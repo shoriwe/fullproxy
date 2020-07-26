@@ -25,7 +25,7 @@ func main(){
 	case "interface":
 		Interface.Server(arguments["ip"].(string), arguments["port"].(string))
 	default:
-		_, _ = fmt.Fprint(os.Stderr, "Unknown module supplied, use \"help\"")
+		_, _ = fmt.Fprint(os.Stderr, "Unknown module supplied, use \"-h\" for help")
 		os.Exit(1)
 	}
 }
