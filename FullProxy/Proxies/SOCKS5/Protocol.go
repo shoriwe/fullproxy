@@ -46,7 +46,7 @@ func GetTargetAddressPort(targetRequestedCommand *byte, targetAddressType *byte,
 
 func CreateProxySession(clientConnection net.Conn, username *[]byte, passwordHash *[]byte) {
 
-	var targetConnection net.Conn
+	// var targetConnection net.Conn
 	var targetAddress string
 	clientConnectionReader := bufio.NewReader(clientConnection)
 	clientConnectionWriter := bufio.NewWriter(clientConnection)
@@ -68,14 +68,9 @@ func CreateProxySession(clientConnection net.Conn, username *[]byte, passwordHas
 		_ = clientConnection.Close()
 		return
 	}
-
-	targetConnection = HandleCommandExecution(
+	HandleCommandExecution(
 		clientConnection, clientConnectionReader, clientConnectionWriter, &targetRequestedCommand,
 		&targetAddressType, &targetAddress, &targetPort, rawTargetAddress, rawTargetPort)
-	if targetConnection != nil {
-		_ = targetConnection.Close()
-	}
-	_ = clientConnection.Close()
 }
 
 
