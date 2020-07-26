@@ -5,3 +5,4 @@
 .idea/misc.xml
 .idea/FullProxy.iml
 *.exe
+build/go_build_FullProxy.exe
