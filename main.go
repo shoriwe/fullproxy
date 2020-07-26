@@ -2,7 +2,7 @@ package main
 
 import (
 	"FullProxy/ArgumentParser"
-	"FullProxy/Proxies"
+	"FullProxy/Proxies/SOCKS5"
 	"fmt"
 	"os"
 )
@@ -14,11 +14,11 @@ func main(){
 	case "socks4":
 		fmt.Println("Sock4 not implemented yet")
 	case "socks5":
-		Proxies.StartSocks5(arguments["ip"].(string),
+		SOCKS5.StartSocks5(arguments["ip"].(string),
 							arguments["port"].(string),
 							arguments["interface-mode"].(bool),
-							arguments["username"].(string),
-							arguments["password"].(string))
+							[]byte(arguments["username"].(string)),
+							[]byte(arguments["password"].(string)))
 	case "http":
 		fmt.Println("HTTP not implemented yet")
 	case "interface":
