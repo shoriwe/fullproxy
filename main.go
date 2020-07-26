@@ -2,6 +2,7 @@ package main
 
 import (
 	"FullProxy/FullProxy/ArgumentParser"
+	"FullProxy/FullProxy/Interface"
 	"FullProxy/FullProxy/Proxies/SOCKS5"
 	"fmt"
 	"os"
@@ -22,7 +23,7 @@ func main(){
 	case "http":
 		fmt.Println("HTTP not implemented yet")
 	case "interface":
-		fmt.Println("Interface not implemented yet")
+		Interface.Server(arguments["ip"].(string), arguments["port"].(string))
 	default:
 		_, _ = fmt.Fprint(os.Stderr, "Unknown module supplied, use \"help\"")
 		os.Exit(1)
