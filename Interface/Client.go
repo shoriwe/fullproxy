@@ -8,10 +8,10 @@ import (
 )
 
 
-type Function func(conn net.Conn, username string, passwordHash []byte)
+type Function func(conn net.Conn, username *[]byte, passwordHash *[]byte)
 
 
-func Client(address string, port string, username string, passwordHash []byte, function Function){
+func Client(address string, port string, username *[]byte, passwordHash *[]byte, function Function){
 	log.Printf("Trying to connecto to %s:%s", address, port)
 	var clientConnection net.Conn
 	var masterConnection = Sockets.Connect(address,  port)
@@ -30,7 +30,7 @@ func Client(address string, port string, username string, passwordHash []byte, f
 			continue
 		}
 		if buffer[0] == Shutdown {
-			log.Print("Received shutdown signal from the interface... Shuting down now the proxing service")
+			log.Print("Received shutdown signal from the interface... Shutting down now the proxy service")
 			break
 		}
 		clientConnection = Sockets.Connect(address, port)
