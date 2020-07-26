@@ -1,7 +1,7 @@
 package SOCKS5
 
 import (
-	"FullProxy/cmd/FullProxy/Sockets"
+	"FullProxy/FullProxy/Sockets"
 	"bufio"
 	"bytes"
 )

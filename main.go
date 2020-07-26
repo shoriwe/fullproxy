@@ -1,8 +1,8 @@
 package main
 
 import (
-	"FullProxy/cmd/FullProxy/ArgumentParser"
-	"FullProxy/cmd/FullProxy/Proxies/SOCKS5"
+	"FullProxy/FullProxy/ArgumentParser"
+	"FullProxy/FullProxy/Proxies/SOCKS5"
 	"fmt"
 	"os"
 )

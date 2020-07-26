@@ -1,7 +1,7 @@
 package Interface
 
 import (
-	"FullProxy/cmd/FullProxy/Sockets"
+	"FullProxy/FullProxy/Sockets"
 	"bufio"
 	"log"
 	"net"

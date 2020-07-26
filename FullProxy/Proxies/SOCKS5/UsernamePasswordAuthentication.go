@@ -1,8 +1,8 @@
 package SOCKS5
 
 import (
-	"FullProxy/cmd/FullProxy/CryptoTools"
-	"FullProxy/cmd/FullProxy/Sockets"
+	"FullProxy/FullProxy/CryptoTools"
+	"FullProxy/FullProxy/Sockets"
 	"bufio"
 	"bytes"
 )

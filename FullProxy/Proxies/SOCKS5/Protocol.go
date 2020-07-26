@@ -1,10 +1,10 @@
 package SOCKS5
 
 import (
-	"FullProxy/cmd/FullProxy/BindServer"
-	"FullProxy/cmd/FullProxy/CryptoTools"
-	"FullProxy/cmd/FullProxy/Interface"
-	"FullProxy/cmd/FullProxy/Sockets"
+	"FullProxy/FullProxy/BindServer"
+	"FullProxy/FullProxy/CryptoTools"
+	"FullProxy/FullProxy/Interface"
+	"FullProxy/FullProxy/Sockets"
 	"bufio"
 	"log"
 	"math/big"
