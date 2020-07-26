@@ -1,10 +1,10 @@
 package SOCKS5
 
 import (
+	"FullProxy/FullProxy/Proxies/Basic"
 	"FullProxy/FullProxy/Sockets"
 	"bufio"
 	"net"
-	"time"
 )
 
 
@@ -13,6 +13,7 @@ func PrepareConnect(
 	clientConnectionWriter *bufio.Writer, targetAddress *string,
 	targetPort *string, rawTargetAddress []byte,
 	rawTargetPort []byte, targetAddressType *byte) net.Conn{
+
 	var targetConnection = Sockets.Connect(*targetAddress, *targetPort) // new(big.Int).SetBytes(rawTargetPort).String())
 	if targetConnection == nil {
 		_, _ = Sockets.Send(clientConnectionWriter, []byte{Version, ConnectionRefused, 0, *targetAddressType, 0, 0})
@@ -27,48 +28,9 @@ func PrepareConnect(
 	}
 	targetConnectionReader := bufio.NewReader(targetConnection)
 	targetConnectionWriter := bufio.NewWriter(targetConnection)
-	HandleConnect(
+	Basic.Proxy(
 		clientConnection, targetConnection,
 		clientConnectionReader, clientConnectionWriter,
-		targetConnectionReader, targetConnectionWriter,
-	)
+		targetConnectionReader, targetConnectionWriter, true)
 	return targetConnection
-}
-
-func HandleConnect(clientConnection net.Conn,
-	targetConnection net.Conn,
-	clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer,
-	targetConnectionReader *bufio.Reader,
-	targetConnectionWriter *bufio.Writer) {
-	for {
-		for state := 0; state < 2; state++ {
-			switch state {
-			case 1:
-				_ = clientConnection.SetReadDeadline(time.Now().Add(100))
-				NumberOfBytesReceived, buffer, ConnectionError := Sockets.Receive(clientConnectionReader, 20480)
-				if ConnectionError != nil {
-					if ConnectionError, ok := ConnectionError.(net.Error); !(ok && ConnectionError.Timeout()) {
-						return
-					}
-				}
-				_, ConnectionError = Sockets.Send(targetConnectionWriter, buffer[:NumberOfBytesReceived])
-				if ConnectionError != nil {
-					return
-				}
-			case 0:
-				_ = targetConnection.SetReadDeadline(time.Now().Add(100))
-				NumberOfBytesReceived, buffer, ConnectionError := Sockets.Receive(targetConnectionReader, 20480)
-				if ConnectionError != nil {
-					if ConnectionError, ok := ConnectionError.(net.Error); !(ok && ConnectionError.Timeout()) {
-						return
-					}
-				}
-				_, ConnectionError = Sockets.Send(clientConnectionWriter, buffer[:NumberOfBytesReceived])
-				if ConnectionError != nil {
-					return
-				}
-			}
-		}
-	}
 }
