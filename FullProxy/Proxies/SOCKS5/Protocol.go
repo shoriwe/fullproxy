@@ -74,13 +74,7 @@ func CreateProxySession(clientConnection net.Conn, username *[]byte, passwordHas
 
 
 func StartSocks5(ip string, port string, interfaceMode bool, username []byte, password []byte) {
-	var passwordHash []byte
-	rawPasswordHash := CryptoTools.GetPasswordHashPasswordByteArray(&username, &password)
-	if rawPasswordHash == nil{
-		passwordHash = []byte{}
-	} else {
-		passwordHash = rawPasswordHash
-	}
+	passwordHash := CryptoTools.GetPasswordHashPasswordByteArray(&username, &password)
 	switch interfaceMode {
 	case true:
 		log.Println("Starting SOCKS5 server in Interface Mode")
