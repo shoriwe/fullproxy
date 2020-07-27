@@ -2,6 +2,6 @@ package Interface
 
 
 const(
-	NewConnection byte = 1
+	NewConnection 		   byte = 1
 	Shutdown               byte = 2
 )
