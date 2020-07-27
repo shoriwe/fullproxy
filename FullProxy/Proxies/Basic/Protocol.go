@@ -38,6 +38,7 @@ func Proxy(clientConnection net.Conn,
 	targetConnectionReader *bufio.Reader,
 	targetConnectionWriter *bufio.Writer,
 	sniff bool) {
+
 	go HandleReadWrite(clientConnection, targetConnection, clientConnectionReader, targetConnectionWriter, &sniff)
 	go HandleReadWrite(targetConnection, clientConnection, targetConnectionReader, clientConnectionWriter, &sniff)
 }
