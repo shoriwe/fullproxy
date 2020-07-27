@@ -11,16 +11,15 @@ func HandleCommandExecution(
 	clientConnectionReader *bufio.Reader, clientConnectionWriter *bufio.Writer,
 	targetRequestedCommand *byte, targetAddressType *byte,
 	targetAddress *string, targetPort *string,
-	rawTargetAddress []byte, rawTargetPort []byte) net.Conn{
+	rawTargetAddress []byte, rawTargetPort []byte){
 
-	var targetConnection net.Conn = nil
+
 	switch *targetRequestedCommand {
 	case Connect:
-		targetConnection = PrepareConnect(clientConnection, clientConnectionReader, clientConnectionWriter, targetAddress, targetPort, rawTargetAddress, rawTargetPort, targetAddressType)
+		PrepareConnect(clientConnection, clientConnectionReader, clientConnectionWriter, targetAddress, targetPort, rawTargetAddress, rawTargetPort, targetAddressType)
 	case Bind:
 		break
 	case UDPAssociate:
 		break
 	}
-	return targetConnection
 }
