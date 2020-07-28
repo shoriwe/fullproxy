@@ -11,7 +11,7 @@ func Sha3_512_256(buffer []byte) []byte{
 
 
 func GetPasswordHashPasswordByteArray(username *[]byte, password *[]byte) []byte{
-	if *username != nil && password  != nil{
+	if len(*username) != 0 && len(*password) != 0{
 		return Sha3_512_256(*password)
 	}
 	return []byte{}
