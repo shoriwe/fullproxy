@@ -18,7 +18,7 @@ type UserArguments struct {
 
 
 func showGeneralHelpMessage(){
-	_, _ = fmt.Fprint(os.Stderr, "Usage: ", os.Args[0], " PROTOCOL *FLAGS\nProtocols available:\n\t - socks5\n\t - http\n\t - interface")
+	_, _ = fmt.Fprint(os.Stderr, "Usage: ", os.Args[0], " PROTOCOL *FLAGS\nProtocols available:\n\t - socks5\n\t - http\n\t - interface-master")
 }
 
 
@@ -40,7 +40,7 @@ func parseSocks5Arguments() UserArguments {
 
 func parseInterfaceArguments() UserArguments{
 	interfaceArguments := UserArguments{Username: "", Password: ""}
-	interfaceArguments.Protocol = "interface"
+	interfaceArguments.Protocol = "interface-master"
 	protocolFlagSet := flag.NewFlagSet("interface", flag.ExitOnError)
 	protocolFlagSet.StringVar(&interfaceArguments.IP, "ip", "0.0.0.0", "IP address to listen on.")
 	protocolFlagSet.StringVar(&interfaceArguments.Port, "port", "1080", "Port address to listen on.")
