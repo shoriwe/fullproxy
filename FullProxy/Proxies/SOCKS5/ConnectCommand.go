@@ -29,7 +29,7 @@ func PrepareConnect(
 			Basic.Proxy(
 				clientConnection, targetConnection,
 				clientConnectionReader, clientConnectionWriter,
-				targetConnectionReader, targetConnectionWriter, false)
+				targetConnectionReader, targetConnectionWriter)
 		} else {
 			{
 				_ = clientConnection.Close()
