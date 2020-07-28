@@ -20,7 +20,7 @@ func main(){
 				[]byte(arguments.Password))
 		case "http":
 			fmt.Println("HTTP not implemented yet")
-		case "interface":
+		case "interface-master":
 			Interface.Server(arguments.IP, arguments.Port)
 		}
 	}
