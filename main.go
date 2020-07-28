@@ -5,27 +5,23 @@ import (
 	"FullProxy/FullProxy/Interface"
 	"FullProxy/FullProxy/Proxies/SOCKS5"
 	"fmt"
-	"os"
 )
 
 
 func main(){
-	var arguments = ArgumentParser.GetArguments()
-	switch arguments["protocol"].(string) {
-	case "socks4":
-		fmt.Println("Sock4 not implemented yet")
-	case "socks5":
-		SOCKS5.StartSocks5(arguments["ip"].(string),
-							arguments["port"].(string),
-							arguments["interface-mode"].(bool),
-							[]byte(arguments["username"].(string)),
-							[]byte(arguments["password"].(string)))
-	case "http":
-		fmt.Println("HTTP not implemented yet")
-	case "interface":
-		Interface.Server(arguments["ip"].(string), arguments["port"].(string))
-	default:
-		_, _ = fmt.Fprint(os.Stderr, "Unknown module supplied, use \"-h\" for help")
-		os.Exit(1)
+	arguments := ArgumentParser.GetArguments()
+	if arguments.Parsed {
+		switch arguments.Protocol {
+		case "socks5":
+			SOCKS5.StartSocks5(arguments.IP,
+				arguments.Port,
+				arguments.InterfaceMode,
+				[]byte(arguments.Username),
+				[]byte(arguments.Password))
+		case "http":
+			fmt.Println("HTTP not implemented yet")
+		case "interface":
+			Interface.Server(arguments.IP, arguments.Port)
+		}
 	}
 }
