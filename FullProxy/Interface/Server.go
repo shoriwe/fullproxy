@@ -31,7 +31,7 @@ func startProxying(clientConnection net.Conn, targetConnection net.Conn){
 	Basic.Proxy(
 		clientConnection, targetConnection,
 		clientConnectionReader, clientConnectionWriter,
-		targetConnectionReader, targetConnectionWriter, true)
+		targetConnectionReader, targetConnectionWriter)
 }
 
 
