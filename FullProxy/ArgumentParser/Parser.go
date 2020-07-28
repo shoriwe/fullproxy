@@ -2,25 +2,71 @@ package ArgumentParser
 
 import (
 	"flag"
+	"fmt"
+	"os"
 )
 
+type UserArguments struct {
+	Protocol      string
+	IP            string
+	Port          string
+	Username      string
+	Password      string
+	InterfaceMode bool
+	Parsed		  bool
+}
 
-func GetArguments() map[string]interface{} {
-	protocol := flag.String("protocol", "help", "Available protocols (socks4 socks5 http interface)")
-	ip := flag.String("ip", "0.0.0.0", "IP to connect in interface mode or IP to bind in bind-mode. Default is 0.0.0.0")
-	port := flag.String("port", "9050", "PORT to connect in interface mode or PORT to bind in bind-mode. Default is 9050")
-	username := flag.String("username", "", "Username to force the client to authenticate with, default is not set")
-	password := flag.String("password", "", "Password to force  the client to authenticate with, default is not set")
-	interfaceMode := flag.Bool("interface-mode", false, "Use the interface mode")
-	flag.Parse()
 
-	var arguments = map[string]interface{}{
-		"protocol":       *protocol,
-		"ip":             *ip,
-		"port":           *port,
-		"interface-mode": *interfaceMode,
-		"username": *username,
-		"password": *password,
+func showGeneralHelpMessage(){
+	_, _ = fmt.Fprint(os.Stderr, "Usage: ", os.Args[0], " PROTOCOL *FLAGS\nProtocols available:\n\t - socks5\n\t - http\n\t - interface")
+}
+
+
+
+func parseSocks5Arguments() UserArguments {
+	socks5Arguments := UserArguments{}
+	socks5Arguments.Protocol = "socks5"
+	protocolFlagSet := flag.NewFlagSet("socks5", flag.ExitOnError)
+	protocolFlagSet.StringVar(&socks5Arguments.IP, "ip", "0.0.0.0", "IP address to listen on. When \"-interface-mode\" flag is set, is the IP of interface to connect")
+	protocolFlagSet.StringVar(&socks5Arguments.Port, "port", "1080", "Port address to listen on. When \"-interface-mode\" flag is set, is the Port of the interface to connect")
+	protocolFlagSet.StringVar(&socks5Arguments.Username, "username", "", "Username of the running proxy, requires \"-password\" and can't be an empty string ('')")
+	protocolFlagSet.StringVar(&socks5Arguments.Password, "password", "", "Password of the running proxy, requires \"-username\" and can't be an empty string ('')")
+	protocolFlagSet.BoolVar(&socks5Arguments.InterfaceMode, "interface-mode", false, "Connect to an interface, no bind proxying")
+	_ = protocolFlagSet.Parse(os.Args[2:])
+	socks5Arguments.Parsed = true
+	return socks5Arguments
+}
+
+
+func parseInterfaceArguments() UserArguments{
+	interfaceArguments := UserArguments{Username: "", Password: ""}
+	interfaceArguments.Protocol = "interface"
+	protocolFlagSet := flag.NewFlagSet("interface", flag.ExitOnError)
+	protocolFlagSet.StringVar(&interfaceArguments.IP, "ip", "0.0.0.0", "IP address to listen on.")
+	protocolFlagSet.StringVar(&interfaceArguments.Port, "port", "1080", "Port address to listen on.")
+	_ = protocolFlagSet.Parse(os.Args[2:])
+	interfaceArguments.Parsed = true
+	return interfaceArguments
+}
+
+
+func GetArguments() UserArguments {
+	var arguments = UserArguments{}
+	if len(os.Args) >= 2 {
+		switch os.Args[1] {
+		case "socks5":
+			arguments = parseSocks5Arguments()
+		case "interface":
+			arguments = parseInterfaceArguments()
+		case "http":
+			arguments.Parsed = true
+		default:
+			arguments.Parsed = true
+			showGeneralHelpMessage()
+		}
+	} else {
+		arguments.Parsed = true
+		showGeneralHelpMessage()
 	}
 	return arguments
 }
