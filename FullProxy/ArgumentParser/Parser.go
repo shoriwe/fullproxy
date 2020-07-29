@@ -56,7 +56,7 @@ func GetArguments() UserArguments {
 		switch os.Args[1] {
 		case "socks5":
 			arguments = parseSocks5Arguments()
-		case "interface":
+		case "interface-master":
 			arguments = parseInterfaceArguments()
 		case "http":
 			arguments.Parsed = true
