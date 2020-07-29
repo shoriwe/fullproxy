@@ -18,7 +18,7 @@ type UserArguments struct {
 
 
 func showGeneralHelpMessage(){
-	_, _ = fmt.Fprint(os.Stderr, "Usage: ", os.Args[0], " PROTOCOL *FLAGS\nProtocols available:\n\t - socks5\n\t - http\n\t - interface-master")
+	_, _ = fmt.Fprintln(os.Stderr, "Usage: ", os.Args[0], " PROTOCOL *FLAGS\nProtocols available:\n\t - socks5\n\t - http\n\t - interface-master")
 }
 
 
@@ -61,11 +61,11 @@ func GetArguments() UserArguments {
 		case "http":
 			arguments.Parsed = true
 		default:
-			arguments.Parsed = true
+			arguments.Parsed = false
 			showGeneralHelpMessage()
 		}
 	} else {
-		arguments.Parsed = true
+		arguments.Parsed = false
 		showGeneralHelpMessage()
 	}
 	return arguments
