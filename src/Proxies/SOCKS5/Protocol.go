@@ -2,6 +2,7 @@ package SOCKS5
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/shoriwe/FullProxy/src/BindServer"
 	"github.com/shoriwe/FullProxy/src/CryptoTools"
 	"github.com/shoriwe/FullProxy/src/Interface"
@@ -14,7 +15,7 @@ import (
 
 func ReceiveTargetRequest(clientConnectionReader *bufio.Reader) (byte, byte, []byte, []byte) {
 	numberOfBytesReceived, targetRequest, ConnectionError := Sockets.Receive(clientConnectionReader, 1024)
-	if ConnectionError == nil && numberOfBytesReceived >= 10{
+	if ConnectionError == nil{
 		if targetRequest[0] == Version {
 			if targetRequest[1] == Connect || targetRequest[1] == Bind || targetRequest[1] == UDPAssociate {
 				if targetRequest[3] == IPv4 || targetRequest[3] == IPv6 || targetRequest[3] == DomainName {
@@ -62,6 +63,7 @@ func CreateProxySession(clientConnection net.Conn, username *[]byte, passwordHas
 			&rawTargetRequestedCommand, &targetAddressType,
 			rawTargetAddress, rawTargetPort)
 		if targetRequestedCommand != ConnectionRefused{
+			fmt.Println(targetRequestedCommand, []byte(targetAddress), []byte(targetPort))
 			HandleCommandExecution(
 				clientConnection, clientConnectionReader, clientConnectionWriter, &targetRequestedCommand,
 				&targetAddressType, &targetAddress, &targetPort, rawTargetAddress, rawTargetPort)
