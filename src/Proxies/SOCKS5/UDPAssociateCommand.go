@@ -1,4 +1,6 @@
 package SOCKS5
 
 
-func PrepareUDPAssociate()
+func PrepareUDPAssociate(){
+	
+}
