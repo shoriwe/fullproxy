@@ -1,10 +1,10 @@
 package SOCKS5
 
 import (
-	"FullProxy/FullProxy/CryptoTools"
-	"FullProxy/FullProxy/Sockets"
 	"bufio"
 	"bytes"
+	"github.com/shoriwe/FullProxy/src/CryptoTools"
+	"github.com/shoriwe/FullProxy/src/Sockets"
 )
 
 

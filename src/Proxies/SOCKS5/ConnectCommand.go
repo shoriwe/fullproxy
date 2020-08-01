@@ -1,9 +1,9 @@
 package SOCKS5
 
 import (
-	"FullProxy/FullProxy/Proxies/Basic"
-	"FullProxy/FullProxy/Sockets"
 	"bufio"
+	"github.com/shoriwe/FullProxy/src/Proxies/Basic"
+	"github.com/shoriwe/FullProxy/src/Sockets"
 	"net"
 )
 
