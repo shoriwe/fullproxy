@@ -1,13 +1,8 @@
 package Basic
 
 import (
-	"FullProxy/FullProxy/Sockets"
 	"bufio"
-<<<<<<< Updated upstream:FullProxy/Proxies/Basic/Protocol.go
-=======
-	"fmt"
 	"github.com/shoriwe/FullProxy/src/Sockets"
->>>>>>> Stashed changes:src/Proxies/Basic/Protocol.go
 	"net"
 	"time"
 )
@@ -31,9 +26,6 @@ func HandleReadWrite(
 			if ConnectionError != nil {
 				break
 			}}
-		if numberOfBytesReceived > 0{
-			fmt.Println(buffer[:numberOfBytesReceived])
-		}
 		buffer = nil
 	}
 	_ = sourceConnection.Close()
