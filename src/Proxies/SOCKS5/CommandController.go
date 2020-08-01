@@ -18,8 +18,8 @@ func HandleCommandExecution(
 	case Connect:
 		PrepareConnect(clientConnection, clientConnectionReader, clientConnectionWriter, targetAddress, targetPort, rawTargetAddress, rawTargetPort, targetAddressType)
 	case Bind:
-		break
+		PrepareBind(clientConnection, clientConnectionReader, clientConnectionWriter, targetAddress, targetPort, rawTargetAddress, rawTargetPort, targetAddressType)
 	case UDPAssociate:
-		break
+		PrepareUDPAssociate(clientConnection, clientConnectionReader, clientConnectionWriter, targetAddress, targetPort, rawTargetAddress, rawTargetPort, targetAddressType)
 	}
 }
