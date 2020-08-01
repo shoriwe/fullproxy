@@ -1,8 +1,8 @@
 package Basic
 
 import (
-	"FullProxy/FullProxy/Sockets"
 	"bufio"
+	"github.com/shoriwe/FullProxy/src/Sockets"
 	"net"
 	"time"
 )
