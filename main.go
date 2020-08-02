@@ -11,7 +11,7 @@ import (
 
 func main() {
 	if len(os.Args) == 1 {
-		_, _ = fmt.Fprintln(os.Stderr, "Try: ", os.Args[0], " help")
+		_, _ = fmt.Fprintln(os.Stderr, "Try:\n", os.Args[0], " help")
 		os.Exit(-1)
 	}
 	switch os.Args[1] {
