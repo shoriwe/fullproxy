@@ -28,7 +28,7 @@ func HandleReadWrite(
 				break
 			}}
 		if numberOfBytesReceived > 0{
-			log.Println(buffer[:numberOfBytesReceived])
+			log.Println("Sending: ", buffer[:numberOfBytesReceived], " From: ", sourceConnection.LocalAddr(), " To: ", sourceConnection.RemoteAddr())
 		}
 		buffer = nil
 	}
