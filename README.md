@@ -72,8 +72,9 @@ This could be specially useful when you need to proxy a network that a machine h
 ## Pre-compiled binaries
 You can find pre-compiled binaries for windows and linux [Here](https://github.com/shoriwe/FullProxy/tree/master/build)
 ## Build from source code
-1. `git clone https://github.com/shoriwe/FullProxy.git`
-2. `cd FullProxy`
-3. `go build -o ../fullproxy[.exe] main.go`
+Run this command:
+```
+go get github.com/shoriwe/FullProxy
+```
 # Suggestions
 If you have any suggestion for new features, also leave them in the issue section or create the proper branch, add what do you want and request a pull request
