@@ -1,11 +1,11 @@
 package SOCKS5
 
 import (
-	"FullProxy/FullProxy/BindServer"
-	"FullProxy/FullProxy/CryptoTools"
-	"FullProxy/FullProxy/Interface"
-	"FullProxy/FullProxy/Sockets"
 	"bufio"
+	"github.com/shoriwe/FullProxy/src/BindServer"
+	"github.com/shoriwe/FullProxy/src/CryptoTools"
+	"github.com/shoriwe/FullProxy/src/Interface"
+	"github.com/shoriwe/FullProxy/src/Sockets"
 	"log"
 	"math/big"
 	"net"
@@ -14,7 +14,7 @@ import (
 
 func ReceiveTargetRequest(clientConnectionReader *bufio.Reader) (byte, byte, []byte, []byte) {
 	numberOfBytesReceived, targetRequest, ConnectionError := Sockets.Receive(clientConnectionReader, 1024)
-	if ConnectionError == nil && numberOfBytesReceived >= 10{
+	if ConnectionError == nil{
 		if targetRequest[0] == Version {
 			if targetRequest[1] == Connect || targetRequest[1] == Bind || targetRequest[1] == UDPAssociate {
 				if targetRequest[3] == IPv4 || targetRequest[3] == IPv6 || targetRequest[3] == DomainName {
@@ -64,7 +64,7 @@ func CreateProxySession(clientConnection net.Conn, username *[]byte, passwordHas
 		if targetRequestedCommand != ConnectionRefused{
 			HandleCommandExecution(
 				clientConnection, clientConnectionReader, clientConnectionWriter, &targetRequestedCommand,
-				&targetAddressType, &targetAddress, &targetPort, rawTargetAddress, rawTargetPort)
+				&targetAddressType, &targetAddress, &targetPort)
 		}
 	}
 	if (!clientHasCompatibleMethods) || (targetRequestedCommand == ConnectionRefused){

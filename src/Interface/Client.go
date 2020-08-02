@@ -1,8 +1,8 @@
 package Interface
 
 import (
-	"FullProxy/FullProxy/Sockets"
 	"bufio"
+	"github.com/shoriwe/FullProxy/src/Sockets"
 	"log"
 	"net"
 )

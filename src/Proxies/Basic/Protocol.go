@@ -1,8 +1,9 @@
 package Basic
 
 import (
-	"FullProxy/FullProxy/Sockets"
 	"bufio"
+	"github.com/shoriwe/FullProxy/src/Sockets"
+	"log"
 	"net"
 	"time"
 )
@@ -26,6 +27,9 @@ func HandleReadWrite(
 			if ConnectionError != nil {
 				break
 			}}
+		if numberOfBytesReceived > 0{
+			log.Println("Sending: ", buffer[:numberOfBytesReceived], " From: ", sourceConnection.LocalAddr(), " To: ", sourceConnection.RemoteAddr())
+		}
 		buffer = nil
 	}
 	_ = sourceConnection.Close()
