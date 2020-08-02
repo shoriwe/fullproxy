@@ -36,25 +36,25 @@ Protocols available:
 user@linux:~$ fullproxy socks5 --help
 Usage of socks5:
   -interface-mode
-        Connect to an interface, no bind proxying
+    	Connect to an interface, no bind proxying
   -ip string
-        IP address to listen on. When "-interface-mode" flag is set, is the IP of interface to connect (default "0.0.0.0")
+    	IP address to listen on. When "-interface-mode" flag is set, is the IP of interface to connect
   -password string
-        Password of the running proxy, requires "-username" and can't be an empty string ('')
+    	Password of the running proxy, requires "-username". It will be ignored if is an empty string
   -port string
-        Port address to listen on. When "-interface-mode" flag is set, is the Port of the interface to connect (default "1080")
+    	Port address to listen on. When "-interface-mode" flag is set, is the Port of the interface to connect. I both modes the default port is 1080 (default "1080")
   -username string
-        Username of the running proxy, requires "-password" and can't be an empty string ('')
+    	Username of the running proxy, requires "-password". It will be ignored if is an empty string
 ```
 ### HTTP
 Coming soon
 ### Interface master
 ```
-Usage of interface-master:
+Usage of interface:
   -ip string
-        IP address to listen on. (default "0.0.0.0")
+    	IP address to listen on. (default "0.0.0.0")
   -port string
-        Port address to listen on. (default "1080")
+    	Port address to listen on. (default "1080")
 ```
 # Concepts
 ## Interface mode
