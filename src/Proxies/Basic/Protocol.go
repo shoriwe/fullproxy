@@ -10,7 +10,7 @@ import (
 
 
 func HandleReadWrite(
-	sourceConnection net.Conn, sourceReader *bufio.Reader, destinationWriter *bufio.Writer, connectionAlive *bool){
+	sourceConnection net.Conn, destinationAddress string,sourceReader *bufio.Reader, destinationWriter *bufio.Writer, connectionAlive *bool){
 	for {
 		if !(*connectionAlive){
 			break
@@ -28,7 +28,7 @@ func HandleReadWrite(
 				break
 			}}
 		if numberOfBytesReceived > 0{
-			log.Println("Sending: ", buffer[:numberOfBytesReceived], " From: ", sourceConnection.LocalAddr(), " To: ", sourceConnection.RemoteAddr())
+			log.Print("Sending: ", buffer[:numberOfBytesReceived], " From: ", sourceConnection.RemoteAddr(), " To: ", destinationAddress)
 		}
 		buffer = nil
 	}
@@ -45,6 +45,6 @@ func Proxy(clientConnection net.Conn,
 	targetConnectionWriter *bufio.Writer) {
 	connectionAlive := true
 
-	go HandleReadWrite(clientConnection, clientConnectionReader, targetConnectionWriter, &connectionAlive)
-	go HandleReadWrite(targetConnection, targetConnectionReader, clientConnectionWriter, &connectionAlive)
+	go HandleReadWrite(clientConnection, targetConnection.RemoteAddr().String(), clientConnectionReader, targetConnectionWriter, &connectionAlive)
+	go HandleReadWrite(targetConnection, clientConnection.RemoteAddr().String(), targetConnectionReader, clientConnectionWriter, &connectionAlive)
 }
