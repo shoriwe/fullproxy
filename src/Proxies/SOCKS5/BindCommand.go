@@ -8,7 +8,6 @@ import (
 
 func PrepareBind(clientConnection net.Conn, clientConnectionReader *bufio.Reader,
 clientConnectionWriter *bufio.Writer, targetAddress *string,
-targetPort *string, rawTargetAddress []byte,
-rawTargetPort []byte, targetAddressType *byte){
+targetPort *string, targetAddressType *byte){
 	_ = clientConnection.Close()
 }
