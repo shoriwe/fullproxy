@@ -11,9 +11,9 @@
     * [Implemented protocols](#implemented-protocols)
         * [SOCKS5](#socks5)
         * [HTTP](#http)
-        * [Interface master](#interface-master)
+        * [Interface master](#master)
 * [Concepts](#concepts)
-    * [Interface mode](#interface-mode)
+    * [Interface mode](#slave)
         * [How it works](#how-it-works)
         * [Applications](#applications)
         * [Considerations](#considerations)
@@ -29,35 +29,35 @@ Usage: FullProxy PROTOCOL *FLAGS
 Protocols available:
          - socks5
          - http
-         - interface-master
+         - master
 ```
 ### SOCKS5
 ```
 user@linux:~$ fullproxy socks5 --help
 Usage of socks5:
-  -interface-mode
+  -slave
     	Connect to an interface, no bind proxying
-  -ip string
-    	IP address to listen on. When "-interface-mode" flag is set, is the IP of interface to connect
+  -address string
+    	IP address to listen on. When "-slave" flag is set, is the IP of interface to connect
   -password string
     	Password of the running proxy, requires "-username". It will be ignored if is an empty string
   -port string
-    	Port address to listen on. When "-interface-mode" flag is set, is the Port of the interface to connect. I both modes the default port is 1080 (default "1080")
+    	Port address to listen on. When "-slave" flag is set, is the Port of the interface to connect. I both modes the default port is 1080 (default "1080")
   -username string
     	Username of the running proxy, requires "-password". It will be ignored if is an empty string
 ```
 ### HTTP
 Coming soon
-### Interface master
+### Master
 ```
 Usage of interface:
-  -ip string
+  -address string
     	IP address to listen on. (default "0.0.0.0")
   -port string
     	Port address to listen on. (default "1080")
 ```
 # Concepts
-## Interface mode
+## Slave
 Handles the proxying between a reverse connected proxy and the clients. In other words, it will receive the connections of the clients and will forward the traffic to the proxy that is reverse connected to it.
 ### How it works
 1. It first binds to the address specified by the user.
