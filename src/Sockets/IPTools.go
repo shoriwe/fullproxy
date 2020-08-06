@@ -4,7 +4,7 @@ import "strconv"
 
 
 func GetIPv6(rawIPv6Address []byte) string{
-	var ipv6 string = ""
+	ipv6 := ""
 	for index := 0; index < 16; index++{
 		ipv6 += strconv.FormatInt(int64(rawIPv6Address[index]), 16)
 		if (index != 15) && (index != 0) && (index % 2 != 0){
