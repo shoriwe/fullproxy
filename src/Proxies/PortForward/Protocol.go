@@ -2,19 +2,20 @@ package PortForward
 
 import (
 	"fmt"
+	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/MasterSlave"
 	"github.com/shoriwe/FullProxy/src/Proxies/Basic"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 	"net"
 )
 
-func CreatePortForwardSession(masterConnection net.Conn, args...interface{}){
+
+func CreatePortForwardSession(masterConnection net.Conn, masterReader ConnectionStructures.SocketReader, masterWriter ConnectionStructures.SocketWriter, args...interface{}){
 	targetAddress := args[0].(*string)
 	targetPort := args[1].(*string)
 	targetConnection := Sockets.Connect(targetAddress, targetPort)
 	if targetConnection != nil{
-		masterReader, masterWriter := Sockets.CreateReaderWriter(masterConnection)
-		targetReader, targetWriter := Sockets.CreateReaderWriter(targetConnection)
+		targetReader, targetWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(targetConnection)
 		Basic.Proxy(masterConnection, targetConnection, masterReader, masterWriter, targetReader, targetWriter)
 	} else {
 		_ = masterConnection.Close()
