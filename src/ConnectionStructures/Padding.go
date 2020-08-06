@@ -1,6 +1,5 @@
 package ConnectionStructures
 
-
 import (
 	"bytes"
 	"crypto/aes"
