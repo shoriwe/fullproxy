@@ -2,6 +2,7 @@ package SOCKS5
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/shoriwe/FullProxy/src/BindServer"
 	"github.com/shoriwe/FullProxy/src/CryptoTools"
 	"github.com/shoriwe/FullProxy/src/Interface"
@@ -43,6 +44,7 @@ func GetTargetAddressPort(targetRequestedCommand *byte, targetAddressType *byte,
 
 
 func CreateProxySession(clientConnection net.Conn, args...interface{}) {
+	fmt.Println(args[0], " ", args[1])
 	username, passwordHash := args[0].(*[]byte), args[1].(*[]byte)
 	var targetRequestedCommand byte
 	clientConnectionReader, clientConnectionWriter := Sockets.CreateReaderWriter(clientConnection)
@@ -78,9 +80,9 @@ func StartSocks5(address *string, port *string, interfaceMode *bool, username *[
 	switch *interfaceMode {
 	case true:
 		log.Println("Starting SOCKS5 server in Interface Mode")
-		Interface.Slave(address, port, CreateProxySession, username, passwordHash)
+		Interface.Slave(address, port, CreateProxySession, username, &passwordHash)
 	case false:
 		log.Println("Starting SOCKS5 server in Bind Mode")
-		BindServer.Bind(address, port, CreateProxySession, username, passwordHash)
+		BindServer.Bind(address, port, CreateProxySession, username, &passwordHash)
 	}
 }
