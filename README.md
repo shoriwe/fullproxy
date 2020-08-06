@@ -1,8 +1,8 @@
 # FullProxy
- Bind and reverse connection based, SOCKS5, HTTP and PortForward based proxy
+ Bind and reverse connection (with encryption) based, SOCKS5, HTTP and PortForward proxy
 # Description
 ![FullProxyLogo](https://raw.githubusercontent.com/shoriwe/FullProxy/master/logo/full-proxy-logo.PNG) \
-`FullProxy` is a `Bind` and `Reverse Connection` based `HTTP`, `SOCKS5` and basic `PortForward` portable proxy
+`FullProxy` is a `Bind` and `Reverse Connection` (with encryption) based `HTTP`, `SOCKS5` and basic PortForward portable proxy
 # Index
 * [Title](#fullproxy)
 * [Description](#description)
@@ -72,7 +72,7 @@ Usage of master:
 ```
 # Concepts
 ## Slave
-Handles the proxying between a reverse connected proxy and the clients. In other words, it will receive the connections of the clients and will forward the traffic to the proxy that is reverse connected to it.
+Handles the proxying between a reverse connected (with encryption) proxy and the clients. In other words, it will receive the connections of the clients and will forward the traffic to the proxy that is reverse connected to it.
 ### How it works
 1. It first binds to the address specified by the user.
 2. Then accept the connection from the proxy server.

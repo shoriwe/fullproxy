@@ -1,7 +1,7 @@
 package MasterSlave
 
 import (
-	"bufio"
+	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/Proxies/Basic"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 	"log"
@@ -24,10 +24,8 @@ func setupControlCSignal(server net.Listener, masterConnection net.Conn){
 
 
 func startProxying(clientConnection net.Conn, targetConnection net.Conn){
-	clientConnectionReader := bufio.NewReader(clientConnection)
-	clientConnectionWriter := bufio.NewWriter(clientConnection)
-	targetConnectionReader := bufio.NewReader(targetConnection)
-	targetConnectionWriter := bufio.NewWriter(targetConnection)
+	clientConnectionReader, clientConnectionWriter := ConnectionStructures.CreateReaderWriter(clientConnection)
+	targetConnectionReader, targetConnectionWriter := ConnectionStructures.CreateTunnelReaderWriter(targetConnection)
 	Basic.Proxy(
 		clientConnection, targetConnection,
 		clientConnectionReader, clientConnectionWriter,
@@ -51,7 +49,7 @@ func Master(address *string, port *string){
 	}
 	log.Print("Reverse connection received from: ", masterConnection.RemoteAddr())
 	setupControlCSignal(server, masterConnection)
-	masterConnectionWriter := bufio.NewWriter(masterConnection)
+	_, masterConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(masterConnection)
 	for {
 		clientConnection, _ := server.Accept()
 		_, connectionError := Sockets.Send(masterConnectionWriter, &NewConnection)

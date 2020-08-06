@@ -1,4 +1,4 @@
-package CryptoTools
+package Hashing
 
 import (
 	"crypto/sha512"

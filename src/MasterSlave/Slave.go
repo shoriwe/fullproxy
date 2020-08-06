@@ -1,20 +1,21 @@
 package MasterSlave
 
 import (
+	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 	"log"
 	"net"
 )
 
 
-type Function func(conn net.Conn, args...interface{})
+type Function func(conn net.Conn, connReader ConnectionStructures.SocketReader, connWriter ConnectionStructures.SocketWriter, args...interface{})
 
 
 func Slave(address *string, port *string, function Function, args...interface{}){
 	log.Printf("Trying to connecto to %s:%s", *address, *port)
 	masterConnection := Sockets.Connect(address,  port)
 	if masterConnection != nil{
-		masterConnectionReader, _ := Sockets.CreateReaderWriter(masterConnection)
+		masterConnectionReader, _ := ConnectionStructures.CreateReaderWriter(masterConnection)
 		log.Printf("Successfully connected to %s:%s", *address, *port)
 		for {
 			NumberOfReceivedBytes, buffer, ConnectionError := Sockets.Receive(masterConnectionReader, 1024)
@@ -27,7 +28,8 @@ func Slave(address *string, port *string, function Function, args...interface{})
 					case NewConnection[0]:
 						clientConnection := Sockets.Connect(address, port)
 						if clientConnection != nil{
-							go function(clientConnection, args...)
+							clientConnectionReader, clientConnectionWriter := ConnectionStructures.CreateTunnelReaderWriter(clientConnection)
+							go function(clientConnection, clientConnectionReader, clientConnectionWriter,args...)
 						}
 					}
 				} else {

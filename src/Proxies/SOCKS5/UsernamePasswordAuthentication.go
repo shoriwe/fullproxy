@@ -1,14 +1,14 @@
 package SOCKS5
 
 import (
-	"bufio"
 	"bytes"
-	"github.com/shoriwe/FullProxy/src/CryptoTools"
+	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
+	"github.com/shoriwe/FullProxy/src/Hashing"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 )
 
 
-func HandleUsernamePasswordAuthentication(clientConnectionReader *bufio.Reader,
+func HandleUsernamePasswordAuthentication(clientConnectionReader ConnectionStructures.SocketReader,
 	username *[]byte,
 	passwordHash *[]byte) (bool, byte){
 	numberOfReceivedBytes, credentials, connectionError := Sockets.Receive(clientConnectionReader, 1024)
@@ -29,7 +29,7 @@ func HandleUsernamePasswordAuthentication(clientConnectionReader *bufio.Reader,
 	receivedUsername := credentials[2:2+receivedUsernameLength]
 	if bytes.Equal(receivedUsername, *username){
 		rawReceivedUsernamePassword := credentials[2+receivedUsernameLength+1:numberOfReceivedBytes]
-		if bytes.Equal(CryptoTools.Sha3_512_256(rawReceivedUsernamePassword), *passwordHash){
+		if bytes.Equal(Hashing.Sha3_512_256(rawReceivedUsernamePassword), *passwordHash){
 			return true, BasicNegotiation
 		}
 	}

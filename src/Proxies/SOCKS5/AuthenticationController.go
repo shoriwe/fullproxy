@@ -1,14 +1,14 @@
 package SOCKS5
 
 import (
-	"bufio"
 	"bytes"
+	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 )
 
 
-func GetClientAuthenticationImplementedMethods(clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer,
+func GetClientAuthenticationImplementedMethods(clientConnectionReader ConnectionStructures.SocketReader,
+	clientConnectionWriter ConnectionStructures.SocketWriter,
 	username *[]byte,
 	passwordHash *[]byte) bool{
 	var wantedMethod = NoAuthRequired
