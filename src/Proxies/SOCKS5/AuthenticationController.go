@@ -1,14 +1,15 @@
 package SOCKS5
 
 import (
-	"bufio"
 	"bytes"
+	"fmt"
+	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 )
 
 
-func GetClientAuthenticationImplementedMethods(clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer,
+func GetClientAuthenticationImplementedMethods(clientConnectionReader ConnectionStructures.SocketReader,
+	clientConnectionWriter ConnectionStructures.SocketWriter,
 	username *[]byte,
 	passwordHash *[]byte) bool{
 	var wantedMethod = NoAuthRequired
@@ -19,6 +20,7 @@ func GetClientAuthenticationImplementedMethods(clientConnectionReader *bufio.Rea
 
 	var FoundMethod = InvalidMethod
 	numberOfReceivedBytes, clientImplementedMethods, _ := Sockets.Receive(clientConnectionReader, 1024)
+	fmt.Println(clientImplementedMethods[:numberOfReceivedBytes])
 	if clientImplementedMethods == nil {
 		_, _ = Sockets.Send(clientConnectionWriter, &NoSupportedMethods)
 		return false
