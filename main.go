@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/shoriwe/FullProxy/src/ArgumentParser"
 	"github.com/shoriwe/FullProxy/src/Interface"
+	"github.com/shoriwe/FullProxy/src/Proxies/PortForward"
 	"github.com/shoriwe/FullProxy/src/Proxies/SOCKS5"
 	"os"
 )
@@ -16,15 +17,16 @@ func main() {
 	}
 	switch os.Args[1] {
 	case "socks5":
-		ip, port, username, password, interfaceMode := ArgumentParser.ParseSocks5Arguments()
-		SOCKS5.StartSocks5(ip, port, interfaceMode, username, password)
+		address, port, username, password, slave := ArgumentParser.ParseSocks5Arguments()
+		SOCKS5.StartSocks5(address, port, slave, &username, &password)
 	case "http":
 		fmt.Println("HTTP not implemented yet")
 	case "forward":
-
-	case "interface-master":
-		ip, port := ArgumentParser.ParseInterfaceArguments()
-		Interface.Server(ip, port)
+		address, port, masterAddress, masterPort := ArgumentParser.PortForwardArguments()
+		PortForward.StartPortForward(address, port, masterAddress, masterPort)
+	case "master":
+		address, port := ArgumentParser.ParseMasterArguments()
+		Interface.Master(address, port)
 	case "help":
 		ArgumentParser.ShowGeneralHelpMessage()
 	default:
