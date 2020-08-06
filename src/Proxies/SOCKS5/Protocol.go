@@ -75,9 +75,9 @@ func CreateProxySession(clientConnection net.Conn, args...interface{}) {
 }
 
 
-func StartSocks5(address *string, port *string, interfaceMode *bool, username *[]byte, password *[]byte) {
+func StartSocks5(address *string, port *string, slave *bool, username *[]byte, password *[]byte) {
 	passwordHash := CryptoTools.GetPasswordHashPasswordByteArray(username, password)
-	switch *interfaceMode {
+	switch *slave {
 	case true:
 		log.Println("Starting SOCKS5 server as slave")
 		MasterSlave.Slave(address, port, CreateProxySession, username, &passwordHash)
