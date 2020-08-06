@@ -2,7 +2,6 @@ package ConnectionStructures
 
 import (
 	"crypto/cipher"
-	"fmt"
 )
 
 
@@ -35,7 +34,6 @@ type TunnelWriter struct {
 func (tunnelWriter *TunnelWriter) Write(buffer []byte) (int, error){
 	paddedBuffer := PKCS7PaddingAES(buffer)
 	encryptedBuffer := make([]byte, len(paddedBuffer))
-	fmt.Print(encryptedBuffer)
 	tunnelWriter.CipherBlock.Encrypt(encryptedBuffer, paddedBuffer)
 	return tunnelWriter.ActiveSocketWriter.Write(encryptedBuffer)
 }
