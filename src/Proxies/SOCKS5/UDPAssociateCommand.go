@@ -1,7 +1,6 @@
 package SOCKS5
 
 import (
-	"fmt"
 	"net"
 )
 
@@ -11,5 +10,4 @@ func PrepareUDPAssociate(
 	clientConnectionWriter interface{}, targetAddress *string,
 	targetPort *string, targetAddressType *byte){
 	_ = clientConnection.Close()
-	fmt.Println(*targetAddress, *targetPort)
 }
