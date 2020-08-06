@@ -1,8 +1,8 @@
 # FullProxy
- Bind and reverse connection based, SOCKS5 and HTTP proxy
+ Bind and reverse connection based, SOCKS5, HTTP and PortForward proxy
 # Description
 ![FullProxyLogo](https://raw.githubusercontent.com/shoriwe/FullProxy/master/logo/full-proxy-logo.PNG) \
-`FullProxy` is a `Bind` and `Reverse Connection` based `HTTP` and `SOCKS5` portable proxy
+`FullProxy` is a `Bind` and `Reverse Connection` based `HTTP`, `SOCKS5` and basic PortForward portable proxy
 # Index
 * [Title](#fullproxy)
 * [Description](#description)
@@ -11,9 +11,10 @@
     * [Implemented protocols](#implemented-protocols)
         * [SOCKS5](#socks5)
         * [HTTP](#http)
-        * [Interface master](#master)
+        * [Forward](#forward)
+        * [Master](#master)
 * [Concepts](#concepts)
-    * [Interface mode](#slave)
+    * [Slave](#slave)
         * [How it works](#how-it-works)
         * [Applications](#applications)
         * [Considerations](#considerations)
@@ -25,32 +26,45 @@
 ## Implemented protocols
 ```
 user@linux:~$ fullproxy help
-Usage: FullProxy PROTOCOL *FLAGS
+Usage:  fullproxy-windows-amd64.exe  PROTOCOL *FLAGS
 Protocols available:
          - socks5
          - http
+         - forward
          - master
 ```
 ### SOCKS5
 ```
 user@linux:~$ fullproxy socks5 --help
 Usage of socks5:
-  -slave
-    	Connect to an interface, no bind proxying
   -address string
-    	IP address to listen on. When "-slave" flag is set, is the IP of interface to connect
+        Address to listen on. When "-slave" flag is set, is the IP of master to connect
   -password string
-    	Password of the running proxy, requires "-username". It will be ignored if is an empty string
+        Password of the running proxy, requires "-username". It will be ignored if is an empty string
   -port string
-    	Port address to listen on. When "-slave" flag is set, is the Port of the interface to connect. I both modes the default port is 1080 (default "1080")
+        Port to listen on. When "-slave" flag is set, is the Port of the master to connect. I both modes the default port is 1080 (default "1080")
+  -slave
+        Connect to a master, no bind proxying
   -username string
-    	Username of the running proxy, requires "-password". It will be ignored if is an empty string
+        Username of the running proxy, requires "-password". It will be ignored if is an empty string
 ```
 ### HTTP
 Coming soon
+### Forward
+```
+Usage of forward:
+  -forwardAddress string
+        Address to forward the traffic received from master
+  -forwardPort string
+        Port to forward the traffic received from master
+  -masterAddress string
+        Address of the master
+  -masterPort string
+        Port of the master
+```
 ### Master
 ```
-Usage of interface:
+Usage of master:
   -address string
     	IP address to listen on. (default "0.0.0.0")
   -port string
@@ -67,7 +81,7 @@ In other words, is the proxy of another proxy but totally invisible for the clie
 ### Applications
 This could be specially useful when you need to proxy a network that a machine have access to, but you can't bind with it
 ### Considerations
-- The `interface` protocol may loss some setup connections if it is extremely stressed, but it should work `just fine` if the connections where already made
+- The `master` protocol may loss some setup connections if it is extremely stressed, but it should work `just fine` if the connections where already made
 # Installation
 ## Pre-compiled binaries
 You can find pre-compiled binaries for windows and linux [Here](https://github.com/shoriwe/FullProxy/tree/master/build)
