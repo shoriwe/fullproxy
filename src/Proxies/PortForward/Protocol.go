@@ -1,7 +1,8 @@
 package PortForward
 
 import (
-	"github.com/shoriwe/FullProxy/src/Interface"
+	"fmt"
+	"github.com/shoriwe/FullProxy/src/MasterSlave"
 	"github.com/shoriwe/FullProxy/src/Proxies/Basic"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 	"net"
@@ -21,9 +22,10 @@ func CreatePortForwardSession(masterConnection net.Conn, args...interface{}){
 }
 
 
-func  StartPortForward(targetAddress *string, targetPort *string, masterAddress *string, masterPort *string){
-	if *targetAddress == "" || *targetPort == "" || *masterAddress == "" || *masterPort == ""{
-
+func StartPortForward(targetAddress *string, targetPort *string, masterAddress *string, masterPort *string){
+	if !(*targetAddress == "" || *targetPort == "" || *masterAddress == "" || *masterPort == ""){
+		MasterSlave.Slave(targetAddress, masterPort, CreatePortForwardSession, targetAddress, targetPort)
+	} else {
+		fmt.Println("All flags need to be in use")
 	}
-	Interface.Slave(targetAddress, masterPort, CreatePortForwardSession, targetAddress, targetPort)
 }
