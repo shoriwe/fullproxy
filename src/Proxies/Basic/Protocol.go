@@ -1,7 +1,8 @@
 package Basic
 
 import (
-	"bufio"
+	"fmt"
+	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 	"log"
 	"net"
@@ -10,17 +11,22 @@ import (
 
 
 func HandleReadWrite(
-	sourceConnection net.Conn, destinationAddress string,sourceReader *bufio.Reader, destinationWriter *bufio.Writer, connectionAlive *bool){
-	for {
+	sourceConnection net.Conn, destinationAddress string,
+	sourceReader ConnectionStructures.SocketReader, destinationWriter ConnectionStructures.SocketWriter,
+	connectionAlive *bool){
+	for tries := 0; tries < 5; tries++{
 		if !(*connectionAlive){
 			break
 		}
-		_ = sourceConnection.SetReadDeadline(time.Now().Add(10 * time.Second))
+		_ = sourceConnection.SetReadDeadline(time.Now().Add(20 * time.Second))
 		numberOfBytesReceived, buffer, ConnectionError := Sockets.Receive(sourceReader, 20480)
+		fmt.Println(ConnectionError)
 		if ConnectionError != nil {
 			if ConnectionError, ok := ConnectionError.(net.Error); !(ok && ConnectionError.Timeout()) {
 				break
 			}
+		} else {
+			tries = 0
 		}
 		if numberOfBytesReceived > 0 {
 			realChunk := buffer[:numberOfBytesReceived]
@@ -40,12 +46,12 @@ func HandleReadWrite(
 
 func Proxy(clientConnection net.Conn,
 	targetConnection net.Conn,
-	clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer,
-	targetConnectionReader *bufio.Reader,
-	targetConnectionWriter *bufio.Writer) {
+	clientConnectionReader ConnectionStructures.SocketReader,
+	clientConnectionWriter ConnectionStructures.SocketWriter,
+	targetConnectionReader ConnectionStructures.SocketReader,
+	targetConnectionWriter ConnectionStructures.SocketWriter) {
 	connectionAlive := true
-
 	go HandleReadWrite(clientConnection, targetConnection.RemoteAddr().String(), clientConnectionReader, targetConnectionWriter, &connectionAlive)
 	go HandleReadWrite(targetConnection, clientConnection.RemoteAddr().String(), targetConnectionReader, clientConnectionWriter, &connectionAlive)
+
 }
