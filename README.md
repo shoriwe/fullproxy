@@ -2,7 +2,7 @@
  Bind and reverse connection (with encryption) based, SOCKS5, HTTP and PortForward proxy
 # Description
 ![FullProxyLogo](https://raw.githubusercontent.com/shoriwe/FullProxy/master/logo/full-proxy-logo.PNG) \
-`FullProxy` is a `Bind` and `Reverse Connection` based `HTTP`, `SOCKS5` and basic PortForward portable proxy
+`FullProxy` is a `Bind` and `Reverse Connection` (with encryption) based `HTTP`, `SOCKS5` and basic PortForward portable proxy
 # Index
 * [Title](#fullproxy)
 * [Description](#description)
