@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/shoriwe/FullProxy/src/ArgumentParser"
-	"github.com/shoriwe/FullProxy/src/Interface"
+	"github.com/shoriwe/FullProxy/src/MasterSlave"
 	"github.com/shoriwe/FullProxy/src/Proxies/PortForward"
 	"github.com/shoriwe/FullProxy/src/Proxies/SOCKS5"
 	"os"
@@ -26,7 +26,7 @@ func main() {
 		PortForward.StartPortForward(address, port, masterAddress, masterPort)
 	case "master":
 		address, port := ArgumentParser.ParseMasterArguments()
-		Interface.Master(address, port)
+		MasterSlave.Master(address, port)
 	case "help":
 		ArgumentParser.ShowGeneralHelpMessage()
 	default:
