@@ -1,14 +1,14 @@
 package SOCKS5
 
 import (
-	"bufio"
 	"bytes"
+	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/CryptoTools"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 )
 
 
-func HandleUsernamePasswordAuthentication(clientConnectionReader *bufio.Reader,
+func HandleUsernamePasswordAuthentication(clientConnectionReader ConnectionStructures.SocketReader,
 	username *[]byte,
 	passwordHash *[]byte) (bool, byte){
 	numberOfReceivedBytes, credentials, connectionError := Sockets.Receive(clientConnectionReader, 1024)
