@@ -6,8 +6,13 @@ import (
 )
 
 
-func Send(connectionWriter *bufio.Writer, data []byte) (int, error){
-	NumberOfBytesSent, ConnectionError := connectionWriter.Write(data)
+func CreateReaderWriter(connection net.Conn) (*bufio.Reader, *bufio.Writer){
+	return bufio.NewReader(connection), bufio.NewWriter(connection)
+}
+
+
+func Send(connectionWriter *bufio.Writer, data *[]byte) (int, error){
+	NumberOfBytesSent, ConnectionError := connectionWriter.Write(*data)
 	_ = connectionWriter.Flush()
 	return NumberOfBytesSent, ConnectionError
 }
@@ -23,10 +28,10 @@ func Receive(connectionReader *bufio.Reader, bufferSize int) (int, []byte, error
 }
 
 
-func Connect(ip string, port string) net.Conn{
+func Connect(address *string, port *string) net.Conn{
 	var connection net.Conn
 	var connectionError error
-	connection, connectionError = net.Dial("tcp", ip + ":" + port)
+	connection, connectionError = net.Dial("tcp", *address + ":" + *port)
 	if connectionError != nil{
 		return nil
 	}

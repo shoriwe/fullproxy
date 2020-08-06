@@ -23,12 +23,13 @@ func HandleReadWrite(
 			}
 		}
 		if numberOfBytesReceived > 0 {
-			_, ConnectionError = Sockets.Send(destinationWriter, buffer[:numberOfBytesReceived])
+			realChunk := buffer[:numberOfBytesReceived]
+			_, ConnectionError = Sockets.Send(destinationWriter, &realChunk)
 			if ConnectionError != nil {
 				break
-			}}
-		if numberOfBytesReceived > 0{
-			log.Print("Sending: ", buffer[:numberOfBytesReceived], " From: ", sourceConnection.RemoteAddr(), " To: ", destinationAddress)
+			}
+			log.Print("Sending: ", realChunk, " From: ", sourceConnection.RemoteAddr(), " To: ", destinationAddress)
+			realChunk = nil
 		}
 		buffer = nil
 	}

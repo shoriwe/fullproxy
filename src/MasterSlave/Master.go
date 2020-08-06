@@ -1,4 +1,4 @@
-package Interface
+package MasterSlave
 
 import (
 	"bufio"
@@ -35,14 +35,14 @@ func startProxying(clientConnection net.Conn, targetConnection net.Conn){
 }
 
 
-func Server(address string, port string){
-	log.Print("Starting Interface server")
-	server, BindingError  := net.Listen("tcp", address + ":" + port)
+func Master(address *string, port *string){
+	log.Print("Starting Master server")
+	server, BindingError  := net.Listen("tcp", *address + ":" + *port)
 	if BindingError != nil {
 		log.Print("Something goes wrong: " + BindingError.Error())
 		return
 	}
-	log.Printf("Bind successfully in %s:%s", address, port)
+	log.Printf("Bind successfully in %s:%s", *address, *port)
 	log.Print("Waiting for proxy server connections...")
 	masterConnection, connectionError := server.Accept()
 	if connectionError != nil{
@@ -54,7 +54,7 @@ func Server(address string, port string){
 	masterConnectionWriter := bufio.NewWriter(masterConnection)
 	for {
 		clientConnection, _ := server.Accept()
-		_, connectionError := Sockets.Send(masterConnectionWriter, []byte{1})
+		_, connectionError := Sockets.Send(masterConnectionWriter, &NewConnection)
 		if connectionError != nil{
 			break
 		}

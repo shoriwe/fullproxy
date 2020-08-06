@@ -1,34 +1,33 @@
-package Interface
+package MasterSlave
 
 import (
-	"bufio"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 	"log"
 	"net"
 )
 
 
-type Function func(conn net.Conn, username *[]byte, passwordHash *[]byte)
+type Function func(conn net.Conn, args...interface{})
 
 
-func Client(address string, port string, username *[]byte, passwordHash *[]byte, function Function){
-	log.Printf("Trying to connecto to %s:%s", address, port)
+func Slave(address *string, port *string, function Function, args...interface{}){
+	log.Printf("Trying to connecto to %s:%s", *address, *port)
 	masterConnection := Sockets.Connect(address,  port)
 	if masterConnection != nil{
-		masterConnectionReader := bufio.NewReader(masterConnection)
-		log.Printf("Successfully connected to %s:%s", address, port)
+		masterConnectionReader, _ := Sockets.CreateReaderWriter(masterConnection)
+		log.Printf("Successfully connected to %s:%s", *address, *port)
 		for {
 			NumberOfReceivedBytes, buffer, ConnectionError := Sockets.Receive(masterConnectionReader, 1024)
 			if ConnectionError == nil{
 				if NumberOfReceivedBytes == 1{
 					switch buffer[0] {
-					case Shutdown:
+					case Shutdown[0]:
 						log.Print("Received shutdown signal... shutting down")
 						break
-					case NewConnection:
+					case NewConnection[0]:
 						clientConnection := Sockets.Connect(address, port)
 						if clientConnection != nil{
-							go function(clientConnection, username, passwordHash)
+							go function(clientConnection, args...)
 						}
 					}
 				} else {

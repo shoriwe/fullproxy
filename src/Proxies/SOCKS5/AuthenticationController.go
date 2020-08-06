@@ -20,7 +20,7 @@ func GetClientAuthenticationImplementedMethods(clientConnectionReader *bufio.Rea
 	var FoundMethod = InvalidMethod
 	numberOfReceivedBytes, clientImplementedMethods, _ := Sockets.Receive(clientConnectionReader, 1024)
 	if clientImplementedMethods == nil {
-		_, _ = Sockets.Send(clientConnectionWriter, NoSupportedMethods)
+		_, _ = Sockets.Send(clientConnectionWriter, &NoSupportedMethods)
 		return false
 	} else if numberOfReceivedBytes >= 3 {
 		if clientImplementedMethods[0] == Version && int(clientImplementedMethods[1]) == numberOfReceivedBytes-2 {
@@ -39,18 +39,22 @@ func GetClientAuthenticationImplementedMethods(clientConnectionReader *bufio.Rea
 	switch FoundMethod {
 	case UsernamePassword:
 		var negotiationVersion byte
-		_, connectionError = Sockets.Send(clientConnectionWriter, UsernamePasswordSupported)
+		_, connectionError = Sockets.Send(clientConnectionWriter, &UsernamePasswordSupported)
 		if connectionError != nil{
 			break
 		}
 		success, negotiationVersion = HandleUsernamePasswordAuthentication(clientConnectionReader, username, passwordHash)
 		if success{
-			_, connectionError = Sockets.Send(clientConnectionWriter, []byte{negotiationVersion, Succeeded})
+			if negotiationVersion == UsernamePassword {
+				_, connectionError = Sockets.Send(clientConnectionWriter, &UsernamePasswordSucceededResponse)
+			} else {
+				_, connectionError = Sockets.Send(clientConnectionWriter, &NoAuthSucceededResponse)
+			}
 			break
 		}
-		_, connectionError = Sockets.Send(clientConnectionWriter, []byte{Version, InvalidMethod})
+		_, connectionError = Sockets.Send(clientConnectionWriter, &InvalidMethodResponse)
 	case NoAuthRequired:
-		_, connectionError = Sockets.Send(clientConnectionWriter, NoAuthRequiredSupported)
+		_, connectionError = Sockets.Send(clientConnectionWriter, &NoAuthRequiredSupported)
 		if connectionError != nil{
 			break
 		}
