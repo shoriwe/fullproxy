@@ -1,9 +1,8 @@
 package SOCKS5
 
 import (
-	"bufio"
-	"fmt"
 	"github.com/shoriwe/FullProxy/src/BindServer"
+	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/CryptoTools"
 	"github.com/shoriwe/FullProxy/src/MasterSlave"
 	"github.com/shoriwe/FullProxy/src/Sockets"
@@ -13,7 +12,7 @@ import (
 )
 
 
-func ReceiveTargetRequest(clientConnectionReader *bufio.Reader) (byte, byte, []byte, []byte) {
+func ReceiveTargetRequest(clientConnectionReader ConnectionStructures.SocketReader) (byte, byte, []byte, []byte) {
 	numberOfBytesReceived, targetRequest, ConnectionError := Sockets.Receive(clientConnectionReader, 1024)
 	if ConnectionError == nil{
 		if targetRequest[0] == Version {
@@ -43,11 +42,11 @@ func GetTargetAddressPort(targetRequestedCommand *byte, targetAddressType *byte,
 }
 
 
-func CreateProxySession(clientConnection net.Conn, args...interface{}) {
-	fmt.Println(args[0], " ", args[1])
-	username, passwordHash := args[0].(*[]byte), args[1].(*[]byte)
+func CreateProxySession(
+	clientConnection net.Conn, clientConnectionReader ConnectionStructures.SocketReader,
+	clientConnectionWriter ConnectionStructures.SocketWriter, args...interface{}) {
 	var targetRequestedCommand byte
-	clientConnectionReader, clientConnectionWriter := Sockets.CreateReaderWriter(clientConnection)
+	username, passwordHash := args[0].(*[]byte), args[1].(*[]byte)
 
 	// Receive connection
 	clientHasCompatibleMethods := GetClientAuthenticationImplementedMethods(
