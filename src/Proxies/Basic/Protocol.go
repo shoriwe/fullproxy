@@ -1,7 +1,6 @@
 package Basic
 
 import (
-	"fmt"
 	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 	"log"
@@ -20,7 +19,6 @@ func HandleReadWrite(
 		}
 		_ = sourceConnection.SetReadDeadline(time.Now().Add(20 * time.Second))
 		numberOfBytesReceived, buffer, ConnectionError := Sockets.Receive(sourceReader, 20480)
-		fmt.Println(ConnectionError)
 		if ConnectionError != nil {
 			if ConnectionError, ok := ConnectionError.(net.Error); !(ok && ConnectionError.Timeout()) {
 				break
