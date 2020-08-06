@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/shoriwe/FullProxy/src/BindServer"
 	"github.com/shoriwe/FullProxy/src/CryptoTools"
-	"github.com/shoriwe/FullProxy/src/Interface"
+	"github.com/shoriwe/FullProxy/src/MasterSlave"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 	"log"
 	"math/big"
@@ -79,8 +79,8 @@ func StartSocks5(address *string, port *string, interfaceMode *bool, username *[
 	passwordHash := CryptoTools.GetPasswordHashPasswordByteArray(username, password)
 	switch *interfaceMode {
 	case true:
-		log.Println("Starting SOCKS5 server in Interface Mode")
-		Interface.Slave(address, port, CreateProxySession, username, &passwordHash)
+		log.Println("Starting SOCKS5 server as slave")
+		MasterSlave.Slave(address, port, CreateProxySession, username, &passwordHash)
 	case false:
 		log.Println("Starting SOCKS5 server in Bind Mode")
 		BindServer.Bind(address, port, CreateProxySession, username, &passwordHash)
