@@ -24,5 +24,8 @@ var (
 	// SOCKS requests connection responses
 	UsernamePasswordSupported	 = []byte{Version, UsernamePassword}
 	NoAuthRequiredSupported      = []byte{Version, NoAuthRequired}
-	NoSupportedMethods           = []byte{5, 255}
+	NoSupportedMethods           = []byte{Version, 255}
+	InvalidMethodResponse		 = []byte{Version, InvalidMethod}
+	NoAuthSucceededResponse 	 = []byte{NoAuthRequired, Succeeded}
+	UsernamePasswordSucceededResponse = []byte{UsernamePassword, Succeeded}
 )
