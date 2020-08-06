@@ -26,21 +26,21 @@ func ShowGeneralHelpMessage(){
 
 func ParseSocks5Arguments() (*string, *string, []byte, []byte, *bool) {
 	protocolFlagSet := flag.NewFlagSet("socks5", flag.ExitOnError)
-	address := protocolFlagSet.String( "address", "", "Address to listen on. When \"-slave\" flag is set, is the IP of interface to connect")
-	port := protocolFlagSet.String("port", "1080", "Port to listen on. When \"-slave\" flag is set, is the Port of the interface to connect. I both modes the default port is 1080")
+	address := protocolFlagSet.String( "address", "", "Address to listen on. When \"-slave\" flag is set, is the IP of master to connect")
+	port := protocolFlagSet.String("port", "1080", "Port to listen on. When \"-slave\" flag is set, is the Port of the master to connect. I both modes the default port is 1080")
 	username := protocolFlagSet.String("username", "", "Username of the running proxy, requires \"-password\". It will be ignored if is an empty string")
 	password := protocolFlagSet.String("password", "", "Password of the running proxy, requires \"-username\". It will be ignored if is an empty string")
-	interfaceMode := protocolFlagSet.Bool("slave", false, "Connect to a master, no bind proxying")
+	slave := protocolFlagSet.Bool("slave", false, "Connect to a master, no bind proxying")
 	_ = protocolFlagSet.Parse(os.Args[2:])
-	println(*interfaceMode)
+	println(*slave)
 	if len(*address) == 0{
-		if *interfaceMode{
+		if *slave{
 			*address = "127.0.0.1"
 		} else {
 			*address = "0.0.0.0"
 		}
 	}
-	return address, port, []byte(*username), []byte(*password), interfaceMode
+	return address, port, []byte(*username), []byte(*password), slave
 }
 
 
