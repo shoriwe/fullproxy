@@ -1,4 +1,4 @@
-package Interface
+package MasterSlave
 
 import (
 	"github.com/shoriwe/FullProxy/src/Sockets"
