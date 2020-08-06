@@ -6,11 +6,11 @@ import (
 )
 
 
-type Function func(conn net.Conn, username *[]byte, passwordHash *[]byte)
+type Function func(conn net.Conn, args...interface{})
 
 
-func BindServer(address string, port string, username *[]byte, passwordHash *[]byte, protocolFunction Function){
-	server, BindingError  := net.Listen("tcp", address + ":" + port)
+func Bind(address *string, port *string, protocolFunction Function, args...interface{}){
+	server, BindingError  := net.Listen("tcp", *address + ":" + *port)
 	if BindingError != nil {
 		log.Print("Something goes wrong: " + BindingError.Error())
 		return
@@ -18,6 +18,6 @@ func BindServer(address string, port string, username *[]byte, passwordHash *[]b
 	for {
 		clientConnection, _ := server.Accept()
 		log.Print("Received connection from: ", clientConnection.RemoteAddr().String())
-		go protocolFunction(clientConnection, username, passwordHash)
+		go protocolFunction(clientConnection, args[:]...)
 	}
 }
