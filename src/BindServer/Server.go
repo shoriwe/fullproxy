@@ -1,12 +1,13 @@
 package BindServer
 
 import (
+	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"log"
 	"net"
 )
 
 
-type Function func(conn net.Conn, args...interface{})
+type Function func(conn net.Conn, connReader  ConnectionStructures.SocketReader, connWriter ConnectionStructures.SocketWriter, args...interface{})
 
 
 func Bind(address *string, port *string, protocolFunction Function, args...interface{}){
@@ -18,6 +19,7 @@ func Bind(address *string, port *string, protocolFunction Function, args...inter
 	for {
 		clientConnection, _ := server.Accept()
 		log.Print("Received connection from: ", clientConnection.RemoteAddr().String())
-		go protocolFunction(clientConnection, args[:]...)
+		clientConnectionReader, clientConnectionWriter := ConnectionStructures.CreateReaderWriter(clientConnection)
+		go protocolFunction(clientConnection, clientConnectionReader, clientConnectionWriter, args[:]...)
 	}
 }
