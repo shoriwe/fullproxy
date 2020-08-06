@@ -3,7 +3,7 @@ package SOCKS5
 import (
 	"github.com/shoriwe/FullProxy/src/BindServer"
 	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
-	"github.com/shoriwe/FullProxy/src/CryptoTools"
+	"github.com/shoriwe/FullProxy/src/Hashing"
 	"github.com/shoriwe/FullProxy/src/MasterSlave"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 	"log"
@@ -75,7 +75,7 @@ func CreateProxySession(
 
 
 func StartSocks5(address *string, port *string, slave *bool, username *[]byte, password *[]byte) {
-	passwordHash := CryptoTools.GetPasswordHashPasswordByteArray(username, password)
+	passwordHash := Hashing.GetPasswordHashPasswordByteArray(username, password)
 	switch *slave {
 	case true:
 		log.Println("Starting SOCKS5 server as slave")
