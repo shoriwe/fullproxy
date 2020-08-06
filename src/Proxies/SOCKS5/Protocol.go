@@ -42,10 +42,10 @@ func GetTargetAddressPort(targetRequestedCommand *byte, targetAddressType *byte,
 }
 
 
-func CreateProxySession(clientConnection net.Conn, username *[]byte, passwordHash *[]byte) {
+func CreateProxySession(clientConnection net.Conn, args...interface{}) {
+	username, passwordHash := args[0].(*[]byte), args[1].(*[]byte)
 	var targetRequestedCommand byte
-	clientConnectionReader := bufio.NewReader(clientConnection)
-	clientConnectionWriter := bufio.NewWriter(clientConnection)
+	clientConnectionReader, clientConnectionWriter := Sockets.CreateReaderWriter(clientConnection)
 
 	// Receive connection
 	clientHasCompatibleMethods := GetClientAuthenticationImplementedMethods(
@@ -73,14 +73,14 @@ func CreateProxySession(clientConnection net.Conn, username *[]byte, passwordHas
 }
 
 
-func StartSocks5(ip string, port string, interfaceMode bool, username []byte, password []byte) {
-	passwordHash := CryptoTools.GetPasswordHashPasswordByteArray(&username, &password)
-	switch interfaceMode {
+func StartSocks5(address *string, port *string, interfaceMode *bool, username *[]byte, password *[]byte) {
+	passwordHash := CryptoTools.GetPasswordHashPasswordByteArray(username, password)
+	switch *interfaceMode {
 	case true:
 		log.Println("Starting SOCKS5 server in Interface Mode")
-		Interface.Client(ip, port, &username, &passwordHash, CreateProxySession)
+		Interface.Slave(address, port, CreateProxySession, username, passwordHash)
 	case false:
 		log.Println("Starting SOCKS5 server in Bind Mode")
-		BindServer.BindServer(ip, port, &username, &passwordHash, CreateProxySession)
+		BindServer.Bind(address, port, CreateProxySession, username, passwordHash)
 	}
 }
