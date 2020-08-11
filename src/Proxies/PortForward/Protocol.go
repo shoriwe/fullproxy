@@ -1,5 +1,6 @@
 package PortForward
 
+
 import (
 	"fmt"
 	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
@@ -25,7 +26,7 @@ func CreatePortForwardSession(masterConnection net.Conn, masterReader Connection
 
 func StartPortForward(targetAddress *string, targetPort *string, masterAddress *string, masterPort *string){
 	if !(*targetAddress == "" || *targetPort == "" || *masterAddress == "" || *masterPort == ""){
-		MasterSlave.Slave(targetAddress, masterPort, CreatePortForwardSession, targetAddress, targetPort)
+		MasterSlave.Slave(masterAddress, masterPort, CreatePortForwardSession, targetAddress, targetPort)
 	} else {
 		fmt.Println("All flags need to be in use")
 	}
