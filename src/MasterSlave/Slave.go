@@ -29,7 +29,7 @@ func Slave(address *string, port *string, function Function, args...interface{})
 						clientConnection := Sockets.Connect(address, port)
 						if clientConnection != nil{
 							clientConnectionReader, clientConnectionWriter := ConnectionStructures.CreateTunnelReaderWriter(clientConnection)
-							go function(clientConnection, clientConnectionReader, clientConnectionWriter,args...)
+							go function(clientConnection, clientConnectionReader, clientConnectionWriter, args...)
 						}
 					}
 				} else {
