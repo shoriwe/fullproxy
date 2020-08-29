@@ -16,15 +16,19 @@ func (tunnelReader *TunnelReader) Read(buffer []byte) (int,  error){
 	tempBuffer := make([]byte, len(buffer))
 	numberOfReceivedBytes, connectionError := tunnelReader.ActiveSocketReader.Read(tempBuffer)
 	if connectionError == nil{
-		decryptedBufferPadded := make([]byte, 0)
-		for index := 0; index < numberOfReceivedBytes / aes.BlockSize; index ++ {
-			chunk := make([]byte, aes.BlockSize)
-			tunnelReader.CipherBlock.Decrypt(chunk, tempBuffer[aes.BlockSize * index:(index+1)*aes.BlockSize])
-			decryptedBufferPadded = append(decryptedBufferPadded, chunk...)
+		if numberOfReceivedBytes > 0 {
+			decryptedBufferPadded := make([]byte, 0)
+			for index := 0; index < numberOfReceivedBytes/aes.BlockSize; index++ {
+				chunk := make([]byte, aes.BlockSize)
+				tunnelReader.CipherBlock.Decrypt(chunk, tempBuffer[aes.BlockSize*index:(index+1)*aes.BlockSize])
+				decryptedBufferPadded = append(decryptedBufferPadded, chunk...)
+			}
+			if lengthDecryptedBufferPadded := len(decryptedBufferPadded); lengthDecryptedBufferPadded > 0 && lengthDecryptedBufferPadded <= numberOfReceivedBytes{
+				unPaddedBuffer := PKCS7UnPadding(decryptedBufferPadded[:numberOfReceivedBytes])
+				copy(buffer, decryptedBufferPadded[:numberOfReceivedBytes])
+				return len(unPaddedBuffer), connectionError
+			}
 		}
-		unPaddedBuffer := PKCS7UnPadding(decryptedBufferPadded[:numberOfReceivedBytes])
-		copy(buffer, decryptedBufferPadded[:numberOfReceivedBytes])
-		return len(unPaddedBuffer), connectionError
 	}
 	return numberOfReceivedBytes, connectionError
 }
