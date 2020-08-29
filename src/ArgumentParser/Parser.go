@@ -50,4 +50,3 @@ func ParseMasterArguments() (*string, *string){
 	_ = protocolFlagSet.Parse(os.Args[2:])
 	return address, port
 }
-
