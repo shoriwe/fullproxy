@@ -26,10 +26,15 @@ func setupControlCSignal(server net.Listener, masterConnection net.Conn){
 func startProxying(clientConnection net.Conn, targetConnection net.Conn){
 	clientConnectionReader, clientConnectionWriter := ConnectionStructures.CreateReaderWriter(clientConnection)
 	targetConnectionReader, targetConnectionWriter := ConnectionStructures.CreateTunnelReaderWriter(targetConnection)
-	Basic.Proxy(
-		clientConnection, targetConnection,
-		clientConnectionReader, clientConnectionWriter,
-		targetConnectionReader, targetConnectionWriter)
+	if targetConnectionReader != nil && targetConnectionWriter != nil {
+		Basic.Proxy(
+			clientConnection, targetConnection,
+			clientConnectionReader, clientConnectionWriter,
+			targetConnectionReader, targetConnectionWriter)
+	} else {
+		_ = clientConnection.Close()
+		_ = targetConnection.Close()
+	}
 }
 
 
