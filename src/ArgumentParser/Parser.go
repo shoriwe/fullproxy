@@ -32,7 +32,6 @@ func ParseSocks5Arguments() (*string, *string, []byte, []byte, *bool) {
 	password := protocolFlagSet.String("password", "", "Password of the running proxy, requires \"-username\". It will be ignored if is an empty string")
 	slave := protocolFlagSet.Bool("slave", false, "Connect to a master, no bind proxying")
 	_ = protocolFlagSet.Parse(os.Args[2:])
-	println(*slave)
 	if len(*address) == 0{
 		if *slave{
 			*address = "127.0.0.1"
