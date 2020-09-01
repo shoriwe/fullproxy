@@ -2,6 +2,7 @@ package Sockets
 
 import (
 	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
+	"log"
 	"net"
 )
 
@@ -34,4 +35,15 @@ func Connect(address *string, port *string) net.Conn{
 		return nil
 	}
 	return connection
+}
+
+
+func Bind(address *string, port *string) net.Listener {
+	log.Print("Starting Master server")
+	server, BindingError := net.Listen("tcp", *address+":"+*port)
+	if BindingError != nil {
+		log.Fatal("Something goes wrong: " + BindingError.Error())
+	}
+	log.Printf("Bind successfully in %s:%s", *address, *port)
+	return server
 }
