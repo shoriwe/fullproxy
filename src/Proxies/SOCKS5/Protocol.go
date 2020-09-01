@@ -79,7 +79,7 @@ func StartSocks5(address *string, port *string, slave *bool, username *[]byte, p
 	switch *slave {
 	case true:
 		log.Println("Starting SOCKS5 server as slave")
-		MasterSlave.Slave(address, port, CreateProxySession, username, &passwordHash)
+		MasterSlave.GeneralSlave(address, port, CreateProxySession, username, &passwordHash)
 	case false:
 		log.Println("Starting SOCKS5 server in Bind Mode")
 		BindServer.Bind(address, port, CreateProxySession, username, &passwordHash)

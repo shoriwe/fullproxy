@@ -8,19 +8,30 @@ import (
 )
 
 
-func PortForwardArguments() (*string, *string, *string, *string){
-	protocolFlagSet := flag.NewFlagSet("forward", flag.ExitOnError)
-	forwardAddress := protocolFlagSet.String( "forwardAddress", "", "Address to forward the traffic received from master")
-	forwardPort := protocolFlagSet.String("forwardPort", "", "Port to forward the traffic received from master")
-	masterAddress := protocolFlagSet.String("masterAddress", "", "Address of the master")
-	masterPort := protocolFlagSet.String("masterPort", "", "Port of the master")
+func LocalPortForwardArguments() (*string, *string, *string, *string){
+	protocolFlagSet := flag.NewFlagSet("local-forward", flag.ExitOnError)
+	forwardAddress := protocolFlagSet.String( "forward-address", "", "Address to forward the traffic received from master")
+	forwardPort := protocolFlagSet.String("forward-port", "", "Port to forward the traffic received from master")
+	masterAddress := protocolFlagSet.String("master-address", "", "Address of the master")
+	masterPort := protocolFlagSet.String("master-port", "", "Port of the master")
 	_ = protocolFlagSet.Parse(os.Args[2:])
 	return forwardAddress, forwardPort, masterAddress, masterPort
 }
 
 
+func RemotePortForwardArguments() (*string, *string, *string, *string){
+	protocolFlagSet := flag.NewFlagSet("remote-forward", flag.ExitOnError)
+	localAddress := protocolFlagSet.String( "local-address", "", "Address accessible by master")
+	localPort := protocolFlagSet.String("local-port", "", "Port of the address that is accessible by master")
+	masterAddress := protocolFlagSet.String("master-address", "", "Address of the master")
+	masterPort := protocolFlagSet.String("master-port", "", "Port of the master")
+	_ = protocolFlagSet.Parse(os.Args[2:])
+	return localAddress, localPort, masterAddress, masterPort
+}
+
+
 func ShowGeneralHelpMessage(){
-	_, _ = fmt.Fprintln(os.Stderr, "Usage: ", os.Args[0], " PROTOCOL *FLAGS\nProtocols available:\n\t - socks5\n\t - http\n\t - forward\n\t - master")
+	_, _ = fmt.Fprintln(os.Stderr, "Usage: ", os.Args[0], " PROTOCOL *FLAGS\nProtocols available:\n\t - socks5\n\t - http\n\t - local-forward\n\t - remote-forward\n\t - master")
 }
 
 
@@ -43,10 +54,12 @@ func ParseSocks5Arguments() (*string, *string, []byte, []byte, *bool) {
 }
 
 
-func ParseMasterArguments() (*string, *string){
+func ParseMasterArguments() (*string, *string, *string, *string){
 	protocolFlagSet := flag.NewFlagSet("master", flag.ExitOnError)
 	address := protocolFlagSet.String( "address", "0.0.0.0", "Address to listen on.")
 	port := protocolFlagSet.String( "port", "1080", "Port to listen on.")
+	remoteAddress := protocolFlagSet.String( "remote-address", "", "Argument required to handle correctly the \"remote-forward\"")
+	remotePort := protocolFlagSet.String( "remote-port", "", "Argument required to handle correctly the \"remote-forward\"")
 	_ = protocolFlagSet.Parse(os.Args[2:])
-	return address, port
+	return address, port, remoteAddress, remotePort
 }

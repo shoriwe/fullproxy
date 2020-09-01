@@ -31,7 +31,8 @@ Usage:  fullproxy  PROTOCOL *FLAGS
 Protocols available:
          - socks5
          - http
-         - forward
+         - local-forward
+         - remote-forward
          - master
 ```
 ### SOCKS5
@@ -52,24 +53,44 @@ Usage of socks5:
 ### HTTP
 Coming soon
 ### Forward
+#### Local
 ```
-Usage of forward:
-  -forwardAddress string
+user@linux:~$ fullproxy local-forward -help
+Usage of local-forward:
+  -forward-address string
         Address to forward the traffic received from master
-  -forwardPort string
+  -forward-port string
         Port to forward the traffic received from master
-  -masterAddress string
+  -master-address string
+        Address of the master
+  -master-port string
+        Port of the master
+```
+#### Remote
+```
+user@linux:~$ fullproxy remote-forward -help
+Usage of remote-forward:
+  -local-address string
+        Address accessible by master
+  -localPort string
+        Port of the address that is accessible by master
+  -master-address string
         Address of the master
   -masterPort string
         Port of the master
 ```
 ### Master
 ```
+user@linux:~$ fullproxy remote-forward -help
 Usage of master:
   -address string
-    	IP address to listen on. (default "0.0.0.0")
+        Address to listen on. (default "0.0.0.0")
   -port string
-    	Port address to listen on. (default "1080")
+        Port to listen on. (default "1080")
+  -remote-address string
+        Argument required to handle correctly the "remote-forward"
+  -remote-port string
+        Argument required to handle correctly the "remote-forward"
 ```
 # Concepts
 ## Slave
