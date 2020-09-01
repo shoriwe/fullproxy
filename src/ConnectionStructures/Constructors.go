@@ -8,7 +8,6 @@ import (
 	"crypto/x509"
 	"encoding/binary"
 	"encoding/pem"
-	"fmt"
 	"log"
 	"net"
 )
@@ -114,7 +113,6 @@ func CreateTunnelReaderWriter(connection net.Conn) (SocketReader, SocketWriter){
 	tunnelWriter := new(TunnelWriter)
 	tunnelReader.ActiveSocketReader, tunnelWriter.ActiveSocketWriter = CreateSocketConnectionReaderWriter(connection)
 	key := NegotiateKey(tunnelReader.ActiveSocketReader, tunnelWriter.ActiveSocketWriter)
-	fmt.Println("Final Key: ", key)
 	if key != nil {
 		if len(key) == 16 {
 			cipherBlockReader, _ := aes.NewCipher(key)
