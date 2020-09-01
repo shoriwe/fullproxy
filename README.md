@@ -27,7 +27,7 @@
 ## Implemented protocols
 ```
 user@linux:~$ fullproxy help
-Usage:  fullproxy-windows-amd64.exe  PROTOCOL *FLAGS
+Usage:  fullproxy  PROTOCOL *FLAGS
 Protocols available:
          - socks5
          - http
