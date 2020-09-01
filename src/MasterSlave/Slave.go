@@ -73,8 +73,12 @@ func RemotePortForwardSlave(masterAddress *string, masterPort *string, localAddr
 									log.Fatal("Connectivity issues with master server")
 								}
 							case FailToConnectToTarget[0]:
+								_ = clientConnection.Close()
+								log.Print("Something goes wrong when master connected to target")
 								break
 							case UnknownOperation[0]:
+								_ = clientConnection.Close()
+								log.Print("The master did not understood the message")
 								break
 							}
 						}
