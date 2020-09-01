@@ -21,12 +21,15 @@ func main() {
 		SOCKS5.StartSocks5(address, port, slave, &username, &password)
 	case "http":
 		fmt.Println("HTTP not implemented yet")
-	case "forward":
-		address, port, masterAddress, masterPort := ArgumentParser.PortForwardArguments()
-		PortForward.StartPortForward(address, port, masterAddress, masterPort)
+	case "local-forward":
+		address, port, masterAddress, masterPort := ArgumentParser.LocalPortForwardArguments()
+		PortForward.StartLocalPortForward(address, port, masterAddress, masterPort)
+	case "remote-forward":
+		localAddress, localPort, masterAddress, masterPort := ArgumentParser.RemotePortForwardArguments()
+		PortForward.StartRemotePortForward(localAddress, localPort, masterAddress, masterPort)
 	case "master":
-		address, port := ArgumentParser.ParseMasterArguments()
-		MasterSlave.Master(address, port)
+		masterAddress, masterPort, remoteAddress, remotePort := ArgumentParser.ParseMasterArguments()
+		MasterSlave.Master(masterAddress, masterPort, remoteAddress, remotePort)
 	case "help":
 		ArgumentParser.ShowGeneralHelpMessage()
 	default:
