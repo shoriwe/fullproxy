@@ -22,9 +22,9 @@ func LocalPortForwardArguments() (*string, *string, *string, *string){
 func RemotePortForwardArguments() (*string, *string, *string, *string){
 	protocolFlagSet := flag.NewFlagSet("remote-forward", flag.ExitOnError)
 	localAddress := protocolFlagSet.String( "local-address", "", "Address accessible by master")
-	localPort := protocolFlagSet.String("localPort", "", "Port of the address that is accessible by master")
+	localPort := protocolFlagSet.String("local-port", "", "Port of the address that is accessible by master")
 	masterAddress := protocolFlagSet.String("master-address", "", "Address of the master")
-	masterPort := protocolFlagSet.String("masterPort", "", "Port of the master")
+	masterPort := protocolFlagSet.String("master-port", "", "Port of the master")
 	_ = protocolFlagSet.Parse(os.Args[2:])
 	return localAddress, localPort, masterAddress, masterPort
 }
