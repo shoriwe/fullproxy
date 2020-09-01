@@ -72,11 +72,11 @@ user@linux:~$ fullproxy remote-forward -help
 Usage of remote-forward:
   -local-address string
         Address accessible by master
-  -localPort string
+  -local-port string
         Port of the address that is accessible by master
   -master-address string
         Address of the master
-  -masterPort string
+  -master-port string
         Port of the master
 ```
 ### Master
