@@ -25,7 +25,7 @@ func (tunnelReader *TunnelReader) Read(buffer []byte) (int,  error){
 			}
 			if lengthDecryptedBufferPadded := len(decryptedBufferPadded); lengthDecryptedBufferPadded > 0 && lengthDecryptedBufferPadded <= numberOfReceivedBytes{
 				unPaddedBuffer := PKCS7UnPadding(decryptedBufferPadded[:numberOfReceivedBytes])
-				copy(buffer, decryptedBufferPadded[:numberOfReceivedBytes])
+				copy(buffer, unPaddedBuffer)
 				return len(unPaddedBuffer), connectionError
 			}
 		}
