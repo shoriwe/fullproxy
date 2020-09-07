@@ -14,7 +14,7 @@ func HandleReadWrite(
 	connectionAlive *bool){
 	for tries := 0; tries < 5; tries++{
 		_ = sourceConnection.SetReadDeadline(time.Now().Add(10 * time.Second))
-		numberOfBytesReceived, buffer, connectionError := Sockets.Receive(sourceReader, 20480)
+		numberOfBytesReceived, buffer, connectionError := Sockets.Receive(sourceReader, 1048576)
 		if connectionError != nil {
 			// If the error is not "Timeout"
 			if parsedConnectionError, ok := connectionError.(net.Error); !(ok && parsedConnectionError.Timeout()) {
