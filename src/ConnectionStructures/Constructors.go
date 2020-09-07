@@ -82,8 +82,7 @@ func NegotiateKey(
 					log.Print("Received just: ", numberOfBytesReceived)
 				}
 			}else {
-				log.Println(connectionError)
-				log.Println(numberOfBytesReceived)
+				log.Print("Looks like we could not receive correctly the message with the public key size")
 			}
 		} else {
 			log.Print(connectionError)
