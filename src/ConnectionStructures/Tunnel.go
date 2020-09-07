@@ -3,7 +3,17 @@ package ConnectionStructures
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 )
+
+func GenerateIV() ([]byte, error){
+	iv := make([]byte, 16)
+	_, randomReadError := rand.Read(iv)
+	if randomReadError == nil {
+		return iv, nil
+	}
+	return nil, randomReadError
+}
 
 
 type TunnelReader struct {
@@ -13,18 +23,22 @@ type TunnelReader struct {
 
 
 func (tunnelReader *TunnelReader) Read(buffer []byte) (int,  error){
-	tempBuffer := make([]byte, len(buffer))
+	tempBuffer := make([]byte, len(buffer) + 16)
 	numberOfReceivedBytes, connectionError := tunnelReader.ActiveSocketReader.Read(tempBuffer)
 	if connectionError == nil{
-		if numberOfReceivedBytes > 0 {
+		if numberOfReceivedBytes >= 16 {
+			iv := tempBuffer[:16]
+			decryptCBCBlock := cipher.NewCBCDecrypter(tunnelReader.CipherBlock, iv)
 			decryptedBufferPadded := make([]byte, 0)
-			for index := 0; index < numberOfReceivedBytes/aes.BlockSize; index++ {
+			lengthEncryptedMessage := numberOfReceivedBytes - 16
+			for index := 0; index < lengthEncryptedMessage / aes.BlockSize; index++ {
 				chunk := make([]byte, aes.BlockSize)
-				tunnelReader.CipherBlock.Decrypt(chunk, tempBuffer[aes.BlockSize*index:(index+1)*aes.BlockSize])
+				decryptCBCBlock.CryptBlocks(chunk, tempBuffer[16:][aes.BlockSize*index:(index+1)*aes.BlockSize])
 				decryptedBufferPadded = append(decryptedBufferPadded, chunk...)
 			}
-			if lengthDecryptedBufferPadded := len(decryptedBufferPadded); lengthDecryptedBufferPadded > 0 && lengthDecryptedBufferPadded <= numberOfReceivedBytes{
-				unPaddedBuffer := PKCS7UnPadding(decryptedBufferPadded[:numberOfReceivedBytes])
+			lengthDecryptedBufferPadded := len(decryptedBufferPadded)
+			if lengthDecryptedBufferPadded > 0 && lengthDecryptedBufferPadded <= lengthEncryptedMessage{
+				unPaddedBuffer := PKCS7UnPadding(decryptedBufferPadded[:lengthEncryptedMessage])
 				copy(buffer, unPaddedBuffer)
 				return len(unPaddedBuffer), connectionError
 			}
@@ -43,12 +57,15 @@ type TunnelWriter struct {
 func (tunnelWriter *TunnelWriter) Write(buffer []byte) (int, error){
 	paddedBuffer := PKCS7PaddingAES(buffer)
 	encryptedBuffer := make([]byte, 0)
+	// Always create a new IV for each message
+	iv, _ := GenerateIV()
+	encryptCBCBlock := cipher.NewCBCEncrypter(tunnelWriter.CipherBlock, iv)
 	for index := 0; index < len(paddedBuffer) / aes.BlockSize; index ++{
 		chunk := make([]byte, aes.BlockSize)
-		tunnelWriter.CipherBlock.Encrypt(chunk, paddedBuffer[aes.BlockSize * index:(index+1)*aes.BlockSize])
+		encryptCBCBlock.CryptBlocks(chunk, paddedBuffer[aes.BlockSize * index:(index+1)*aes.BlockSize])
 		encryptedBuffer = append(encryptedBuffer, chunk...)
 	}
-	return tunnelWriter.ActiveSocketWriter.Write(encryptedBuffer)
+	return tunnelWriter.ActiveSocketWriter.Write(append(iv, encryptedBuffer...))
 }
 
 func (tunnelWriter *TunnelWriter) Flush() error {

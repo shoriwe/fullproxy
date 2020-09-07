@@ -15,6 +15,11 @@ func PKCS7PaddingAES(ciphertext []byte) []byte {
 
 func PKCS7UnPadding(origData []byte) []byte {
 	length := len(origData)
-	unPadding := int(origData[length-1])
-	return origData[:(length - unPadding)]
+	if length > 0 {
+		unPadding := int(origData[length-1])
+		if length > unPadding {
+			return origData[:(length - unPadding)]
+		}
+	}
+	return origData
 }
