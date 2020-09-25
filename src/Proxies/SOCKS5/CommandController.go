@@ -5,13 +5,11 @@ import (
 	"net"
 )
 
-
 func HandleCommandExecution(
 	clientConnection net.Conn,
 	clientConnectionReader ConnectionStructures.SocketReader, clientConnectionWriter ConnectionStructures.SocketWriter,
 	targetRequestedCommand *byte, targetAddressType *byte,
-	targetAddress *string, targetPort *string){
-
+	targetAddress *string, targetPort *string) {
 
 	switch *targetRequestedCommand {
 	case Connect:

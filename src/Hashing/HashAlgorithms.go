@@ -1,26 +1,25 @@
 package Hashing
 
 import (
-	"crypto/sha512"
+	"golang.org/x/crypto/sha3"
 )
 
-
-func Sha3_512_256(buffer []byte) []byte{
-	return sha512.New512_256().Sum(buffer)
+func PasswordHashingSHA3(buffer []byte) []byte {
+	hashHandler := sha3.New512()
+	hashHandler.Write(buffer)
+	return hashHandler.Sum(nil)
 }
 
-
-func GetPasswordHashPasswordByteArray(username *[]byte, password *[]byte) []byte{
-	if len(*username) != 0 && len(*password) != 0{
-		return Sha3_512_256(*password)
+func GetPasswordHashPasswordByteArray(username *[]byte, password *[]byte) []byte {
+	if len(*username) != 0 && len(*password) != 0 {
+		return PasswordHashingSHA3(*password)
 	}
-	return []byte{}
+	return nil
 }
 
-
-func GetPasswordHashPasswordString(username *string, password *string) []byte{
-	if len(*username) > 0{
-		return Sha3_512_256([]byte(*password))
+func GetPasswordHashPasswordString(username *string, password *string) []byte {
+	if len(*username) > 0 {
+		return PasswordHashingSHA3([]byte(*password))
 	}
 	return []byte{}
 }

@@ -6,8 +6,7 @@ import (
 	"net"
 )
 
-
-func Send(connectionWriter ConnectionStructures.SocketWriter, data *[]byte) (int, error){
+func Send(connectionWriter ConnectionStructures.SocketWriter, data *[]byte) (int, error) {
 	var NumberOfBytesSent int
 	var ConnectionError error
 	NumberOfBytesSent, ConnectionError = connectionWriter.Write(*data)
@@ -15,28 +14,25 @@ func Send(connectionWriter ConnectionStructures.SocketWriter, data *[]byte) (int
 	return NumberOfBytesSent, ConnectionError
 }
 
-
-func Receive(connectionReader ConnectionStructures.SocketReader, bufferSize int) (int, []byte, error){
+func Receive(connectionReader ConnectionStructures.SocketReader, bufferSize int) (int, []byte, error) {
 	var receivedBytesError error
 	buffer := make([]byte, bufferSize)
 	NumberOfReceivedBytes, receivedBytesError := connectionReader.Read(buffer)
-	if receivedBytesError != nil{
+	if receivedBytesError != nil {
 		return 0, nil, receivedBytesError
 	}
 	return NumberOfReceivedBytes, buffer, receivedBytesError
 }
 
-
-func Connect(address *string, port *string) net.Conn{
+func Connect(address *string, port *string) net.Conn {
 	var connection net.Conn
 	var connectionError error
-	connection, connectionError = net.Dial("tcp", *address + ":" + *port)
-	if connectionError != nil{
+	connection, connectionError = net.Dial("tcp", *address+":"+*port)
+	if connectionError != nil {
 		return nil
 	}
 	return connection
 }
-
 
 func Bind(address *string, port *string) net.Listener {
 	log.Print("Starting Master server")

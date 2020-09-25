@@ -7,11 +7,10 @@ import (
 	"time"
 )
 
-
 func HandleReadWrite(
 	sourceConnection net.Conn, sourceReader ConnectionStructures.SocketReader,
-	destinationWriter ConnectionStructures.SocketWriter, connectionAlive *bool){
-	for tries := 0; tries < 5; tries++{
+	destinationWriter ConnectionStructures.SocketWriter, connectionAlive *bool) {
+	for tries := 0; tries < 5; tries++ {
 		_ = sourceConnection.SetReadDeadline(time.Now().Add(10 * time.Second))
 		numberOfBytesReceived, buffer, connectionError := Sockets.Receive(sourceReader, 1048576)
 		if connectionError != nil {
@@ -19,7 +18,7 @@ func HandleReadWrite(
 			if parsedConnectionError, ok := connectionError.(net.Error); !(ok && parsedConnectionError.Timeout()) {
 				break
 			} else {
-				if !(*connectionAlive){
+				if !(*connectionAlive) {
 					break
 				}
 			}
@@ -39,7 +38,6 @@ func HandleReadWrite(
 	_ = sourceConnection.Close()
 	*connectionAlive = false
 }
-
 
 func Proxy(clientConnection net.Conn,
 	targetConnection net.Conn,

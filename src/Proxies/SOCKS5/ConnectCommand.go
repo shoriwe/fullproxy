@@ -8,11 +8,10 @@ import (
 	"net"
 )
 
-
 func PrepareConnect(
 	clientConnection net.Conn, clientConnectionReader ConnectionStructures.SocketReader,
 	clientConnectionWriter ConnectionStructures.SocketWriter, targetAddress *string,
-	targetPort *string, targetAddressType *byte){
+	targetPort *string, targetAddressType *byte) {
 
 	targetConnection := Sockets.Connect(targetAddress, targetPort) // new(big.Int).SetBytes(rawTargetPort).String())
 	if targetConnection != nil {

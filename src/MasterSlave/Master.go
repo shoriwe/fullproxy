@@ -25,7 +25,7 @@ func setupControlCSignal(server net.Listener, masterConnection net.Conn) {
 }
 
 func startGeneralProxying(clientConnection net.Conn, targetConnection net.Conn) {
-	clientConnectionReader, clientConnectionWriter := ConnectionStructures.CreateReaderWriter(clientConnection)
+	clientConnectionReader, clientConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(clientConnection)
 	targetConnectionReader, targetConnectionWriter := ConnectionStructures.CreateTunnelReaderWriter(targetConnection)
 	if targetConnectionReader != nil && targetConnectionWriter != nil {
 		Basic.Proxy(
@@ -37,7 +37,6 @@ func startGeneralProxying(clientConnection net.Conn, targetConnection net.Conn) 
 		_ = targetConnection.Close()
 	}
 }
-
 
 func receiveMasterConnectionFromSlave(server net.Listener) net.Conn {
 	masterConnection, connectionError := server.Accept()

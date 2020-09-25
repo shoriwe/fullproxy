@@ -8,28 +8,26 @@ import (
 	"time"
 )
 
+type Function func(conn net.Conn, connReader ConnectionStructures.SocketReader, connWriter ConnectionStructures.SocketWriter, args ...interface{})
 
-type Function func(conn net.Conn, connReader ConnectionStructures.SocketReader, connWriter ConnectionStructures.SocketWriter, args...interface{})
-
-
-func GeneralSlave(masterAddress *string, masterPort *string, function Function, args...interface{}){
+func GeneralSlave(masterAddress *string, masterPort *string, function Function, args ...interface{}) {
 	log.Printf("Trying to connecto to %s:%s", *masterAddress, *masterPort)
 	masterConnection := Sockets.Connect(masterAddress, masterPort)
-	if masterConnection != nil{
-		masterConnectionReader, _ := ConnectionStructures.CreateReaderWriter(masterConnection)
+	if masterConnection != nil {
+		masterConnectionReader, _ := ConnectionStructures.CreateSocketConnectionReaderWriter(masterConnection)
 		log.Printf("Successfully connected to %s:%s", *masterAddress, *masterPort)
 		for {
 			_ = masterConnection.SetReadDeadline(time.Now().Add(20 * time.Second))
 			NumberOfReceivedBytes, buffer, connectionError := Sockets.Receive(masterConnectionReader, 1024)
-			if connectionError == nil{
-				if NumberOfReceivedBytes == 1{
+			if connectionError == nil {
+				if NumberOfReceivedBytes == 1 {
 					switch buffer[0] {
 					case Shutdown[0]:
 						log.Print("Received shutdown signal... shutting down")
 						break
 					case NewConnection[0]:
 						clientConnection := Sockets.Connect(masterAddress, masterPort)
-						if clientConnection != nil{
+						if clientConnection != nil {
 							clientConnectionReader, clientConnectionWriter := ConnectionStructures.CreateTunnelReaderWriter(clientConnection)
 							if clientConnectionReader != nil && clientConnectionWriter != nil {
 								go function(clientConnection, clientConnectionReader, clientConnectionWriter, args...)
@@ -48,8 +46,7 @@ func GeneralSlave(masterAddress *string, masterPort *string, function Function, 
 	}
 }
 
-
-func RemotePortForwardSlave(masterAddress *string, masterPort *string, localAddress *string, localPort *string){
+func RemotePortForwardSlave(masterAddress *string, masterPort *string, localAddress *string, localPort *string) {
 	localServer := Sockets.Bind(localAddress, localPort)
 	masterConnection := Sockets.Connect(masterAddress, masterPort)
 	masterConnectionReader, masterConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(masterConnection)

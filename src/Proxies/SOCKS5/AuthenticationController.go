@@ -1,22 +1,19 @@
 package SOCKS5
 
 import (
-	"bytes"
 	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 )
 
-
 func GetClientAuthenticationImplementedMethods(clientConnectionReader ConnectionStructures.SocketReader,
 	clientConnectionWriter ConnectionStructures.SocketWriter,
 	username *[]byte,
-	passwordHash *[]byte) bool{
-	var wantedMethod = NoAuthRequired
-	if !bytes.Equal(*passwordHash, []byte{}){
-		wantedMethod = UsernamePassword
+	passwordHash *[]byte) bool {
+
+	wantedMethod := UsernamePassword
+	if *passwordHash == nil {
+		wantedMethod = NoAuthRequired
 	}
-
-
 	var FoundMethod = InvalidMethod
 	numberOfReceivedBytes, clientImplementedMethods, _ := Sockets.Receive(clientConnectionReader, 1024)
 	if clientImplementedMethods == nil {
@@ -33,35 +30,23 @@ func GetClientAuthenticationImplementedMethods(clientConnectionReader Connection
 		}
 	}
 
-
-	var connectionError error
-	success := false
 	switch FoundMethod {
 	case UsernamePassword:
-		var negotiationVersion byte
-		_, connectionError = Sockets.Send(clientConnectionWriter, &UsernamePasswordSupported)
-		if connectionError != nil{
-			break
-		}
-		success, negotiationVersion = HandleUsernamePasswordAuthentication(clientConnectionReader, username, passwordHash)
-		if success{
-			if negotiationVersion == UsernamePassword {
+		// Say to the client that we want to use the password protocol
+		_, connectionError := Sockets.Send(clientConnectionWriter, &UsernamePasswordSupported)
+		if connectionError == nil {
+			if success, authenticationProtocol := HandleUsernamePasswordAuthentication(clientConnectionReader, username, passwordHash); success && authenticationProtocol == UsernamePassword {
 				_, connectionError = Sockets.Send(clientConnectionWriter, &UsernamePasswordSucceededResponse)
-			} else {
-				_, connectionError = Sockets.Send(clientConnectionWriter, &NoAuthSucceededResponse)
+				return connectionError == nil
 			}
-			break
+			_, _ = Sockets.Send(clientConnectionWriter, &AuthenticationFailed)
 		}
-		_, connectionError = Sockets.Send(clientConnectionWriter, &InvalidMethodResponse)
 	case NoAuthRequired:
-		_, connectionError = Sockets.Send(clientConnectionWriter, &NoAuthRequiredSupported)
-		if connectionError != nil{
-			break
-		}
-		success = true
+		// Say to the client that he doesn't need to authenticate with us
+		_, connectionError := Sockets.Send(clientConnectionWriter, &NoAuthRequiredSupported)
+		return connectionError == nil
+	default:
+		_, _ = Sockets.Send(clientConnectionWriter, &InvalidMethodResponse)
 	}
-	if connectionError != nil {
-		return false
-	}
-	return success
+	return false
 }

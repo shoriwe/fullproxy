@@ -11,10 +11,9 @@ import (
 	"net"
 )
 
-
 func ReceiveTargetRequest(clientConnectionReader ConnectionStructures.SocketReader) (byte, byte, []byte, []byte) {
 	numberOfBytesReceived, targetRequest, ConnectionError := Sockets.Receive(clientConnectionReader, 1024)
-	if ConnectionError == nil{
+	if ConnectionError == nil {
 		if targetRequest[0] == Version {
 			if targetRequest[1] == Connect || targetRequest[1] == Bind || targetRequest[1] == UDPAssociate {
 				if targetRequest[3] == IPv4 || targetRequest[3] == IPv6 || targetRequest[3] == DomainName {
@@ -26,8 +25,7 @@ func ReceiveTargetRequest(clientConnectionReader ConnectionStructures.SocketRead
 	return 0, 0, nil, nil
 }
 
-
-func GetTargetAddressPort(targetRequestedCommand *byte, targetAddressType *byte, rawTargetAddress []byte, rawTargetPort []byte) (byte, string, string){
+func GetTargetAddressPort(targetRequestedCommand *byte, targetAddressType *byte, rawTargetAddress []byte, rawTargetPort []byte) (byte, string, string) {
 	if *targetRequestedCommand != 0 && *targetAddressType != 0 {
 		switch *targetAddressType {
 		case IPv4:
@@ -41,10 +39,9 @@ func GetTargetAddressPort(targetRequestedCommand *byte, targetAddressType *byte,
 	return ConnectionRefused, "", ""
 }
 
-
 func CreateProxySession(
 	clientConnection net.Conn, clientConnectionReader ConnectionStructures.SocketReader,
-	clientConnectionWriter ConnectionStructures.SocketWriter, args...interface{}) {
+	clientConnectionWriter ConnectionStructures.SocketWriter, args ...interface{}) {
 	var targetRequestedCommand byte
 	username, passwordHash := args[0].(*[]byte), args[1].(*[]byte)
 
@@ -54,7 +51,7 @@ func CreateProxySession(
 		clientConnectionWriter,
 		username,
 		passwordHash)
-	if clientHasCompatibleMethods{
+	if clientHasCompatibleMethods {
 		var targetAddress string
 		var targetPort string
 		rawTargetRequestedCommand, targetAddressType, rawTargetAddress, rawTargetPort := ReceiveTargetRequest(
@@ -62,17 +59,16 @@ func CreateProxySession(
 		targetRequestedCommand, targetAddress, targetPort = GetTargetAddressPort(
 			&rawTargetRequestedCommand, &targetAddressType,
 			rawTargetAddress, rawTargetPort)
-		if targetRequestedCommand != ConnectionRefused{
+		if targetRequestedCommand != ConnectionRefused {
 			HandleCommandExecution(
 				clientConnection, clientConnectionReader, clientConnectionWriter, &targetRequestedCommand,
 				&targetAddressType, &targetAddress, &targetPort)
 		}
 	}
-	if (!clientHasCompatibleMethods) || (targetRequestedCommand == ConnectionRefused){
+	if (!clientHasCompatibleMethods) || (targetRequestedCommand == ConnectionRefused) {
 		_ = clientConnection.Close()
 	}
 }
-
 
 func StartSocks5(address *string, port *string, slave *bool, username *[]byte, password *[]byte) {
 	passwordHash := Hashing.GetPasswordHashPasswordByteArray(username, password)
