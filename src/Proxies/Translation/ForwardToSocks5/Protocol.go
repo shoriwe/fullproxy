@@ -8,6 +8,7 @@ import (
 	"golang.org/x/net/proxy"
 	"log"
 	"net"
+	"os"
 )
 
 func CreateTranslationSession(conn net.Conn, connReader  ConnectionStructures.SocketReader, connWriter ConnectionStructures.SocketWriter, args...interface{}) {
@@ -44,6 +45,6 @@ func StartForwardToSocks5Translation(bindAddress *string, bindPort *string, sock
 			log.Print(connectionError)
 		}
 	} else {
-		fmt.Println("You must specify a target and port address")
+		fmt.Printf("Some flags are missing; please set \"-target-address\" and \"-target-port\"\nUse \"%s translate forward-socks5 -help\" for more information\n", os.Args[0])
 	}
 }
