@@ -32,7 +32,6 @@ func GetClientAuthenticationImplementedMethods(clientConnectionReader Connection
 
 	switch FoundMethod {
 	case UsernamePassword:
-		// Say to the client that we want to use the password protocol
 		_, connectionError := Sockets.Send(clientConnectionWriter, &UsernamePasswordSupported)
 		if connectionError == nil {
 			if success, authenticationProtocol := HandleUsernamePasswordAuthentication(clientConnectionReader, username, passwordHash); success && authenticationProtocol == UsernamePassword {
@@ -42,11 +41,10 @@ func GetClientAuthenticationImplementedMethods(clientConnectionReader Connection
 			_, _ = Sockets.Send(clientConnectionWriter, &AuthenticationFailed)
 		}
 	case NoAuthRequired:
-		// Say to the client that he doesn't need to authenticate with us
 		_, connectionError := Sockets.Send(clientConnectionWriter, &NoAuthRequiredSupported)
 		return connectionError == nil
 	default:
-		_, _ = Sockets.Send(clientConnectionWriter, &InvalidMethodResponse)
+		_, _ = Sockets.Send(clientConnectionWriter, &NoSupportedMethods)
 	}
 	return false
 }
