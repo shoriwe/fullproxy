@@ -37,17 +37,13 @@ func GetClientAuthenticationImplementedMethods(clientConnectionReader Connection
 		if connectionError == nil {
 			if success, authenticationProtocol := HandleUsernamePasswordAuthentication(clientConnectionReader, username, passwordHash); success && authenticationProtocol == UsernamePassword {
 				_, connectionError = Sockets.Send(clientConnectionWriter, &UsernamePasswordSucceededResponse)
-				if connectionError == nil {
-					return true
-				}
+				return connectionError == nil
 			}
 			_, _ = Sockets.Send(clientConnectionWriter, &AuthenticationFailed)
 		}
 	case NoAuthRequired:
 		_, connectionError = Sockets.Send(clientConnectionWriter, &NoAuthRequiredSupported)
-		if connectionError == nil {
-			return true
-		}
+		return connectionError == nil
 	default:
 		_, _ = Sockets.Send(clientConnectionWriter, &InvalidMethodResponse)
 	}
