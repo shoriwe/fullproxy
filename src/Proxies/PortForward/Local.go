@@ -9,11 +9,11 @@ import (
 	"net"
 )
 
-func CreateLocalPortForwardSession(clientConnection net.Conn, clientReader ConnectionStructures.SocketReader, clientWriter ConnectionStructures.SocketWriter, args...interface{}){
+func CreateLocalPortForwardSession(clientConnection net.Conn, clientReader ConnectionStructures.SocketReader, clientWriter ConnectionStructures.SocketWriter, args ...interface{}) {
 	targetAddress := args[0].(*string)
 	targetPort := args[1].(*string)
 	targetConnection := Sockets.Connect(targetAddress, targetPort)
-	if targetConnection != nil{
+	if targetConnection != nil {
 		targetReader, targetWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(targetConnection)
 		Basic.Proxy(clientConnection, targetConnection, clientReader, clientWriter, targetReader, targetWriter)
 	} else {
@@ -21,9 +21,8 @@ func CreateLocalPortForwardSession(clientConnection net.Conn, clientReader Conne
 	}
 }
 
-
-func StartLocalPortForward(targetAddress *string, targetPort *string, masterAddress *string, masterPort *string){
-	if !(*targetAddress == "" || *targetPort == "" || *masterAddress == "" || *masterPort == ""){
+func StartLocalPortForward(targetAddress *string, targetPort *string, masterAddress *string, masterPort *string) {
+	if !(*targetAddress == "" || *targetPort == "" || *masterAddress == "" || *masterPort == "") {
 		MasterSlave.GeneralSlave(masterAddress, masterPort, CreateLocalPortForwardSession, targetAddress, targetPort)
 	} else {
 		fmt.Println("All flags need to be in use")
