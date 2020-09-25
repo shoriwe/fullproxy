@@ -6,16 +6,14 @@ import (
 	"github.com/shoriwe/FullProxy/src/Sockets"
 )
 
-
 func GetClientAuthenticationImplementedMethods(clientConnectionReader ConnectionStructures.SocketReader,
 	clientConnectionWriter ConnectionStructures.SocketWriter,
 	username *[]byte,
-	passwordHash *[]byte) bool{
+	passwordHash *[]byte) bool {
 	var wantedMethod = NoAuthRequired
-	if !bytes.Equal(*passwordHash, []byte{}){
+	if !bytes.Equal(*passwordHash, []byte{}) {
 		wantedMethod = UsernamePassword
 	}
-
 
 	var FoundMethod = InvalidMethod
 	numberOfReceivedBytes, clientImplementedMethods, _ := Sockets.Receive(clientConnectionReader, 1024)
@@ -33,29 +31,26 @@ func GetClientAuthenticationImplementedMethods(clientConnectionReader Connection
 		}
 	}
 
-
 	var connectionError error
 	success := false
 	switch FoundMethod {
 	case UsernamePassword:
 		var negotiationVersion byte
 		_, connectionError = Sockets.Send(clientConnectionWriter, &UsernamePasswordSupported)
-		if connectionError != nil{
+		if connectionError != nil {
 			break
 		}
 		success, negotiationVersion = HandleUsernamePasswordAuthentication(clientConnectionReader, username, passwordHash)
-		if success{
+		if success {
 			if negotiationVersion == UsernamePassword {
 				_, connectionError = Sockets.Send(clientConnectionWriter, &UsernamePasswordSucceededResponse)
-			} else {
-				_, connectionError = Sockets.Send(clientConnectionWriter, &NoAuthSucceededResponse)
+				break
 			}
-			break
 		}
 		_, connectionError = Sockets.Send(clientConnectionWriter, &InvalidMethodResponse)
 	case NoAuthRequired:
 		_, connectionError = Sockets.Send(clientConnectionWriter, &NoAuthRequiredSupported)
-		if connectionError != nil{
+		if connectionError != nil {
 			break
 		}
 		success = true
