@@ -27,4 +27,5 @@ var (
 	InvalidMethodResponse     = []byte{Version, InvalidMethod}
 	// NoAuthSucceededResponse 	 = []byte{1, Succeeded}
 	UsernamePasswordSucceededResponse = []byte{1, Succeeded}
+	AuthenticationFailed = []byte{1, 1}
 )
