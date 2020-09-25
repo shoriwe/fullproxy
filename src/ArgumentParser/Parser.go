@@ -31,11 +31,11 @@ func RemotePortForwardArguments() (*string, *string, *string, *string){
 
 
 func ShowGeneralHelpMessage(){
-	_, _ = fmt.Fprintln(os.Stderr, "Usage: ", os.Args[0], " PROTOCOL *FLAGS\nProtocols available:\n\t - socks5\n\t - http\n\t - local-forward\n\t - remote-forward\n\t - master\n\t - translate")
+	_, _ = fmt.Fprintln(os.Stderr, "Usage:\n\t", os.Args[0], "PROTOCOL *FLAGS\n\nProtocols available:\n\t - socks5\n\t - http\n\t - local-forward\n\t - remote-forward\n\t - master\n\t - translate")
 }
 
 func ShowTranslateHelpMessage(){
-	_, _ = fmt.Fprintln(os.Stderr, "Usage: ", os.Args[0], " translate TARGET *FLAGS\nTARGETS available:\n\t - forward-socks5\n\t")
+	_, _ = fmt.Fprintln(os.Stderr, "Usage:\n\t", os.Args[0], "translate TARGET *FLAGS\n\nTARGETS available:\n\t - forward-socks5\n\t")
 }
 
 
