@@ -27,7 +27,7 @@ func HandleUsernamePasswordAuthentication(clientConnectionReader ConnectionStruc
 	receivedUsername := credentials[2 : 2+receivedUsernameLength]
 	if bytes.Equal(receivedUsername, *username) {
 		rawReceivedUsernamePassword := credentials[2+receivedUsernameLength+1 : numberOfReceivedBytes]
-		if bytes.Equal(Hashing.Sha3_512_256(rawReceivedUsernamePassword), *passwordHash) {
+		if bytes.Equal(Hashing.PasswordHashingSHA3(rawReceivedUsernamePassword), *passwordHash) {
 			return true, UsernamePassword
 		}
 	}
