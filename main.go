@@ -38,7 +38,7 @@ func main() {
 			os.Exit(-1)
 		}
 		switch os.Args[2] {
-		case "forward-socks5":
+		case "port_forward-socks5":
 			bindAddress, bindPort, socks5Address, socks5Port, username, password, targetAddress, targetPort := ArgumentParser.ParseForwardToSocks5Arguments()
 			ForwardToSocks5.StartForwardToSocks5Translation(bindAddress, bindPort, socks5Address, socks5Port, username, password, targetAddress, targetPort)
 		case "help":

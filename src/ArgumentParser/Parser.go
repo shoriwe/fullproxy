@@ -35,7 +35,7 @@ func ShowGeneralHelpMessage(){
 }
 
 func ShowTranslateHelpMessage(){
-	_, _ = fmt.Fprintln(os.Stderr, "Usage:\n\t", os.Args[0], "translate TARGET *FLAGS\n\nTARGETS available:\n\t - forward-socks5\n\t")
+	_, _ = fmt.Fprintln(os.Stderr, "Usage:\n\t", os.Args[0], "translate TARGET *FLAGS\n\nTARGETS available:\n\t - port_forward-socks5\n\t")
 }
 
 
@@ -69,7 +69,7 @@ func ParseMasterArguments() (*string, *string, *string, *string){
 }
 
 func ParseForwardToSocks5Arguments() (*string, *string, *string, *string, *string, *string, *string, *string){
-	protocolFlagSet := flag.NewFlagSet("forward-socks5", flag.ExitOnError)
+	protocolFlagSet := flag.NewFlagSet("port_forward-socks5", flag.ExitOnError)
 	bindAddress := protocolFlagSet.String( "bind-address", "0.0.0.0", "Address to listen on.")
 	bindPort := protocolFlagSet.String( "bind-port", "8080", "Port to listen on.")
 	socks5Address := protocolFlagSet.String( "socks5-address", "127.0.0.1", "SOCKS5 server address to use")

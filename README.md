@@ -15,7 +15,7 @@
         * [Forward](#forward)
         * [Master](#master)
         * [Translate](#translate)
-            * [Forward To SOCKS5](#forward-to-socks5)
+            * [Forward To SOCKS5](#port-forward-to-socks5)
 * [Concepts](#concepts)
     * [Master/Slave](#masterslave)
         * [How it works](#how-it-works)
@@ -105,12 +105,12 @@ Usage:
          fullproxy.exe translate TARGET *FLAGS
 
 TARGETS available:
-         - forward-socks5
+         - port_forward-socks5
 ```
-#### Forward To SOCKS5
+#### Port Forward To SOCKS5
 ```
-user@linux:~$ fullproxy translate forward-socks5 -help
-Usage of forward-socks5:
+user@linux:~$ fullproxy translate port_forward-socks5 -help
+Usage of port_forward-socks5:
   -bind-address string
         Address to listen on. (default "0.0.0.0")
   -bind-port string
