@@ -21,9 +21,9 @@ const (
 
 var (
 	// SOCKS requests connection responses
-	UsernamePasswordSupported = []byte{Version, UsernamePassword}
-	NoAuthRequiredSupported   = []byte{Version, NoAuthRequired}
-	NoSupportedMethods        = []byte{Version, 255}
+	UsernamePasswordSupported         = []byte{Version, UsernamePassword}
+	NoAuthRequiredSupported           = []byte{Version, NoAuthRequired}
+	NoSupportedMethods                = []byte{Version, 255}
 	UsernamePasswordSucceededResponse = []byte{1, Succeeded}
 	AuthenticationFailed              = []byte{1, 1}
 )
