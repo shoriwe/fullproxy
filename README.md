@@ -118,11 +118,11 @@ Usage of port_forward-socks5:
   -socks5-address string
         SOCKS5 server address to use (default "127.0.0.1")
   -socks5-password string
-        Password for the SOCKS5 server; leave empty to no AUTH
+        Password for the SOCKS5 server; leave empty for no AUTH
   -socks5-port string
         SOCKS5 server port to use (default "1080")
   -socks5-username string
-        Username for the SOCKS5 server; leave empty to no AUTH
+        Username for the SOCKS5 server; leave empty for no AUTH
   -target-address string
         Address of the target host that is accessible by the SOCKS5 proxy
   -target-port string
