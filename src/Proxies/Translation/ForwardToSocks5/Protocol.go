@@ -11,7 +11,7 @@ import (
 	"os"
 )
 
-func CreateTranslationSession(conn net.Conn, connReader  ConnectionStructures.SocketReader, connWriter ConnectionStructures.SocketWriter, args...interface{}) {
+func CreateTranslationSession(conn net.Conn, connReader ConnectionStructures.SocketReader, connWriter ConnectionStructures.SocketWriter, args ...interface{}) {
 	targetConnection, connectionError := args[0].(proxy.Dialer).Dial("tcp", args[1].(string))
 	if connectionError == nil {
 		targetConnectionReader, targetConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(targetConnection)
