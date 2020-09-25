@@ -4,10 +4,9 @@ import (
 	"net"
 )
 
-
 func PrepareUDPAssociate(
 	clientConnection net.Conn, clientConnectionReader interface{},
 	clientConnectionWriter interface{}, targetAddress *string,
-	targetPort *string, targetAddressType *byte){
+	targetPort *string, targetAddressType *byte) {
 	_ = clientConnection.Close()
 }
