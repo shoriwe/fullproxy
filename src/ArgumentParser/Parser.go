@@ -31,7 +31,11 @@ func RemotePortForwardArguments() (*string, *string, *string, *string){
 
 
 func ShowGeneralHelpMessage(){
-	_, _ = fmt.Fprintln(os.Stderr, "Usage: ", os.Args[0], " PROTOCOL *FLAGS\nProtocols available:\n\t - socks5\n\t - http\n\t - local-forward\n\t - remote-forward\n\t - master")
+	_, _ = fmt.Fprintln(os.Stderr, "Usage:\n\t", os.Args[0], "PROTOCOL *FLAGS\n\nProtocols available:\n\t - socks5\n\t - http\n\t - local-forward\n\t - remote-forward\n\t - master\n\t - translate")
+}
+
+func ShowTranslateHelpMessage(){
+	_, _ = fmt.Fprintln(os.Stderr, "Usage:\n\t", os.Args[0], "translate TARGET *FLAGS\n\nTARGETS available:\n\t - forward-socks5\n\t")
 }
 
 
@@ -62,4 +66,18 @@ func ParseMasterArguments() (*string, *string, *string, *string){
 	remotePort := protocolFlagSet.String( "remote-port", "", "Argument required to handle correctly the \"remote-forward\"")
 	_ = protocolFlagSet.Parse(os.Args[2:])
 	return address, port, remoteAddress, remotePort
+}
+
+func ParseForwardToSocks5Arguments() (*string, *string, *string, *string, *string, *string, *string, *string){
+	protocolFlagSet := flag.NewFlagSet("forward-socks5", flag.ExitOnError)
+	bindAddress := protocolFlagSet.String( "bind-address", "0.0.0.0", "Address to listen on.")
+	bindPort := protocolFlagSet.String( "bind-port", "8080", "Port to listen on.")
+	socks5Address := protocolFlagSet.String( "socks5-address", "127.0.0.1", "SOCKS5 server address to use")
+	socks5Port := protocolFlagSet.String( "socks5-port", "1080", "SOCKS5 server port to use")
+	username := protocolFlagSet.String( "socks5-username", "", "Username for the SOCKS5 server; leave black to no AUTH")
+	password := protocolFlagSet.String( "socks5-password", "", "Password for the SOCKS5 server; leave black to no AUTH")
+	targetAddress := protocolFlagSet.String( "target-address", "", "Address of the target host that is accessible by the SOCKS5 proxy")
+	targetPort := protocolFlagSet.String( "target-port", "", "Port of the target host that is accessible by the SOCKS5 proxy")
+	_ = protocolFlagSet.Parse(os.Args[3:])
+	return bindAddress, bindPort, socks5Address, socks5Port, username, password, targetAddress, targetPort
 }

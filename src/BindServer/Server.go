@@ -16,6 +16,7 @@ func Bind(address *string, port *string, protocolFunction Function, args...inter
 		log.Print("Something goes wrong: " + BindingError.Error())
 		return
 	}
+	log.Printf("Listening on %s:%s", *address, *port)
 	for {
 		clientConnection, _ := server.Accept()
 		log.Print("Received connection from: ", clientConnection.RemoteAddr().String())

@@ -9,9 +9,8 @@ import (
 
 
 func HandleReadWrite(
-	sourceConnection net.Conn, destinationAddress string,
-	sourceReader ConnectionStructures.SocketReader, destinationWriter ConnectionStructures.SocketWriter,
-	connectionAlive *bool){
+	sourceConnection net.Conn, sourceReader ConnectionStructures.SocketReader,
+	destinationWriter ConnectionStructures.SocketWriter, connectionAlive *bool){
 	for tries := 0; tries < 5; tries++{
 		_ = sourceConnection.SetReadDeadline(time.Now().Add(10 * time.Second))
 		numberOfBytesReceived, buffer, connectionError := Sockets.Receive(sourceReader, 1048576)
@@ -49,7 +48,7 @@ func Proxy(clientConnection net.Conn,
 	targetConnectionReader ConnectionStructures.SocketReader,
 	targetConnectionWriter ConnectionStructures.SocketWriter) {
 	connectionAlive := true
-	go HandleReadWrite(clientConnection, targetConnection.RemoteAddr().String(), clientConnectionReader, targetConnectionWriter, &connectionAlive)
-	go HandleReadWrite(targetConnection, clientConnection.RemoteAddr().String(), targetConnectionReader, clientConnectionWriter, &connectionAlive)
+	go HandleReadWrite(clientConnection, clientConnectionReader, targetConnectionWriter, &connectionAlive)
+	go HandleReadWrite(targetConnection, targetConnectionReader, clientConnectionWriter, &connectionAlive)
 
 }
