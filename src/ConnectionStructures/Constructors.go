@@ -12,13 +12,11 @@ import (
 	"net"
 )
 
-
-func GenerateKey(keyLength int) []byte{
+func GenerateKey(keyLength int) []byte {
 	key := make([]byte, keyLength)
 	_, _ = rand.Reader.Read(key)
 	return key
 }
-
 
 func NegotiateKey(
 	sourceReader SocketReader,
@@ -35,7 +33,7 @@ func NegotiateKey(
 		if connectionError == nil {
 			lengthOfOtherPublicKey := make([]byte, 4)
 			numberOfBytesReceived, connectionError := sourceReader.Read(lengthOfOtherPublicKey)
-			if connectionError == nil && numberOfBytesReceived == 4{
+			if connectionError == nil && numberOfBytesReceived == 4 {
 				otherPublicKeyBytes := make([]byte, binary.LittleEndian.Uint32(lengthOfOtherPublicKey))
 				numberOfBytesReceived, connectionError := sourceReader.Read(otherPublicKeyBytes)
 				if connectionError == nil && numberOfBytesReceived > 0 {
@@ -81,7 +79,7 @@ func NegotiateKey(
 					log.Print(connectionError)
 					log.Print("Received just: ", numberOfBytesReceived)
 				}
-			}else {
+			} else {
 				log.Print("Looks like we could not receive correctly the message with the public key size")
 			}
 		} else {
@@ -93,21 +91,18 @@ func NegotiateKey(
 	return finalKey
 }
 
-
-func CreateReaderWriter(connection net.Conn) (*bufio.Reader, *bufio.Writer){
+func createReaderWriter(connection net.Conn) (*bufio.Reader, *bufio.Writer) {
 	return bufio.NewReader(connection), bufio.NewWriter(connection)
 }
 
-
-func CreateSocketConnectionReaderWriter(connection net.Conn) (SocketReader, SocketWriter){
+func CreateSocketConnectionReaderWriter(connection net.Conn) (SocketReader, SocketWriter) {
 	var socketConnectionReader BasicConnectionReader
 	var socketConnectionWriter BasicConnectionWriter
-	socketConnectionReader.Reader, socketConnectionWriter.Writer = CreateReaderWriter(connection)
+	socketConnectionReader.Reader, socketConnectionWriter.Writer = createReaderWriter(connection)
 	return &socketConnectionReader, &socketConnectionWriter
 }
 
-
-func CreateTunnelReaderWriter(connection net.Conn) (SocketReader, SocketWriter){
+func CreateTunnelReaderWriter(connection net.Conn) (SocketReader, SocketWriter) {
 	tunnelReader := new(TunnelReader)
 	tunnelWriter := new(TunnelWriter)
 	tunnelReader.ActiveSocketReader, tunnelWriter.ActiveSocketWriter = CreateSocketConnectionReaderWriter(connection)
