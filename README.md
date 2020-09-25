@@ -14,11 +14,14 @@
         * [HTTP](#http)
         * [Forward](#forward)
         * [Master](#master)
+        * [Translate](#translate)
+            * [Forward To SOCKS5](#forward-to-socks5)
 * [Concepts](#concepts)
-    * [Slave](#slave)
+    * [Master/Slave](#masterslave)
         * [How it works](#how-it-works)
         * [Applications](#applications)
         * [Considerations](#considerations)
+    * [Translation](#translation)
 * [Installation](#installation)
     * [Pre-compiled binaries](#pre-compiled-binaries)
     * [Build from source code](#build-from-source-code)
@@ -27,13 +30,16 @@
 ## Implemented protocols
 ```
 user@linux:~$ fullproxy help
-Usage:  fullproxy  PROTOCOL *FLAGS
+Usage:
+         fullproxy.exe PROTOCOL *FLAGS
+
 Protocols available:
          - socks5
          - http
          - local-forward
          - remote-forward
          - master
+         - translate
 ```
 ### SOCKS5
 ```
@@ -92,8 +98,38 @@ Usage of master:
   -remote-port string
         Argument required to handle correctly the "remote-forward"
 ```
+### Translate
+```
+user@linux:~$ fullproxy translate help
+Usage:
+         fullproxy.exe translate TARGET *FLAGS
+
+TARGETS available:
+         - forward-socks5
+```
+#### Forward To SOCKS5
+```
+user@linux:~$ fullproxy translate forward-socks5 -help
+Usage of forward-socks5:
+  -bind-address string
+        Address to listen on. (default "0.0.0.0")
+  -bind-port string
+        Port to listen on. (default "8080")
+  -socks5-address string
+        SOCKS5 server address to use (default "127.0.0.1")
+  -socks5-password string
+        Password for the SOCKS5 server; leave black to no AUTH
+  -socks5-port string
+        SOCKS5 server port to use (default "1080")
+  -socks5-username string
+        Username for the SOCKS5 server; leave black to no AUTH
+  -target-address string
+        Address of the target host that is accessible by the SOCKS5 proxy
+  -target-port string
+        Port of the target host that is accessible by the SOCKS5 proxy
+```
 # Concepts
-## Slave
+## Master/Slave
 Handles the proxying between a reverse connected (with encryption) proxy and the clients. In other words, it will receive the connections of the clients and will forward the traffic to the proxy that is reverse connected to it.
 ### How it works
 1. It first binds to the address specified by the user.
@@ -104,6 +140,8 @@ In other words, is the proxy of another proxy but totally invisible for the clie
 This could be specially useful when you need to proxy a network that a machine have access to, but you can't bind with it
 ### Considerations
 - The `master` protocol may loss some setup connections if it is extremely stressed, but it should work `just fine` if the connections where already made
+## Translation
+This protocol is simple, it receives proxying request in a specific proxying protocol to them forward them to another proxy with another protocol; this means that if you only speaks SOCKS5, you will be able to talk to an HTTP proxy using this "translator" 
 # Installation
 ## Pre-compiled binaries
 You can find pre-compiled binaries for windows and linux [Here](https://github.com/shoriwe/FullProxy/tree/master/build)
