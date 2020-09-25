@@ -24,8 +24,6 @@ var (
 	UsernamePasswordSupported = []byte{Version, UsernamePassword}
 	NoAuthRequiredSupported   = []byte{Version, NoAuthRequired}
 	NoSupportedMethods        = []byte{Version, 255}
-	InvalidMethodResponse     = []byte{Version, InvalidMethod}
-	// NoAuthSucceededResponse 	 = []byte{1, Succeeded}
 	UsernamePasswordSucceededResponse = []byte{1, Succeeded}
 	AuthenticationFailed              = []byte{1, 1}
 )
