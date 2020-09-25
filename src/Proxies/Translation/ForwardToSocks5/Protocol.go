@@ -45,6 +45,6 @@ func StartForwardToSocks5Translation(bindAddress *string, bindPort *string, sock
 			log.Print(connectionError)
 		}
 	} else {
-		_, _ = fmt.Fprintf(os.Stderr, "Some flags are missing; please set \"-target-address\" and \"-target-port\"\n\nFor more information use:\n\t%s translate forward-socks5 -help\n", os.Args[0])
+		_, _ = fmt.Fprintf(os.Stderr, "Some flags are missing; please set \"-target-address\" and \"-target-port\"\n\nFor more information use:\n\t%s translate port_forward-socks5 -help\n", os.Args[0])
 	}
 }
