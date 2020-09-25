@@ -6,12 +6,14 @@ import (
 	"github.com/shoriwe/FullProxy/src/MasterSlave"
 	"github.com/shoriwe/FullProxy/src/Proxies/PortForward"
 	"github.com/shoriwe/FullProxy/src/Proxies/SOCKS5"
+	"github.com/shoriwe/FullProxy/src/Proxies/Translation/ForwardToSocks5"
 	"os"
 )
 
 
 func main() {
-	if len(os.Args) == 1 {
+	numberOfArguments := len(os.Args)
+	if numberOfArguments == 1 {
 		_, _ = fmt.Fprintln(os.Stderr, "Try:\n", os.Args[0], " help")
 		os.Exit(-1)
 	}
@@ -30,6 +32,21 @@ func main() {
 	case "master":
 		masterAddress, masterPort, remoteAddress, remotePort := ArgumentParser.ParseMasterArguments()
 		MasterSlave.Master(masterAddress, masterPort, remoteAddress, remotePort)
+	case "translate":
+		if numberOfArguments == 2 {
+			_, _ = fmt.Fprintln(os.Stderr, "Try:\n", os.Args[0], " translate help")
+			os.Exit(-1)
+		}
+		switch os.Args[2] {
+		case "forward-socks5":
+			bindAddress, bindPort, socks5Address, socks5Port, username, password, targetAddress, targetPort := ArgumentParser.ParseForwardToSocks5Arguments()
+			ForwardToSocks5.StartForwardToSocks5Translation(bindAddress, bindPort, socks5Address, socks5Port, username, password, targetAddress, targetPort)
+		case "help":
+			ArgumentParser.ShowTranslateHelpMessage()
+		default:
+			_, _ = fmt.Fprintln(os.Stderr, "Unknown command\nTry: ", os.Args[0], " translate help")
+			os.Exit(-1)
+		}
 	case "help":
 		ArgumentParser.ShowGeneralHelpMessage()
 	default:
