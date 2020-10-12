@@ -1,6 +1,7 @@
 package MasterSlave
 
 import (
+	"crypto/tls"
 	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/Proxies/Basic"
 	"github.com/shoriwe/FullProxy/src/Sockets"
@@ -8,10 +9,11 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 )
 
-type MasterFunction func(server net.Listener, masterConnection net.Conn, args interface{})
+type MasterFunction func(server net.Listener, masterConnection net.Conn, tlsConfiguration *tls.Config, args interface{})
 
 func setupControlCSignal(server net.Listener, masterConnection net.Conn) {
 	c := make(chan os.Signal, 1)
@@ -26,7 +28,7 @@ func setupControlCSignal(server net.Listener, masterConnection net.Conn) {
 
 func startGeneralProxying(clientConnection net.Conn, targetConnection net.Conn) {
 	clientConnectionReader, clientConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(clientConnection)
-	targetConnectionReader, targetConnectionWriter := ConnectionStructures.CreateTunnelReaderWriter(targetConnection)
+	targetConnectionReader, targetConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(targetConnection)
 	if targetConnectionReader != nil && targetConnectionWriter != nil {
 		Basic.Proxy(
 			clientConnection, targetConnection,
@@ -48,57 +50,81 @@ func receiveMasterConnectionFromSlave(server net.Listener) net.Conn {
 	return masterConnection
 }
 
+func SetupMasterConnection(masterConnection net.Conn) (net.Conn, *tls.Config) {
+	tlsConfiguration, configurationError := Sockets.CreateServerTLSConfiguration()
+	if configurationError == nil {
+		masterConnection = Sockets.UpgradeServerToTLS(masterConnection, tlsConfiguration)
+		return masterConnection, tlsConfiguration
+	}
+	log.Fatal(configurationError)
+	return nil, nil
+}
+
 func masterHandler(address *string, port *string, masterFunction MasterFunction, args ...interface{}) {
 	server := Sockets.Bind(address, port)
 	log.Print("Waiting for proxy server connections...")
-	masterConnection := receiveMasterConnectionFromSlave(server)
+	masterConnection, tlsConfiguration := SetupMasterConnection(receiveMasterConnectionFromSlave(server))
 	setupControlCSignal(server, masterConnection)
-	masterFunction(server, masterConnection, args)
+	masterFunction(server, masterConnection, tlsConfiguration, args)
 }
 
-func basicMasterServer(server net.Listener, masterConnection net.Conn, _ interface{}) {
+func basicMasterServer(server net.Listener, masterConnection net.Conn, tlsConfiguration *tls.Config, _ interface{}) {
 	_, masterConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(masterConnection)
 	for {
 		clientConnection, _ := server.Accept()
-		_, connectionError := Sockets.Send(masterConnectionWriter, &NewConnection)
-		if connectionError != nil {
-			log.Print(connectionError)
-			break
+		// Verify that the new connection is also from the slave
+		if strings.Split(clientConnection.RemoteAddr().String(), ":")[0] == strings.Split(masterConnection.RemoteAddr().String(), ":")[0] {
+			_, connectionError := Sockets.Send(masterConnectionWriter, &NewConnection)
+			if connectionError != nil {
+				log.Print(connectionError)
+				break
+			}
+
+			targetConnection, _ := server.Accept()
+			targetConnection = Sockets.UpgradeServerToTLS(targetConnection, tlsConfiguration)
+
+			go startGeneralProxying(clientConnection, targetConnection)
 		}
-		targetConnection, _ := server.Accept()
-		go startGeneralProxying(clientConnection, targetConnection)
 	}
 	_ = masterConnection.Close()
 	_ = server.Close()
 }
 
-func portForwardMasterServe(server net.Listener, masterConnection net.Conn, args interface{}) {
+func RemotePortForwardMasterServer(server net.Listener, masterConnection net.Conn, tlsConfiguration *tls.Config, args interface{}) {
 	remoteAddress := (args.([]interface{}))[0].(*string)
 	remotePort := (args.([]interface{}))[1].(*string)
 	masterConnectionReader, masterConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(masterConnection)
 	for {
-		_ = masterConnection.SetReadDeadline(time.Now().Add(3 * time.Second))
-		numberOfBytesReceived, _, connectionError := Sockets.Receive(masterConnectionReader, 1)
+		_ = masterConnection.SetReadDeadline(time.Now().Add(20 * time.Second))
+		numberOfBytesReceived, buffer, connectionError := Sockets.Receive(masterConnectionReader, 1)
 		if connectionError == nil {
 			if numberOfBytesReceived == 1 {
-				clientConnection := Sockets.Connect(remoteAddress, remotePort)
-				if clientConnection != nil {
-					_, _ = Sockets.Send(masterConnectionWriter, &NewConnection)
-					targetConnection, connectionError := server.Accept()
-					if connectionError == nil {
-						go startGeneralProxying(clientConnection, targetConnection)
+				if buffer[0] == NewConnection[0] {
+					targetConnection := Sockets.Connect(remoteAddress, remotePort)
+					if targetConnection != nil {
+						_, _ = Sockets.Send(masterConnectionWriter, &NewConnection)
+
+						clientConnection, connectionError := server.Accept()
+						clientConnection = Sockets.UpgradeServerToTLS(clientConnection, tlsConfiguration)
+
+						if connectionError == nil {
+							if strings.Split(clientConnection.RemoteAddr().String(), ":")[0] == strings.Split(masterConnection.RemoteAddr().String(), ":")[0] {
+								go startGeneralProxying(clientConnection, targetConnection)
+							}
+						} else {
+							log.Print(connectionError)
+						}
 					} else {
-						log.Print(connectionError)
+						log.Print("Could not connect to target server")
+						_, _ = Sockets.Send(masterConnectionWriter, &FailToConnectToTarget)
 					}
-				} else {
-					log.Print("Could not connect to target server")
-					_, _ = Sockets.Send(masterConnectionWriter, &FailToConnectToTarget)
 				}
 			} else {
 				log.Print("Error when interacting with slave")
 				_, _ = Sockets.Send(masterConnectionWriter, &UnknownOperation)
 			}
 		} else if parsedConnectionError, ok := connectionError.(net.Error); !(ok && parsedConnectionError.Timeout()) {
+			log.Print(connectionError)
 			break
 		}
 	}
@@ -108,7 +134,7 @@ func portForwardMasterServe(server net.Listener, masterConnection net.Conn, args
 
 func Master(address *string, port *string, remoteAddress *string, remotePort *string) {
 	if len(*remoteAddress) > 0 && len(*remotePort) > 0 {
-		masterHandler(address, port, portForwardMasterServe, remoteAddress, remotePort)
+		masterHandler(address, port, RemotePortForwardMasterServer, remoteAddress, remotePort)
 	} else {
 		masterHandler(address, port, basicMasterServer)
 	}
