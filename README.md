@@ -77,9 +77,9 @@ Usage of local-forward:
 user@linux:~$ fullproxy remote-forward -help
 Usage of remote-forward:
   -local-address string
-        Address accessible by master
+        Address to bind by slave
   -local-port string
-        Port of the address that is accessible by master
+        Port to bind by slave
   -master-address string
         Address of the master
   -master-port string
@@ -91,12 +91,12 @@ user@linux:~$ fullproxy remote-forward -help
 Usage of master:
   -address string
         Address to listen on. (default "0.0.0.0")
+  -forward-address string
+        Argument required to handle correctly the "remote-forward" (This is the service that the master can only acceded)
+  -forward-port string
+        Argument required to handle correctly the "remote-forward" (This is the service that the master can only acceded)
   -port string
         Port to listen on. (default "1080")
-  -remote-address string
-        Argument required to handle correctly the "remote-forward"
-  -remote-port string
-        Argument required to handle correctly the "remote-forward"
 ```
 ### Translate
 ```

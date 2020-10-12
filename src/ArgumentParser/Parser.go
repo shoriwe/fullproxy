@@ -18,8 +18,8 @@ func LocalPortForwardArguments() (*string, *string, *string, *string) {
 
 func RemotePortForwardArguments() (*string, *string, *string, *string) {
 	protocolFlagSet := flag.NewFlagSet("remote-forward", flag.ExitOnError)
-	localAddress := protocolFlagSet.String("local-address", "", "Address accessible by master")
-	localPort := protocolFlagSet.String("local-port", "", "Port of the address that is accessible by master")
+	localAddress := protocolFlagSet.String("local-address", "", "Address to bind by slave")
+	localPort := protocolFlagSet.String("local-port", "", "Port to bind by slave")
 	masterAddress := protocolFlagSet.String("master-address", "", "Address of the master")
 	masterPort := protocolFlagSet.String("master-port", "", "Port of the master")
 	_ = protocolFlagSet.Parse(os.Args[2:])
@@ -56,8 +56,8 @@ func ParseMasterArguments() (*string, *string, *string, *string) {
 	protocolFlagSet := flag.NewFlagSet("master", flag.ExitOnError)
 	address := protocolFlagSet.String("address", "0.0.0.0", "Address to listen on.")
 	port := protocolFlagSet.String("port", "1080", "Port to listen on.")
-	remoteAddress := protocolFlagSet.String("remote-address", "", "Argument required to handle correctly the \"remote-forward\"")
-	remotePort := protocolFlagSet.String("remote-port", "", "Argument required to handle correctly the \"remote-forward\"")
+	remoteAddress := protocolFlagSet.String("forward-address", "", "Argument required to handle correctly the \"remote-forward\" (This is the service that the master can only acceded)")
+	remotePort := protocolFlagSet.String("forward-port", "", "Argument required to handle correctly the \"remote-forward\" (This is the service that the master can only acceded)")
 	_ = protocolFlagSet.Parse(os.Args[2:])
 	return address, port, remoteAddress, remotePort
 }
