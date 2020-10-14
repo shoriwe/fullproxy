@@ -11,8 +11,8 @@ import (
 
 type Function func(conn net.Conn, connReader ConnectionStructures.SocketReader, connWriter ConnectionStructures.SocketWriter, args ...interface{})
 
-func ConnectToMasterServer(masterAddress *string, masterPort *string) (net.Conn, *tls.Config){
-	tlsConfiguration, configurationCreationError := Sockets.CreateClientTLSConfiguration()
+func ConnectToMasterServer(masterAddress *string, masterPort *string) (net.Conn, *tls.Config) {
+	tlsConfiguration, configurationCreationError := Sockets.CreateSlaveTLSConfiguration()
 	if configurationCreationError == nil {
 		log.Printf("Trying to connecto to %s:%s", *masterAddress, *masterPort)
 		masterConnection := Sockets.TLSConnect(masterAddress, masterPort, tlsConfiguration)

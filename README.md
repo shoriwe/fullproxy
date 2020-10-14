@@ -57,7 +57,23 @@ Usage of socks5:
         Username of the running proxy, requires "-password". It will be ignored if is an empty string
 ```
 ### HTTP
-Coming soon
+This implementation could be implemented thanks to [GoProxy](https://github.com/elazarl/goproxy)
+```
+user@linux:~$ fullproxy local-forward -help
+Usage of http:
+  -address string
+        Address to listen on. When "-slave" flag is set, is the IP of master to connect
+  -password string
+        Password of the running proxy, requires "-username". It will be ignored if is an empty string
+  -port string
+        Port to listen on. When "-slave" flag is set, is the Port of the master to connect. I both modes the default port is 8080 (default "8080")
+  -slave
+        Connect to a master, no bind proxying
+  -tls
+        Use HTTPS
+  -username string
+        Username of the running proxy, requires "-password". It will be ignored if is an empty string
+```
 ### Forward
 #### Local
 ```
