@@ -1,6 +1,7 @@
 package MasterSlave
 
 import (
+	"bufio"
 	"crypto/tls"
 	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/Sockets"
@@ -9,7 +10,7 @@ import (
 	"time"
 )
 
-type Function func(conn net.Conn, connReader ConnectionStructures.SocketReader, connWriter ConnectionStructures.SocketWriter, args ...interface{})
+type Function func(conn net.Conn, connReader *bufio.Reader, connWriter *bufio.Writer, args ...interface{})
 
 func ConnectToMasterServer(masterAddress *string, masterPort *string) (net.Conn, *tls.Config) {
 	tlsConfiguration, configurationCreationError := Sockets.CreateSlaveTLSConfiguration()

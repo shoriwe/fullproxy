@@ -2,33 +2,9 @@ package ConnectionStructures
 
 import (
 	"bufio"
+	"net"
 )
 
-type SocketReader interface {
-	Read(buffer []byte) (int, error)
-}
-
-type BasicConnectionReader struct {
-	Reader *bufio.Reader
-}
-
-func (connection BasicConnectionReader) Read(buffer []byte) (int, error) {
-	return connection.Reader.Read(buffer)
-}
-
-type SocketWriter interface {
-	Write(buffer []byte) (int, error)
-	Flush() error
-}
-
-type BasicConnectionWriter struct {
-	Writer *bufio.Writer
-}
-
-func (connection BasicConnectionWriter) Write(buffer []byte) (int, error) {
-	return connection.Writer.Write(buffer)
-}
-
-func (connection BasicConnectionWriter) Flush() error {
-	return connection.Writer.Flush()
+func CreateSocketConnectionReaderWriter(connection net.Conn) (*bufio.Reader, *bufio.Writer) {
+	return bufio.NewReader(connection), bufio.NewWriter(connection)
 }

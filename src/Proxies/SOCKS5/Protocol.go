@@ -1,8 +1,8 @@
 package SOCKS5
 
 import (
+	"bufio"
 	"github.com/shoriwe/FullProxy/src/BindServer"
-	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/Hashing"
 	"github.com/shoriwe/FullProxy/src/MasterSlave"
 	"github.com/shoriwe/FullProxy/src/Sockets"
@@ -11,7 +11,7 @@ import (
 	"net"
 )
 
-func ReceiveTargetRequest(clientConnectionReader ConnectionStructures.SocketReader) (byte, byte, []byte, []byte) {
+func ReceiveTargetRequest(clientConnectionReader *bufio.Reader) (byte, byte, []byte, []byte) {
 	numberOfBytesReceived, targetRequest, ConnectionError := Sockets.Receive(clientConnectionReader, 1024)
 	if ConnectionError == nil {
 		if targetRequest[0] == Version {
@@ -40,8 +40,10 @@ func GetTargetAddressPort(targetRequestedCommand *byte, targetAddressType *byte,
 }
 
 func CreateProxySession(
-	clientConnection net.Conn, clientConnectionReader ConnectionStructures.SocketReader,
-	clientConnectionWriter ConnectionStructures.SocketWriter, args ...interface{}) {
+	clientConnection net.Conn,
+	clientConnectionReader *bufio.Reader,
+	clientConnectionWriter *bufio.Writer,
+	args ...interface{}) {
 	var targetRequestedCommand byte
 	username, passwordHash := args[0].(*[]byte), args[1].(*[]byte)
 
