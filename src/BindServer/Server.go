@@ -1,12 +1,17 @@
 package BindServer
 
 import (
+	"bufio"
 	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"log"
 	"net"
 )
 
-type Function func(conn net.Conn, connReader ConnectionStructures.SocketReader, connWriter ConnectionStructures.SocketWriter, args ...interface{})
+type Function func(
+	conn net.Conn,
+	connReader *bufio.Reader,
+	connWriter *bufio.Writer,
+	args ...interface{})
 
 func Bind(address *string, port *string, protocolFunction Function, args ...interface{}) {
 	server, BindingError := net.Listen("tcp", *address+":"+*port)
