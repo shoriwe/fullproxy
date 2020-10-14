@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
-	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/Hashing"
 	"github.com/shoriwe/FullProxy/src/MasterSlave"
 	"github.com/shoriwe/FullProxy/src/Sockets"
@@ -29,27 +28,31 @@ func (slaveResponseWriter *SlaveResponseWriter) Hijack() (net.Conn, *bufio.ReadW
 
 func CreateSlaveResponseWriter(
 	clientConnection net.Conn,
-	clientConnectionReader ConnectionStructures.SocketReader,
-	clientConnectionWriter ConnectionStructures.SocketWriter) *SlaveResponseWriter {
+	clientConnectionReader *bufio.Reader,
+	clientConnectionWriter *bufio.Writer) *SlaveResponseWriter {
 	slaveResponseWriter := new(SlaveResponseWriter)
 	slaveResponseWriter.Body = new(bytes.Buffer)
 	slaveResponseWriter.Code = 200
 	slaveResponseWriter.ClientConnection = clientConnection
 	slaveResponseWriter.ClientReadWriter = bufio.NewReadWriter(
-		bufio.NewReader(clientConnectionReader),
-		bufio.NewWriter(clientConnectionWriter))
+		clientConnectionReader,
+		clientConnectionWriter)
 	return slaveResponseWriter
 }
 
-func CreateSlaveProxySession(clientConnection net.Conn, clientConnectionReader ConnectionStructures.SocketReader, clientConnectionWriter ConnectionStructures.SocketWriter, args ...interface{}) {
-	connectionBufioReader := bufio.NewReader(clientConnectionReader)
-	request, parsingError := http.ReadRequest(connectionBufioReader)
+func CreateSlaveProxySession(
+	clientConnection net.Conn,
+	clientConnectionReader *bufio.Reader,
+	clientConnectionWriter *bufio.Writer,
+	args ...interface{}) {
+	request, parsingError := http.ReadRequest(clientConnectionReader)
 	if parsingError == nil {
 		request.RemoteAddr = clientConnection.RemoteAddr().String()
 		responseWriter := CreateSlaveResponseWriter(clientConnection, clientConnectionReader, clientConnectionWriter)
 		args[0].(*goproxy.ProxyHttpServer).ServeHTTP(responseWriter, request)
 		if responseWriter.Result().ContentLength > 0 {
 			_ = responseWriter.Result().Write(clientConnectionWriter)
+			_ = clientConnectionWriter.Flush()
 		}
 	} else {
 		log.Print(parsingError)
