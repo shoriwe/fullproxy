@@ -1,6 +1,7 @@
 package PortForward
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/MasterSlave"
@@ -9,7 +10,11 @@ import (
 	"net"
 )
 
-func CreateLocalPortForwardSession(clientConnection net.Conn, clientReader ConnectionStructures.SocketReader, clientWriter ConnectionStructures.SocketWriter, args ...interface{}) {
+func CreateLocalPortForwardSession(
+	clientConnection net.Conn,
+	clientReader *bufio.Reader,
+	clientWriter *bufio.Writer,
+	args ...interface{}) {
 	targetAddress := args[0].(*string)
 	targetPort := args[1].(*string)
 	targetConnection := Sockets.Connect(targetAddress, targetPort)
