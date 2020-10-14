@@ -36,7 +36,9 @@ func HandleReadWrite(
 		buffer = nil
 	}
 	_ = sourceConnection.Close()
-	*connectionAlive = false
+	if *connectionAlive {
+		*connectionAlive = false
+	}
 }
 
 func Proxy(clientConnection net.Conn,
