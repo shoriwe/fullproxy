@@ -1,13 +1,14 @@
 package SOCKS5
 
 import (
-	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
+	"bufio"
 	"net"
 )
 
 func HandleCommandExecution(
 	clientConnection net.Conn,
-	clientConnectionReader ConnectionStructures.SocketReader, clientConnectionWriter ConnectionStructures.SocketWriter,
+	clientConnectionReader *bufio.Reader,
+	clientConnectionWriter *bufio.Writer,
 	targetRequestedCommand *byte, targetAddressType *byte,
 	targetAddress *string, targetPort *string) {
 
