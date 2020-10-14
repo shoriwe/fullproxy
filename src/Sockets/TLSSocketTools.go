@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func CreateCertificateTemplate() *x509.Certificate{
+func CreateMasterSlaveCertificateTemplate() *x509.Certificate {
 	serialNumber, _ := rand.Int(rand.Reader, big.NewInt(1000000))
 	return &x509.Certificate{
 		SerialNumber: serialNumber,
@@ -28,10 +28,9 @@ func CreateCertificateTemplate() *x509.Certificate{
 	}
 }
 
-func CreateCertificate() ([]byte, *rsa.PrivateKey, error) {
+func CreateCertificate(template *x509.Certificate) ([]byte, *rsa.PrivateKey, error) {
 	privateKey, keyGenerationError := rsa.GenerateKey(rand.Reader, 2048)
 	if keyGenerationError == nil {
-		template := CreateCertificateTemplate()
 		certificate, certificateCreationError := x509.CreateCertificate(
 			rand.Reader,
 			template,
@@ -47,8 +46,8 @@ func CreateCertificate() ([]byte, *rsa.PrivateKey, error) {
 
 }
 
-func CreateTLSConfiguration() (*tls.Config, error) {
-	certificate, privateKey, creationError := CreateCertificate()
+func CreateTLSConfiguration(template *x509.Certificate) (*tls.Config, error) {
+	certificate, privateKey, creationError := CreateCertificate(template)
 	tlsCertificate := new(tls.Certificate)
 	tlsCertificate.Certificate = [][]byte{certificate}
 	tlsCertificate.PrivateKey = privateKey
@@ -63,20 +62,19 @@ func CreateTLSConfiguration() (*tls.Config, error) {
 	return nil, creationError
 }
 
-
-func CreateServerTLSConfiguration() (*tls.Config, error) {
-	return CreateTLSConfiguration()
+func CreateMasterTLSConfiguration() (*tls.Config, error) {
+	return CreateTLSConfiguration(CreateMasterSlaveCertificateTemplate())
 }
 
-func CreateClientTLSConfiguration() (*tls.Config, error) {
-	configuration, configurationError := CreateTLSConfiguration()
+func CreateSlaveTLSConfiguration() (*tls.Config, error) {
+	configuration, configurationError := CreateTLSConfiguration(CreateMasterSlaveCertificateTemplate())
 	if configurationError == nil {
 		configuration.InsecureSkipVerify = true
 	}
 	return configuration, configurationError
 }
 
-func UpgradeServerToTLS(connection net.Conn, configuration *tls.Config) net.Conn{
+func UpgradeServerToTLS(connection net.Conn, configuration *tls.Config) net.Conn {
 	return tls.Server(connection, configuration)
 }
 
