@@ -1,13 +1,15 @@
 package SOCKS5
 
 import (
-	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
+	"bufio"
 	"github.com/shoriwe/FullProxy/src/Sockets"
 	"log"
 )
 
-func GetClientAuthenticationImplementedMethods(clientAddress string, clientConnectionReader ConnectionStructures.SocketReader,
-	clientConnectionWriter ConnectionStructures.SocketWriter,
+func GetClientAuthenticationImplementedMethods(
+	clientAddress string,
+	clientConnectionReader *bufio.Reader,
+	clientConnectionWriter *bufio.Writer,
 	username *[]byte,
 	passwordHash *[]byte) bool {
 
