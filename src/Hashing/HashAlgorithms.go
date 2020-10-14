@@ -16,10 +16,3 @@ func GetPasswordHashPasswordByteArray(username *[]byte, password *[]byte) []byte
 	}
 	return nil
 }
-
-func GetPasswordHashPasswordString(username *string, password *string) []byte {
-	if len(*username) > 0 {
-		return PasswordHashingSHA3([]byte(*password))
-	}
-	return []byte{}
-}
