@@ -57,7 +57,7 @@ Usage of socks5:
         Username of the running proxy, requires "-password". It will be ignored if is an empty string
 ```
 ### HTTP
-This implementation could be implemented thanks to [GoProxy](https://github.com/elazarl/goproxy)
+HTTP proxy could be implemented thanks to [GoProxy](https://github.com/elazarl/goproxy)
 ```
 user@linux:~$ fullproxy local-forward -help
 Usage of http:
