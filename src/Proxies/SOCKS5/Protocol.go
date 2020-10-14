@@ -47,6 +47,7 @@ func CreateProxySession(
 
 	// Receive connection
 	clientHasCompatibleMethods := GetClientAuthenticationImplementedMethods(
+		clientConnection.RemoteAddr().String(),
 		clientConnectionReader,
 		clientConnectionWriter,
 		username,
