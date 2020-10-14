@@ -6,6 +6,25 @@ import (
 	"os"
 )
 
+func HTTPArguments() (*string, *string, []byte, []byte, *bool, *bool) {
+	protocolFlagSet := flag.NewFlagSet("http", flag.ExitOnError)
+	address := protocolFlagSet.String("address", "", "Address to listen on. When \"-slave\" flag is set, is the IP of master to connect")
+	port := protocolFlagSet.String("port", "8080", "Port to listen on. When \"-slave\" flag is set, is the Port of the master to connect. I both modes the default port is 8080")
+	username := protocolFlagSet.String("username", "", "Username of the running proxy, requires \"-password\". It will be ignored if is an empty string")
+	password := protocolFlagSet.String("password", "", "Password of the running proxy, requires \"-username\". It will be ignored if is an empty string")
+	slave := protocolFlagSet.Bool("slave", false, "Connect to a master, no bind proxying")
+	tls := protocolFlagSet.Bool("tls", false, "Use HTTPS")
+	_ = protocolFlagSet.Parse(os.Args[2:])
+	if len(*address) == 0 {
+		if *slave {
+			*address = "127.0.0.1"
+		} else {
+			*address = "0.0.0.0"
+		}
+	}
+	return address, port, []byte(*username), []byte(*password), slave, tls
+}
+
 func LocalPortForwardArguments() (*string, *string, *string, *string) {
 	protocolFlagSet := flag.NewFlagSet("local-forward", flag.ExitOnError)
 	forwardAddress := protocolFlagSet.String("forward-address", "", "Address to forward the traffic received from master")
