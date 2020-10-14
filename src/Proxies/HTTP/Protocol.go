@@ -23,7 +23,7 @@ type SlaveResponseWriter struct {
 	ClientReadWriter *bufio.ReadWriter
 }
 
-func (slaveResponseWriter SlaveResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+func (slaveResponseWriter *SlaveResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return slaveResponseWriter.ClientConnection, slaveResponseWriter.ClientReadWriter, nil
 }
 
