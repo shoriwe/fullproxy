@@ -3,9 +3,10 @@ package SOCKS5
 import (
 	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/Sockets"
+	"log"
 )
 
-func GetClientAuthenticationImplementedMethods(clientConnectionReader ConnectionStructures.SocketReader,
+func GetClientAuthenticationImplementedMethods(clientAddress string, clientConnectionReader ConnectionStructures.SocketReader,
 	clientConnectionWriter ConnectionStructures.SocketWriter,
 	username *[]byte,
 	passwordHash *[]byte) bool {
@@ -36,7 +37,12 @@ func GetClientAuthenticationImplementedMethods(clientConnectionReader Connection
 		if connectionError == nil {
 			if success, authenticationProtocol := HandleUsernamePasswordAuthentication(clientConnectionReader, username, passwordHash); success && authenticationProtocol == UsernamePassword {
 				_, connectionError = Sockets.Send(clientConnectionWriter, &UsernamePasswordSucceededResponse)
-				return connectionError == nil
+				authResult := connectionError == nil
+				if connectionError == nil {
+					log.Print("Login failed with invalid credentials from: ", clientAddress)
+				}
+				log.Print("Login succeeded from: ", clientAddress)
+				return authResult
 			}
 			_, _ = Sockets.Send(clientConnectionWriter, &AuthenticationFailed)
 		}
