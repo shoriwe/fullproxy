@@ -15,4 +15,3 @@ func CreateSocketConnectionReaderWriter(connection net.Conn) (SocketReader, Sock
 	socketConnectionReader.Reader, socketConnectionWriter.Writer = createReaderWriter(connection)
 	return &socketConnectionReader, &socketConnectionWriter
 }
-
