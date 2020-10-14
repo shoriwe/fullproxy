@@ -16,7 +16,6 @@ import (
 	"strings"
 )
 
-
 type SlaveResponseWriter struct {
 	httptest.ResponseRecorder
 	http.Hijacker
@@ -24,14 +23,14 @@ type SlaveResponseWriter struct {
 	ClientReadWriter *bufio.ReadWriter
 }
 
-func (slaveResponseWriter SlaveResponseWriter)Hijack() (net.Conn, *bufio.ReadWriter, error){
+func (slaveResponseWriter SlaveResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return slaveResponseWriter.ClientConnection, slaveResponseWriter.ClientReadWriter, nil
 }
 
 func CreateSlaveResponseWriter(
 	clientConnection net.Conn,
 	clientConnectionReader ConnectionStructures.SocketReader,
-	clientConnectionWriter ConnectionStructures.SocketWriter) *SlaveResponseWriter{
+	clientConnectionWriter ConnectionStructures.SocketWriter) *SlaveResponseWriter {
 	slaveResponseWriter := new(SlaveResponseWriter)
 	slaveResponseWriter.Body = new(bytes.Buffer)
 	slaveResponseWriter.Code = 200
@@ -52,7 +51,6 @@ func CreateSlaveProxySession(clientConnection net.Conn, clientConnectionReader C
 		if responseWriter.Result().ContentLength > 0 {
 			_ = responseWriter.Result().Write(clientConnectionWriter)
 		}
-		// -ldflags="-s -w" -trimpath
 	} else {
 		log.Print(parsingError)
 		_ = clientConnection.Close()
