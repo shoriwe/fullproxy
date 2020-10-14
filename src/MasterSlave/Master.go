@@ -51,7 +51,7 @@ func receiveMasterConnectionFromSlave(server net.Listener) net.Conn {
 }
 
 func SetupMasterConnection(masterConnection net.Conn) (net.Conn, *tls.Config) {
-	tlsConfiguration, configurationError := Sockets.CreateServerTLSConfiguration()
+	tlsConfiguration, configurationError := Sockets.CreateMasterTLSConfiguration()
 	if configurationError == nil {
 		masterConnection = Sockets.UpgradeServerToTLS(masterConnection, tlsConfiguration)
 		return masterConnection, tlsConfiguration
