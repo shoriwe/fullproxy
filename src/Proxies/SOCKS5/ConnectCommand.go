@@ -1,6 +1,7 @@
 package SOCKS5
 
 import (
+	"bufio"
 	"encoding/binary"
 	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/src/Proxies/Basic"
@@ -9,8 +10,9 @@ import (
 )
 
 func PrepareConnect(
-	clientConnection net.Conn, clientConnectionReader ConnectionStructures.SocketReader,
-	clientConnectionWriter ConnectionStructures.SocketWriter, targetAddress *string,
+	clientConnection net.Conn,
+	clientConnectionReader *bufio.Reader,
+	clientConnectionWriter *bufio.Writer, targetAddress *string,
 	targetPort *string, targetAddressType *byte) {
 
 	targetConnection := Sockets.Connect(targetAddress, targetPort) // new(big.Int).SetBytes(rawTargetPort).String())
