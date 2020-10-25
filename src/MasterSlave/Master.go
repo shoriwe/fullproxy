@@ -69,21 +69,27 @@ func masterHandler(address *string, port *string, masterFunction MasterFunction,
 }
 
 func basicMasterServer(server net.Listener, masterConnection net.Conn, tlsConfiguration *tls.Config, _ interface{}) {
+	masterAddress := strings.Split(masterConnection.RemoteAddr().String(), ":")[0]
 	_, masterConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(masterConnection)
 	for {
-		clientConnection, _ := server.Accept()
-		// Verify that the new connection is also from the slave
-		if strings.Split(clientConnection.RemoteAddr().String(), ":")[0] == strings.Split(masterConnection.RemoteAddr().String(), ":")[0] {
-			_, connectionError := Sockets.Send(masterConnectionWriter, &NewConnection)
-			if connectionError != nil {
-				log.Print(connectionError)
-				break
+		clientConnection, connectionError := server.Accept()
+		if connectionError != nil {
+			log.Fatal(connectionError)
+		}
+		_, connectionError = Sockets.Send(masterConnectionWriter, &NewConnection)
+		if connectionError != nil {
+			log.Print(connectionError)
+			break
+		}
+
+		targetConnection, connectionError := server.Accept()
+		if connectionError == nil {
+			// Verify that the new connection is also from the slave
+			if strings.Split(targetConnection.RemoteAddr().String(), ":")[0] == masterAddress {
+				targetConnection = Sockets.UpgradeServerToTLS(targetConnection, tlsConfiguration)
+
+				go startGeneralProxying(clientConnection, targetConnection)
 			}
-
-			targetConnection, _ := server.Accept()
-			targetConnection = Sockets.UpgradeServerToTLS(targetConnection, tlsConfiguration)
-
-			go startGeneralProxying(clientConnection, targetConnection)
 		}
 	}
 	_ = masterConnection.Close()
@@ -91,6 +97,7 @@ func basicMasterServer(server net.Listener, masterConnection net.Conn, tlsConfig
 }
 
 func RemotePortForwardMasterServer(server net.Listener, masterConnection net.Conn, tlsConfiguration *tls.Config, args interface{}) {
+	masterAddress := strings.Split(masterConnection.RemoteAddr().String(), ":")[0]
 	remoteAddress := (args.([]interface{}))[0].(*string)
 	remotePort := (args.([]interface{}))[1].(*string)
 	masterConnectionReader, masterConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(masterConnection)
@@ -108,7 +115,7 @@ func RemotePortForwardMasterServer(server net.Listener, masterConnection net.Con
 						clientConnection = Sockets.UpgradeServerToTLS(clientConnection, tlsConfiguration)
 
 						if connectionError == nil {
-							if strings.Split(clientConnection.RemoteAddr().String(), ":")[0] == strings.Split(masterConnection.RemoteAddr().String(), ":")[0] {
+							if strings.Split(clientConnection.RemoteAddr().String(), ":")[0] == masterAddress {
 								go startGeneralProxying(clientConnection, targetConnection)
 							}
 						} else {
