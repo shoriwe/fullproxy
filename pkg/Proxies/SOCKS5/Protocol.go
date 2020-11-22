@@ -2,14 +2,20 @@ package SOCKS5
 
 import (
 	"bufio"
-	"github.com/shoriwe/FullProxy/pkg/BindServer"
-	"github.com/shoriwe/FullProxy/pkg/Hashing"
-	"github.com/shoriwe/FullProxy/pkg/MasterSlave"
+	"errors"
+	"github.com/shoriwe/FullProxy/pkg/ConnectionHandlers"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
-	"log"
 	"math/big"
 	"net"
 )
+
+type Socks5 struct {
+	AuthenticationMethod ConnectionHandlers.AuthenticationMethod
+	ClientConnection net.Conn
+	ClientConnectionReader *bufio.Reader
+	ClientConnectionWriter *bufio.Writer
+	WantedAuthMethod byte
+}
 
 func ReceiveTargetRequest(clientConnectionReader *bufio.Reader) (byte, byte, []byte, []byte) {
 	numberOfBytesReceived, targetRequest, ConnectionError := Sockets.Receive(clientConnectionReader, 1024)
@@ -39,22 +45,20 @@ func GetTargetAddressPort(targetRequestedCommand *byte, targetAddressType *byte,
 	return ConnectionRefused, "", ""
 }
 
-func CreateProxySession(
+func (socks5 *Socks5)Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer,
-	args ...interface{}) {
+	clientConnectionWriter *bufio.Writer) error {
+
+	socks5.ClientConnection = clientConnection
+	socks5.ClientConnectionReader = clientConnectionReader
+	socks5.ClientConnectionWriter = clientConnectionWriter
+
 	var targetRequestedCommand byte
-	username, passwordHash := args[0].(*[]byte), args[1].(*[]byte)
 
 	// Receive connection
-	clientHasCompatibleMethods := GetClientAuthenticationImplementedMethods(
-		clientConnection.RemoteAddr().String(),
-		clientConnectionReader,
-		clientConnectionWriter,
-		username,
-		passwordHash)
-	if clientHasCompatibleMethods {
+	clientHasCompatibleAuthMethods := socks5.GetClientAuthenticationImplementedMethods()
+	if clientHasCompatibleAuthMethods {
 		var targetAddress string
 		var targetPort string
 		rawTargetRequestedCommand, targetAddressType, rawTargetAddress, rawTargetPort := ReceiveTargetRequest(
@@ -63,24 +67,16 @@ func CreateProxySession(
 			&rawTargetRequestedCommand, &targetAddressType,
 			rawTargetAddress, rawTargetPort)
 		if targetRequestedCommand != ConnectionRefused {
-			HandleCommandExecution(
-				clientConnection, clientConnectionReader, clientConnectionWriter, &targetRequestedCommand,
+			return socks5.HandleCommandExecution(&targetRequestedCommand,
 				&targetAddressType, &targetAddress, &targetPort)
 		}
 	}
-	if (!clientHasCompatibleMethods) || (targetRequestedCommand == ConnectionRefused) {
+	var finalError string
+	if !clientHasCompatibleAuthMethods {
+		finalError = "No compatible auth methods found"
 		_ = clientConnection.Close()
+	} else if targetRequestedCommand == ConnectionRefused {
+		finalError = "connection refused to target address"
 	}
-}
-
-func StartSocks5(address *string, port *string, slave *bool, username *[]byte, password *[]byte) {
-	passwordHash := Hashing.GetPasswordHashPasswordByteArray(username, password)
-	switch *slave {
-	case true:
-		log.Print("Starting SOCKS5 server as slave")
-		MasterSlave.GeneralSlave(address, port, CreateProxySession, username, &passwordHash)
-	case false:
-		log.Print("Starting SOCKS5 server in Bind Mode")
-		BindServer.Bind(address, port, CreateProxySession, username, &passwordHash)
-	}
+	return errors.New(finalError)
 }

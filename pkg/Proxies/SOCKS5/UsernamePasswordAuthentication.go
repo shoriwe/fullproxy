@@ -1,17 +1,11 @@
 package SOCKS5
 
 import (
-	"bufio"
-	"bytes"
-	"github.com/shoriwe/FullProxy/pkg/Hashing"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 )
 
-func HandleUsernamePasswordAuthentication(
-	clientConnectionReader *bufio.Reader,
-	username *[]byte,
-	passwordHash *[]byte) (bool, byte) {
-	numberOfReceivedBytes, credentials, connectionError := Sockets.Receive(clientConnectionReader, 1024)
+func (socks5 *Socks5)HandleUsernamePasswordAuthentication() (bool, byte) {
+	numberOfReceivedBytes, credentials, connectionError := Sockets.Receive(socks5.ClientConnectionReader, 1024)
 	if connectionError != nil {
 		return false, 0
 	}
@@ -26,11 +20,9 @@ func HandleUsernamePasswordAuthentication(
 		return false, 0
 	}
 	receivedUsername := credentials[2 : 2+receivedUsernameLength]
-	if bytes.Equal(receivedUsername, *username) {
-		rawReceivedUsernamePassword := credentials[2+receivedUsernameLength+1 : numberOfReceivedBytes]
-		if bytes.Equal(Hashing.PasswordHashingSHA3(rawReceivedUsernamePassword), *passwordHash) {
-			return true, UsernamePassword
-		}
+	rawReceivedUsernamePassword := credentials[2+receivedUsernameLength+1 : numberOfReceivedBytes]
+	if socks5.AuthenticationMethod(receivedUsername, rawReceivedUsernamePassword) {
+		return true, UsernamePassword
 	}
 	return false, 0
 }

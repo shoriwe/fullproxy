@@ -1,23 +1,20 @@
 package SOCKS5
 
 import (
-	"bufio"
-	"net"
+	"errors"
 )
 
-func HandleCommandExecution(
-	clientConnection net.Conn,
-	clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer,
+func (socks5 *Socks5)HandleCommandExecution(
 	targetRequestedCommand *byte, targetAddressType *byte,
-	targetAddress *string, targetPort *string) {
+	targetAddress *string, targetPort *string) error {
 
 	switch *targetRequestedCommand {
 	case Connect:
-		PrepareConnect(clientConnection, clientConnectionReader, clientConnectionWriter, targetAddress, targetPort, targetAddressType)
+		return socks5.PrepareConnect(targetAddress, targetPort, targetAddressType)
 	case Bind:
-		PrepareBind(clientConnection, clientConnectionReader, clientConnectionWriter, targetAddress, targetPort, targetAddressType)
+		return socks5.PrepareBind(targetAddress, targetPort, targetAddressType)
 	case UDPAssociate:
-		PrepareUDPAssociate(clientConnection, clientConnectionReader, clientConnectionWriter, targetAddress, targetPort, targetAddressType)
+		return socks5.PrepareUDPAssociate(targetAddress, targetPort, targetAddressType)
 	}
+	return errors.New("unknown command")
 }

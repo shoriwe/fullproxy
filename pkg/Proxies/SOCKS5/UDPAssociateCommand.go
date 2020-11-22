@@ -1,12 +1,9 @@
 package SOCKS5
 
-import (
-	"net"
-)
+import "errors"
 
-func PrepareUDPAssociate(
-	clientConnection net.Conn, clientConnectionReader interface{},
-	clientConnectionWriter interface{}, targetAddress *string,
-	targetPort *string, targetAddressType *byte) {
-	_ = clientConnection.Close()
+func (socks5 *Socks5)PrepareUDPAssociate(targetAddress *string,
+	targetPort *string, targetAddressType *byte) error {
+	_ = socks5.ClientConnection.Close()
+	return errors.New("method not implemented yet")
 }
