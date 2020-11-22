@@ -11,7 +11,6 @@ import (
 	"os"
 )
 
-
 func main() {
 	numberOfArguments := len(os.Args)
 	if numberOfArguments == 1 {

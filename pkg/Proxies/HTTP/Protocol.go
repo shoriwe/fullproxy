@@ -7,6 +7,7 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/Hashing"
 	"github.com/shoriwe/FullProxy/pkg/MasterSlave"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
+	"gopkg.in/elazarl/goproxy.v1"
 	"log"
 	"net"
 	"net/http"
