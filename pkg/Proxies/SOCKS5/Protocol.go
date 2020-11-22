@@ -11,10 +11,7 @@ import (
 
 type Socks5 struct {
 	AuthenticationMethod ConnectionHandlers.AuthenticationMethod
-	ClientConnection net.Conn
-	ClientConnectionReader *bufio.Reader
-	ClientConnectionWriter *bufio.Writer
-	WantedAuthMethod byte
+	WantedAuthMethod     byte
 }
 
 func ReceiveTargetRequest(clientConnectionReader *bufio.Reader) (byte, byte, []byte, []byte) {
@@ -31,44 +28,45 @@ func ReceiveTargetRequest(clientConnectionReader *bufio.Reader) (byte, byte, []b
 	return 0, 0, nil, nil
 }
 
-func GetTargetAddressPort(targetRequestedCommand *byte, targetAddressType *byte, rawTargetAddress []byte, rawTargetPort []byte) (byte, string, string) {
-	if *targetRequestedCommand != 0 && *targetAddressType != 0 {
-		switch *targetAddressType {
+func GetTargetHostPort(targetRequestedCommand *byte, targetHostType *byte, rawTargetHost []byte, rawTargetPort []byte) (byte, string, string) {
+	if *targetRequestedCommand != 0 && *targetHostType != 0 {
+		switch *targetHostType {
 		case IPv4:
-			return *targetRequestedCommand, net.IPv4(rawTargetAddress[0], rawTargetAddress[1], rawTargetAddress[2], rawTargetAddress[3]).String(), new(big.Int).SetBytes(rawTargetPort).String()
+			return *targetRequestedCommand, net.IPv4(rawTargetHost[0], rawTargetHost[1], rawTargetHost[2], rawTargetHost[3]).String(), new(big.Int).SetBytes(rawTargetPort).String()
 		case IPv6:
-			return *targetRequestedCommand, Sockets.GetIPv6(rawTargetAddress), new(big.Int).SetBytes(rawTargetPort).String()
+			return *targetRequestedCommand, Sockets.GetIPv6(rawTargetHost), new(big.Int).SetBytes(rawTargetPort).String()
 		case DomainName:
-			return *targetRequestedCommand, string(rawTargetAddress[1:]), new(big.Int).SetBytes(rawTargetPort).String()
+			return *targetRequestedCommand, string(rawTargetHost[1:]), new(big.Int).SetBytes(rawTargetPort).String()
 		}
 	}
 	return ConnectionRefused, "", ""
 }
 
-func (socks5 *Socks5)Handle(
+func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod ConnectionHandlers.AuthenticationMethod) error {
+	socks5.AuthenticationMethod = authenticationMethod
+	return nil
+}
+
+func (socks5 *Socks5) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
 
-	socks5.ClientConnection = clientConnection
-	socks5.ClientConnectionReader = clientConnectionReader
-	socks5.ClientConnectionWriter = clientConnectionWriter
-
 	var targetRequestedCommand byte
 
 	// Receive connection
-	clientHasCompatibleAuthMethods := socks5.GetClientAuthenticationImplementedMethods()
+	clientHasCompatibleAuthMethods := socks5.GetClientAuthenticationImplementedMethods(clientConnectionReader, clientConnectionWriter)
 	if clientHasCompatibleAuthMethods {
-		var targetAddress string
+		var targetHost string
 		var targetPort string
-		rawTargetRequestedCommand, targetAddressType, rawTargetAddress, rawTargetPort := ReceiveTargetRequest(
+		rawTargetRequestedCommand, targetHostType, rawTargetHost, rawTargetPort := ReceiveTargetRequest(
 			clientConnectionReader)
-		targetRequestedCommand, targetAddress, targetPort = GetTargetAddressPort(
-			&rawTargetRequestedCommand, &targetAddressType,
-			rawTargetAddress, rawTargetPort)
+		targetRequestedCommand, targetHost, targetPort = GetTargetHostPort(
+			&rawTargetRequestedCommand, &targetHostType,
+			rawTargetHost, rawTargetPort)
 		if targetRequestedCommand != ConnectionRefused {
-			return socks5.HandleCommandExecution(&targetRequestedCommand,
-				&targetAddressType, &targetAddress, &targetPort)
+			return socks5.HandleCommandExecution(clientConnection, clientConnectionReader, clientConnectionWriter,
+				&targetRequestedCommand, &targetHostType, &targetHost, &targetPort)
 		}
 	}
 	var finalError string
@@ -76,7 +74,7 @@ func (socks5 *Socks5)Handle(
 		finalError = "No compatible auth methods found"
 		_ = clientConnection.Close()
 	} else if targetRequestedCommand == ConnectionRefused {
-		finalError = "connection refused to target address"
+		finalError = "connection refused to target host"
 	}
 	return errors.New(finalError)
 }

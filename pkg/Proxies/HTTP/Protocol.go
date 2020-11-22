@@ -13,9 +13,33 @@ import (
 	"strings"
 )
 
+type CustomResponseWriter struct {
+	httptest.ResponseRecorder
+	http.Hijacker
+	ClientConnection net.Conn
+	ClientReadWriter *bufio.ReadWriter
+}
+
+func (customResponseWriter *CustomResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return customResponseWriter.ClientConnection, customResponseWriter.ClientReadWriter, nil
+}
+
+func CreateCustomResponseWriter(
+	clientConnection net.Conn,
+	clientConnectionReader *bufio.Reader,
+	clientConnectionWriter *bufio.Writer) *CustomResponseWriter {
+	slaveResponseWriter := new(CustomResponseWriter)
+	slaveResponseWriter.Body = new(bytes.Buffer)
+	slaveResponseWriter.Code = 200
+	slaveResponseWriter.ClientConnection = clientConnection
+	slaveResponseWriter.ClientReadWriter = bufio.NewReadWriter(
+		clientConnectionReader,
+		clientConnectionWriter)
+	return slaveResponseWriter
+}
+
 type HTTP struct {
 	AuthenticationMethod ConnectionHandlers.AuthenticationMethod
-	Slave                bool
 	ProxyController      *goproxy.ProxyHttpServer
 }
 
@@ -60,29 +84,4 @@ func (httpProtocol *HTTP) Handle(
 	}
 	_ = clientConnection.Close()
 	return parsingError
-}
-
-type CustomResponseWriter struct {
-	httptest.ResponseRecorder
-	http.Hijacker
-	ClientConnection net.Conn
-	ClientReadWriter *bufio.ReadWriter
-}
-
-func (customResponseWriter *CustomResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return customResponseWriter.ClientConnection, customResponseWriter.ClientReadWriter, nil
-}
-
-func CreateCustomResponseWriter(
-	clientConnection net.Conn,
-	clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer) *CustomResponseWriter {
-	slaveResponseWriter := new(CustomResponseWriter)
-	slaveResponseWriter.Body = new(bytes.Buffer)
-	slaveResponseWriter.Code = 200
-	slaveResponseWriter.ClientConnection = clientConnection
-	slaveResponseWriter.ClientReadWriter = bufio.NewReadWriter(
-		clientConnectionReader,
-		clientConnectionWriter)
-	return slaveResponseWriter
 }

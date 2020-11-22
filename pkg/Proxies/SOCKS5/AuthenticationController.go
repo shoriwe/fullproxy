@@ -1,15 +1,16 @@
 package SOCKS5
 
 import (
+	"bufio"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 )
 
-func (socks5 *Socks5)GetClientAuthenticationImplementedMethods() bool {
+func (socks5 *Socks5) GetClientAuthenticationImplementedMethods(clientConnectionReader *bufio.Reader, clientConnectionWriter *bufio.Writer) bool {
 
 	var foundMethod = InvalidMethod
-	numberOfReceivedBytes, clientImplementedMethods, _ := Sockets.Receive(socks5.ClientConnectionReader, 1024)
+	numberOfReceivedBytes, clientImplementedMethods, _ := Sockets.Receive(clientConnectionReader, 1024)
 	if clientImplementedMethods == nil {
-		_, _ = Sockets.Send(socks5.ClientConnectionWriter, &NoSupportedMethods)
+		_, _ = Sockets.Send(clientConnectionWriter, &NoSupportedMethods)
 		return false
 	} else if numberOfReceivedBytes >= 3 {
 		if clientImplementedMethods[0] == Version && int(clientImplementedMethods[1]) == numberOfReceivedBytes-2 {
@@ -24,26 +25,26 @@ func (socks5 *Socks5)GetClientAuthenticationImplementedMethods() bool {
 
 	switch foundMethod {
 	case UsernamePassword:
-		_, connectionError := Sockets.Send(socks5.ClientConnectionWriter, &UsernamePasswordSupported)
+		_, connectionError := Sockets.Send(clientConnectionWriter, &UsernamePasswordSupported)
 		if connectionError == nil {
-			if success, authenticationProtocol := socks5.HandleUsernamePasswordAuthentication(); success && authenticationProtocol == UsernamePassword {
-				_, connectionError = Sockets.Send(socks5.ClientConnectionWriter, &UsernamePasswordSucceededResponse)
+			if success, authenticationProtocol := socks5.HandleUsernamePasswordAuthentication(clientConnectionReader); success && authenticationProtocol == UsernamePassword {
+				_, connectionError = Sockets.Send(clientConnectionWriter, &UsernamePasswordSucceededResponse)
 				authResult := connectionError == nil
 				/*
-				if connectionError == nil {
-					log.Print("Login failed with invalid credentials from: ", clientAddress)
-				}
-				log.Print("Login succeeded from: ", clientAddress)
-				 */
+					if connectionError == nil {
+						log.Print("Login failed with invalid credentials from: ", clientHost)
+					}
+					log.Print("Login succeeded from: ", clientHost)
+				*/
 				return authResult
 			}
-			_, _ = Sockets.Send(socks5.ClientConnectionWriter, &AuthenticationFailed)
+			_, _ = Sockets.Send(clientConnectionWriter, &AuthenticationFailed)
 		}
 	case NoAuthRequired:
-		_, connectionError := Sockets.Send(socks5.ClientConnectionWriter, &NoAuthRequiredSupported)
+		_, connectionError := Sockets.Send(clientConnectionWriter, &NoAuthRequiredSupported)
 		return connectionError == nil
 	default:
-		_, _ = Sockets.Send(socks5.ClientConnectionWriter, &NoSupportedMethods)
+		_, _ = Sockets.Send(clientConnectionWriter, &NoSupportedMethods)
 	}
 	return false
 }

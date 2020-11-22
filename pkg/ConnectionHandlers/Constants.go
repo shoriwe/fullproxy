@@ -3,6 +3,8 @@ package ConnectionHandlers
 import (
 	"bufio"
 	"crypto/tls"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
+	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"net"
 )
 
@@ -22,4 +24,20 @@ type AuthenticationMethod func(username []byte, password []byte) bool
 type ProxyProtocol interface {
 	SetAuthenticationMethod(AuthenticationMethod) error
 	Handle(net.Conn, *bufio.Reader, *bufio.Writer) error
+}
+
+func StartGeneralProxying(clientConnection net.Conn, targetConnection net.Conn) {
+	clientConnectionReader, clientConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(clientConnection)
+	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
+	if targetConnectionReader != nil && targetConnectionWriter != nil {
+		portProxy := Basic.PortProxy{
+			TargetConnection:       targetConnection,
+			TargetConnectionReader: targetConnectionReader,
+			TargetConnectionWriter: targetConnectionWriter,
+		}
+		portProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
+	} else {
+		_ = clientConnection.Close()
+		_ = targetConnection.Close()
+	}
 }

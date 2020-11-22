@@ -24,16 +24,16 @@ func Receive(connectionReader *bufio.Reader, bufferSize int) (int, []byte, error
 	return NumberOfReceivedBytes, buffer, receivedBytesError
 }
 
-func Connect(address *string, port *string) (net.Conn, error) {
-	return net.Dial("tcp", *address+":"+*port)
+func Connect(host *string, port *string) (net.Conn, error) {
+	return net.Dial("tcp", *host+":"+*port)
 }
 
-func Bind(address *string, port *string) net.Listener {
+func Bind(host *string, port *string) net.Listener {
 	log.Print("Starting Master server")
-	server, BindingError := net.Listen("tcp", *address+":"+*port)
+	server, BindingError := net.Listen("tcp", *host+":"+*port)
 	if BindingError != nil {
 		log.Fatal("Something goes wrong: " + BindingError.Error())
 	}
-	log.Printf("Bind successfully in %s:%s", *address, *port)
+	log.Printf("Bind successfully in %s:%s", *host, *port)
 	return server
 }

@@ -10,7 +10,7 @@ const (
 	Connect      byte = 1
 	Bind         byte = 2
 	UDPAssociate byte = 3
-	// SOCKS valid address types
+	// SOCKS valid host types
 	IPv4       byte = 1
 	DomainName byte = 3
 	IPv6       byte = 4

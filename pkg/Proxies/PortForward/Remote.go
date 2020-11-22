@@ -3,7 +3,6 @@ package PortForward
 import (
 	"bufio"
 	"crypto/tls"
-	"fmt"
 	"github.com/shoriwe/FullProxy/pkg/ConnectionHandlers"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
@@ -39,16 +38,4 @@ func (remoteForward *RemoteForward) Handle(
 
 func (remoteForward *RemoteForward) SetAuthenticationMethod(_ ConnectionHandlers.AuthenticationMethod) error {
 	return nil
-}
-
-func StartRemotePortForward(localAddress *string, localPort *string, masterAddress *string, masterPort *string) {
-	if !(*localAddress == "" || *localPort == "" || *masterAddress == "" || *masterPort == "") {
-		remoteForward := RemoteForward{
-			MasterHost: *localAddress,
-			MasterPort: *localPort,
-		}
-		ConnectionHandlers.RemotePortForwardSlave(masterAddress, masterPort, localAddress, localPort, &remoteForward)
-	} else {
-		fmt.Println("All flags need to be in use")
-	}
 }

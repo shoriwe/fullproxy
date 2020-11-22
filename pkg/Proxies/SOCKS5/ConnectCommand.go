@@ -1,45 +1,48 @@
 package SOCKS5
 
 import (
+	"bufio"
 	"encoding/binary"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"net"
 )
 
-func (socks5 *Socks5)PrepareConnect(
-	targetAddress *string,
+func (socks5 *Socks5) PrepareConnect(
+	clientConnection net.Conn, clientConnectionReader *bufio.Reader,
+	clientConnectionWriter *bufio.Writer,
+	targetHost *string,
 	targetPort *string,
-	targetAddressType *byte) error {
+	targetHostType *byte) error {
 
-	targetConnection, connectionError := Sockets.Connect(targetAddress, targetPort) // new(big.Int).SetBytes(rawTargetPort).String())
+	targetConnection, connectionError := Sockets.Connect(targetHost, targetPort) // new(big.Int).SetBytes(rawTargetPort).String())
 	if connectionError == nil {
-		localAddressPort := targetConnection.LocalAddr().(*net.TCPAddr)
+		localHostPort := targetConnection.LocalAddr().(*net.TCPAddr)
 		localPort := make([]byte, 2)
-		binary.BigEndian.PutUint16(localPort, uint16(localAddressPort.Port))
-		response := []byte{Version, Succeeded, 0, *targetAddressType}
-		response = append(response[:], localAddressPort.IP[:]...)
+		binary.BigEndian.PutUint16(localPort, uint16(localHostPort.Port))
+		response := []byte{Version, Succeeded, 0, *targetHostType}
+		response = append(response[:], localHostPort.IP[:]...)
 		response = append(response[:], localPort[:]...)
-		_, connectionError = Sockets.Send(socks5.ClientConnectionWriter, &response)
+		_, connectionError = Sockets.Send(clientConnectionWriter, &response)
 		if connectionError == nil {
 			targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
 			portProxy := Basic.PortProxy{
-				TargetConnection: targetConnection,
+				TargetConnection:       targetConnection,
 				TargetConnectionReader: targetConnectionReader,
 				TargetConnectionWriter: targetConnectionWriter,
 			}
 			return portProxy.Handle(
-				socks5.ClientConnection,
-				socks5.ClientConnectionReader,
-				socks5.ClientConnectionWriter)
+				clientConnection,
+				clientConnectionReader,
+				clientConnectionWriter)
 		} else {
-			_ = socks5.ClientConnection.Close()
+			_ = clientConnection.Close()
 			_ = targetConnection.Close()
 			return connectionError
 		}
 	}
-	failResponse := []byte{Version, ConnectionRefused, 0, *targetAddressType, 0, 0}
-	_, _ = Sockets.Send(socks5.ClientConnectionWriter, &failResponse)
-	_ = socks5.ClientConnection.Close()
+	failResponse := []byte{Version, ConnectionRefused, 0, *targetHostType, 0, 0}
+	_, _ = Sockets.Send(clientConnectionWriter, &failResponse)
+	_ = clientConnection.Close()
 	return connectionError
 }

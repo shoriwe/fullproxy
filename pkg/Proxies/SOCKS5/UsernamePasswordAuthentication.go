@@ -1,11 +1,12 @@
 package SOCKS5
 
 import (
+	"bufio"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 )
 
-func (socks5 *Socks5)HandleUsernamePasswordAuthentication() (bool, byte) {
-	numberOfReceivedBytes, credentials, connectionError := Sockets.Receive(socks5.ClientConnectionReader, 1024)
+func (socks5 *Socks5) HandleUsernamePasswordAuthentication(clientConnectionReader *bufio.Reader) (bool, byte) {
+	numberOfReceivedBytes, credentials, connectionError := Sockets.Receive(clientConnectionReader, 1024)
 	if connectionError != nil {
 		return false, 0
 	}

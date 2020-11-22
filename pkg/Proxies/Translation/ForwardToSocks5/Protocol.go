@@ -2,6 +2,7 @@ package ForwardToSocks5
 
 import (
 	"bufio"
+	"github.com/shoriwe/FullProxy/pkg/ConnectionHandlers"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"golang.org/x/net/proxy"
@@ -9,20 +10,24 @@ import (
 )
 
 type ForwardToSocks5 struct {
-	TargetHost string
-	TargetPort string
+	TargetHost   string
+	TargetPort   string
 	Socks5Dialer proxy.Dialer
 }
 
-func (forwardToSocks5 *ForwardToSocks5)Handle(
+func (forwardToSocks5 *ForwardToSocks5) SetAuthenticationMethod(authenticationMethod ConnectionHandlers.AuthenticationMethod) error {
+	return nil
+}
+
+func (forwardToSocks5 *ForwardToSocks5) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
-	targetConnection, connectionError := forwardToSocks5.Socks5Dialer.Dial("tcp", forwardToSocks5.TargetHost + ":" + forwardToSocks5.TargetPort)
+	targetConnection, connectionError := forwardToSocks5.Socks5Dialer.Dial("tcp", forwardToSocks5.TargetHost+":"+forwardToSocks5.TargetPort)
 	if connectionError == nil {
 		targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
 		portProxy := Basic.PortProxy{
-			TargetConnection: targetConnection,
+			TargetConnection:       targetConnection,
 			TargetConnectionReader: targetConnectionReader,
 			TargetConnectionWriter: targetConnectionWriter,
 		}
