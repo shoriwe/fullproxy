@@ -12,7 +12,6 @@ import (
 	"time"
 )
 
-
 func setupControlCSignal(server net.Listener, masterConnection net.Conn) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -28,10 +27,12 @@ func startGeneralProxying(clientConnection net.Conn, targetConnection net.Conn) 
 	clientConnectionReader, clientConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(clientConnection)
 	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
 	if targetConnectionReader != nil && targetConnectionWriter != nil {
-		Basic.Proxy(
-			clientConnection, targetConnection,
-			clientConnectionReader, clientConnectionWriter,
-			targetConnectionReader, targetConnectionWriter)
+		portProxy := Basic.PortProxy{
+			TargetConnection:       targetConnection,
+			TargetConnectionReader: targetConnectionReader,
+			TargetConnectionWriter: targetConnectionWriter,
+		}
+		portProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 	} else {
 		_ = clientConnection.Close()
 		_ = targetConnection.Close()

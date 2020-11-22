@@ -8,14 +8,13 @@ import (
 	"time"
 )
 
-
 func ConnectToMasterServer(masterAddress *string, masterPort *string) (net.Conn, *tls.Config) {
 	tlsConfiguration, configurationCreationError := Sockets.CreateSlaveTLSConfiguration()
 	if configurationCreationError == nil {
 		log.Printf("Trying to connecto to %s:%s", *masterAddress, *masterPort)
-		masterConnection := Sockets.TLSConnect(masterAddress, masterPort, tlsConfiguration)
+		masterConnection, connectionError := Sockets.TLSConnect(masterAddress, masterPort, tlsConfiguration)
 		log.Printf("Successfully connected to %s:%s", *masterAddress, *masterPort)
-		if masterConnection != nil {
+		if connectionError == nil {
 			return masterConnection, tlsConfiguration
 		}
 		log.Fatal("Could not connect to the master")
@@ -33,9 +32,9 @@ func GeneralSlave(masterAddress *string, masterPort *string, protocol ProxyProto
 		if connectionError == nil {
 			if NumberOfReceivedBytes == 1 {
 				if buffer[0] == NewConnection[0] {
-					clientConnection := Sockets.TLSConnect(masterAddress, masterPort, tlsConfiguration)
+					clientConnection, connectionError := Sockets.TLSConnect(masterAddress, masterPort, tlsConfiguration)
 
-					if clientConnection != nil {
+					if connectionError == nil {
 						clientConnectionReader, clientConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(clientConnection)
 						if clientConnectionReader != nil && clientConnectionWriter != nil {
 							go protocol.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
@@ -73,8 +72,8 @@ func RemotePortForwardSlave(
 					if numberOfBytesReceived == 1 {
 						switch response[0] {
 						case NewConnection[0]:
-							targetConnection := Sockets.TLSConnect(masterAddress, masterPort, tlsConfiguration)
-							if targetConnection != nil {
+							targetConnection, connectionError := Sockets.TLSConnect(masterAddress, masterPort, tlsConfiguration)
+							if connectionError == nil {
 								go startGeneralProxying(clientConnection, targetConnection)
 							} else {
 								_ = clientConnection.Close()

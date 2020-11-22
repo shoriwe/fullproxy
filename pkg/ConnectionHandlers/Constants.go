@@ -17,9 +17,9 @@ type MasterFunction func(server net.Listener, masterConnection net.Conn, tlsConf
 
 type ProxyFunction func(conn net.Conn, connReader *bufio.Reader, connWriter *bufio.Writer, args ...interface{})
 
-type AuthenticationFunction func(username []byte, password []byte) bool
+type AuthenticationMethod func(username []byte, password []byte) bool
 
-type ProxyProtocol interface{
-	SetAuthenticationMethod(AuthenticationFunction) error
+type ProxyProtocol interface {
+	SetAuthenticationMethod(AuthenticationMethod) error
 	Handle(net.Conn, *bufio.Reader, *bufio.Writer) error
 }
