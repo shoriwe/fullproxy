@@ -11,12 +11,12 @@ import (
 )
 
 type RemoteForward struct {
-	MasterHost string
-	MasterPort string
+	MasterHost       string
+	MasterPort       string
 	TLSConfiguration *tls.Config
 }
 
-func (remoteForward *RemoteForward)Handle(
+func (remoteForward *RemoteForward) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
@@ -27,7 +27,7 @@ func (remoteForward *RemoteForward)Handle(
 	if connectionError == nil {
 		targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
 		portProxy := Basic.PortProxy{
-			TargetConnection: targetConnection,
+			TargetConnection:       targetConnection,
 			TargetConnectionReader: targetConnectionReader,
 			TargetConnectionWriter: targetConnectionWriter,
 		}
@@ -37,7 +37,7 @@ func (remoteForward *RemoteForward)Handle(
 	return connectionError
 }
 
-func (remoteForward *RemoteForward)SetAuthenticationMethod(_ ConnectionHandlers.AuthenticationFunction) error {
+func (remoteForward *RemoteForward) SetAuthenticationMethod(_ ConnectionHandlers.AuthenticationMethod) error {
 	return nil
 }
 
