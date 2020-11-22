@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-
 func HandleReadWrite(
 	sourceConnection net.Conn,
 	sourceReader *bufio.Reader,
@@ -56,13 +55,13 @@ func HandleReadWrite(
 }
 
 type PortProxy struct {
-	TargetConnection net.Conn
+	TargetConnection       net.Conn
 	TargetConnectionReader *bufio.Reader
 	TargetConnectionWriter *bufio.Writer
-	ConnectionAlive bool
+	ConnectionAlive        bool
 }
 
-func (portProxy *PortProxy)Handle(
+func (portProxy *PortProxy) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
