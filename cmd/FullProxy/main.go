@@ -3,11 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/shoriwe/FullProxy/internal/ArgumentParser"
-	"github.com/shoriwe/FullProxy/pkg/MasterSlave"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/HTTP"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/PortForward"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/SOCKS5"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/Translation/ForwardToSocks5"
+	"github.com/shoriwe/FullProxy/internal/ProxiesSetup"
+	"github.com/shoriwe/FullProxy/pkg/ConnectionHandlers/Master"
 	"os"
 )
 
@@ -19,20 +16,20 @@ func main() {
 	}
 	switch os.Args[1] {
 	case "socks5":
-		address, port, username, password, slave := ArgumentParser.ParseSocks5Arguments()
-		SOCKS5.StartSocks5(address, port, slave, &username, &password)
+		host, port, username, password, slave := ArgumentParser.ParseSocks5Arguments()
+		ProxiesSetup.SetupSocks5(host, port, slave, &username, &password)
 	case "http":
-		address, port, username, password, slave, tls := ArgumentParser.HTTPArguments()
-		HTTP.StartHTTP(address, port, &username, &password, slave, tls)
+		host, port, username, password, slave, tls := ArgumentParser.HTTPArguments()
+		ProxiesSetup.SetupHTTP(host, port, slave, tls, &username, &password)
 	case "local-forward":
-		address, port, masterAddress, masterPort := ArgumentParser.LocalPortForwardArguments()
-		PortForward.StartLocalPortForward(address, port, masterAddress, masterPort)
+		host, port, masterHost, masterPort := ArgumentParser.LocalPortForwardArguments()
+		ProxiesSetup.SetupLocalForward(host, port, masterHost, masterPort)
 	case "remote-forward":
-		localAddress, localPort, masterAddress, masterPort := ArgumentParser.RemotePortForwardArguments()
-		PortForward.StartRemotePortForward(localAddress, localPort, masterAddress, masterPort)
+		localHost, localPort, masterHost, masterPort := ArgumentParser.RemotePortForwardArguments()
+		ProxiesSetup.SetupRemoteForward(localHost, localPort, masterHost, masterPort)
 	case "master":
-		masterAddress, masterPort, remoteAddress, remotePort := ArgumentParser.ParseMasterArguments()
-		MasterSlave.Master(masterAddress, masterPort, remoteAddress, remotePort)
+		masterHost, masterPort, remoteHost, remotePort := ArgumentParser.ParseMasterArguments()
+		Master.Master(masterHost, masterPort, remoteHost, remotePort)
 	case "translate":
 		if numberOfArguments == 2 {
 			_, _ = fmt.Fprintln(os.Stderr, "Try:\n", os.Args[0], " translate help")
@@ -40,8 +37,8 @@ func main() {
 		}
 		switch os.Args[2] {
 		case "port_forward-socks5":
-			bindAddress, bindPort, socks5Address, socks5Port, username, password, targetAddress, targetPort := ArgumentParser.ParseForwardToSocks5Arguments()
-			ForwardToSocks5.StartForwardToSocks5Translation(bindAddress, bindPort, socks5Address, socks5Port, username, password, targetAddress, targetPort)
+			bindHost, bindPort, socks5Host, socks5Port, username, password, targetHost, targetPort := ArgumentParser.ParseForwardToSocks5Arguments()
+			ProxiesSetup.SetupForwardSocks5(bindHost, bindPort, socks5Host, socks5Port, username, password, targetHost, targetPort)
 		case "help":
 			ArgumentParser.ShowTranslateHelpMessage()
 		default:
