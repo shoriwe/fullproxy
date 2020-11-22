@@ -1,8 +1,7 @@
-package MasterSlave
+package ConnectionHandlers
 
 import (
 	"crypto/tls"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"log"
@@ -13,7 +12,6 @@ import (
 	"time"
 )
 
-type MasterFunction func(server net.Listener, masterConnection net.Conn, tlsConfiguration *tls.Config, args interface{})
 
 func setupControlCSignal(server net.Listener, masterConnection net.Conn) {
 	c := make(chan os.Signal, 1)
@@ -27,8 +25,8 @@ func setupControlCSignal(server net.Listener, masterConnection net.Conn) {
 }
 
 func startGeneralProxying(clientConnection net.Conn, targetConnection net.Conn) {
-	clientConnectionReader, clientConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(clientConnection)
-	targetConnectionReader, targetConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(targetConnection)
+	clientConnectionReader, clientConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(clientConnection)
+	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
 	if targetConnectionReader != nil && targetConnectionWriter != nil {
 		Basic.Proxy(
 			clientConnection, targetConnection,
@@ -70,7 +68,7 @@ func masterHandler(address *string, port *string, masterFunction MasterFunction,
 
 func basicMasterServer(server net.Listener, masterConnection net.Conn, tlsConfiguration *tls.Config, _ interface{}) {
 	masterAddress := strings.Split(masterConnection.RemoteAddr().String(), ":")[0]
-	_, masterConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(masterConnection)
+	_, masterConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(masterConnection)
 	for {
 		clientConnection, connectionError := server.Accept()
 		if connectionError != nil {
@@ -100,15 +98,15 @@ func RemotePortForwardMasterServer(server net.Listener, masterConnection net.Con
 	masterAddress := strings.Split(masterConnection.RemoteAddr().String(), ":")[0]
 	remoteAddress := (args.([]interface{}))[0].(*string)
 	remotePort := (args.([]interface{}))[1].(*string)
-	masterConnectionReader, masterConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(masterConnection)
+	masterConnectionReader, masterConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(masterConnection)
 	for {
 		_ = masterConnection.SetReadDeadline(time.Now().Add(20 * time.Second))
 		numberOfBytesReceived, buffer, connectionError := Sockets.Receive(masterConnectionReader, 1)
 		if connectionError == nil {
 			if numberOfBytesReceived == 1 {
 				if buffer[0] == NewConnection[0] {
-					targetConnection := Sockets.Connect(remoteAddress, remotePort)
-					if targetConnection != nil {
+					targetConnection, connectionError := Sockets.Connect(remoteAddress, remotePort)
+					if connectionError == nil {
 						_, _ = Sockets.Send(masterConnectionWriter, &NewConnection)
 
 						clientConnection, connectionError := server.Accept()

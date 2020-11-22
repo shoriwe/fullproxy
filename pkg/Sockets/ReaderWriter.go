@@ -1,4 +1,4 @@
-package ConnectionStructures
+package Sockets
 
 import (
 	"bufio"

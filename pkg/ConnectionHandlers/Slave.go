@@ -1,16 +1,13 @@
-package MasterSlave
+package ConnectionHandlers
 
 import (
-	"bufio"
 	"crypto/tls"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"log"
 	"net"
 	"time"
 )
 
-type Function func(conn net.Conn, connReader *bufio.Reader, connWriter *bufio.Writer, args ...interface{})
 
 func ConnectToMasterServer(masterAddress *string, masterPort *string) (net.Conn, *tls.Config) {
 	tlsConfiguration, configurationCreationError := Sockets.CreateSlaveTLSConfiguration()
@@ -27,9 +24,9 @@ func ConnectToMasterServer(masterAddress *string, masterPort *string) (net.Conn,
 	return nil, nil
 }
 
-func GeneralSlave(masterAddress *string, masterPort *string, function Function, args ...interface{}) {
+func GeneralSlave(masterAddress *string, masterPort *string, protocol ProxyProtocol) {
 	masterConnection, tlsConfiguration := ConnectToMasterServer(masterAddress, masterPort)
-	masterConnectionReader, _ := ConnectionStructures.CreateSocketConnectionReaderWriter(masterConnection)
+	masterConnectionReader, _ := Sockets.CreateSocketConnectionReaderWriter(masterConnection)
 	for {
 		_ = masterConnection.SetReadDeadline(time.Now().Add(20 * time.Second))
 		NumberOfReceivedBytes, buffer, connectionError := Sockets.Receive(masterConnectionReader, 1024)
@@ -39,9 +36,9 @@ func GeneralSlave(masterAddress *string, masterPort *string, function Function, 
 					clientConnection := Sockets.TLSConnect(masterAddress, masterPort, tlsConfiguration)
 
 					if clientConnection != nil {
-						clientConnectionReader, clientConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(clientConnection)
+						clientConnectionReader, clientConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(clientConnection)
 						if clientConnectionReader != nil && clientConnectionWriter != nil {
-							go function(clientConnection, clientConnectionReader, clientConnectionWriter, args...)
+							go protocol.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 						} else {
 							_ = clientConnection.Close()
 						}
@@ -57,10 +54,13 @@ func GeneralSlave(masterAddress *string, masterPort *string, function Function, 
 	}
 }
 
-func RemotePortForwardSlave(masterAddress *string, masterPort *string, localAddress *string, localPort *string) {
+func RemotePortForwardSlave(
+	masterAddress *string, masterPort *string,
+	localAddress *string, localPort *string,
+	protocol ProxyProtocol) {
 	localServer := Sockets.Bind(localAddress, localPort)
 	masterConnection, tlsConfiguration := ConnectToMasterServer(masterAddress, masterPort)
-	masterConnectionReader, masterConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(masterConnection)
+	masterConnectionReader, masterConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(masterConnection)
 	for {
 		clientConnection, connectionError := localServer.Accept()
 		if connectionError == nil {
