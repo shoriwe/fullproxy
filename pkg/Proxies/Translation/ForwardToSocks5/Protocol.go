@@ -2,54 +2,32 @@ package ForwardToSocks5
 
 import (
 	"bufio"
-	"fmt"
-	"github.com/shoriwe/FullProxy/pkg/BindServer"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionStructures"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
+	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"golang.org/x/net/proxy"
-	"log"
 	"net"
-	"os"
 )
 
-func CreateTranslationSession(
-	conn net.Conn,
-	connReader *bufio.Reader,
-	connWriter *bufio.Writer,
-	args ...interface{}) {
-	targetConnection, connectionError := args[0].(proxy.Dialer).Dial("tcp", args[1].(string))
-	if connectionError == nil {
-		targetConnectionReader, targetConnectionWriter := ConnectionStructures.CreateSocketConnectionReaderWriter(targetConnection)
-		Basic.Proxy(conn, targetConnection, connReader, connWriter, targetConnectionReader, targetConnectionWriter)
-	} else {
-		log.Print(connectionError)
-		_ = conn.Close()
-	}
-
+type ForwardToSocks5 struct {
+	TargetHost string
+	TargetPort string
+	Socks5Dialer proxy.Dialer
 }
 
-func StartForwardToSocks5Translation(bindAddress *string, bindPort *string, socks5Address *string, socks5Port, username *string, password *string, targetAddress *string, targetPort *string) {
-	if len(*targetAddress) > 0 && len(*targetPort) > 0 {
-		var connectionDialer proxy.Dialer
-		var connectionError error
-		if len(*username) > 0 && len(*password) > 0 {
-			auth := new(proxy.Auth)
-			auth.User = *username
-			auth.Password = *password
-			connectionDialer, connectionError = proxy.SOCKS5("tcp", *socks5Address+":"+*socks5Port, auth, proxy.Direct)
-		} else {
-			connectionDialer, connectionError = proxy.SOCKS5("tcp", *socks5Address+":"+*socks5Port, nil, proxy.Direct)
+func (forwardToSocks5 *ForwardToSocks5)Handle(
+	clientConnection net.Conn,
+	clientConnectionReader *bufio.Reader,
+	clientConnectionWriter *bufio.Writer) error {
+	targetConnection, connectionError := forwardToSocks5.Socks5Dialer.Dial("tcp", forwardToSocks5.TargetHost + ":" + forwardToSocks5.TargetPort)
+	if connectionError == nil {
+		targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
+		portProxy := Basic.PortProxy{
+			TargetConnection: targetConnection,
+			TargetConnectionReader: targetConnectionReader,
+			TargetConnectionWriter: targetConnectionWriter,
 		}
-
-		if connectionError == nil {
-			log.Print("Starting translation (Forward --> SOCKS5)")
-			log.Printf("Targeting: %s:%s", *targetAddress, *targetPort)
-			log.Printf("With the SOCKS5 tunnel: %s:%s", *socks5Address, *socks5Port)
-			BindServer.Bind(bindAddress, bindPort, CreateTranslationSession, connectionDialer, *targetAddress+":"+*targetPort)
-		} else {
-			log.Print(connectionError)
-		}
-	} else {
-		_, _ = fmt.Fprintf(os.Stderr, "Some flags are missing; please set \"-target-address\" and \"-target-port\"\n\nFor more information use:\n\t%s translate port_forward-socks5 -help\n", os.Args[0])
+		return portProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 	}
+	_ = clientConnection.Close()
+	return connectionError
 }
