@@ -2,10 +2,10 @@ package SOCKS5
 
 import (
 	"bufio"
-	"github.com/shoriwe/FullProxy/src/BindServer"
-	"github.com/shoriwe/FullProxy/src/Hashing"
-	"github.com/shoriwe/FullProxy/src/MasterSlave"
-	"github.com/shoriwe/FullProxy/src/Sockets"
+	"github.com/shoriwe/FullProxy/pkg/BindServer"
+	"github.com/shoriwe/FullProxy/pkg/Hashing"
+	"github.com/shoriwe/FullProxy/pkg/MasterSlave"
+	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"log"
 	"math/big"
 	"net"

@@ -2,9 +2,9 @@ package MasterSlave
 
 import (
 	"crypto/tls"
-	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
-	"github.com/shoriwe/FullProxy/src/Proxies/Basic"
-	"github.com/shoriwe/FullProxy/src/Sockets"
+	"github.com/shoriwe/FullProxy/pkg/ConnectionStructures"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
+	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"log"
 	"net"
 	"os"

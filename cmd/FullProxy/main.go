@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/shoriwe/FullProxy/src/ArgumentParser"
-	"github.com/shoriwe/FullProxy/src/MasterSlave"
-	"github.com/shoriwe/FullProxy/src/Proxies/HTTP"
-	"github.com/shoriwe/FullProxy/src/Proxies/PortForward"
-	"github.com/shoriwe/FullProxy/src/Proxies/SOCKS5"
-	"github.com/shoriwe/FullProxy/src/Proxies/Translation/ForwardToSocks5"
+	"github.com/shoriwe/FullProxy/internal/ArgumentParser"
+	"github.com/shoriwe/FullProxy/pkg/MasterSlave"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/HTTP"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/PortForward"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/SOCKS5"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/Translation/ForwardToSocks5"
 	"os"
 )
 

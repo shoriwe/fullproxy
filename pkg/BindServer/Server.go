@@ -2,7 +2,7 @@ package BindServer
 
 import (
 	"bufio"
-	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
+	"github.com/shoriwe/FullProxy/pkg/ConnectionStructures"
 	"log"
 	"net"
 )

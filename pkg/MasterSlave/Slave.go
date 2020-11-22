@@ -3,8 +3,8 @@ package MasterSlave
 import (
 	"bufio"
 	"crypto/tls"
-	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
-	"github.com/shoriwe/FullProxy/src/Sockets"
+	"github.com/shoriwe/FullProxy/pkg/ConnectionStructures"
+	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"log"
 	"net"
 	"time"

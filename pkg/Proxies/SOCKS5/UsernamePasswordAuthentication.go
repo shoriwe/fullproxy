@@ -3,8 +3,8 @@ package SOCKS5
 import (
 	"bufio"
 	"bytes"
-	"github.com/shoriwe/FullProxy/src/Hashing"
-	"github.com/shoriwe/FullProxy/src/Sockets"
+	"github.com/shoriwe/FullProxy/pkg/Hashing"
+	"github.com/shoriwe/FullProxy/pkg/Sockets"
 )
 
 func HandleUsernamePasswordAuthentication(

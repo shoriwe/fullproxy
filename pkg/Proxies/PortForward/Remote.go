@@ -2,7 +2,7 @@ package PortForward
 
 import (
 	"fmt"
-	"github.com/shoriwe/FullProxy/src/MasterSlave"
+	"github.com/shoriwe/FullProxy/pkg/MasterSlave"
 )
 
 func StartRemotePortForward(localAddress *string, localPort *string, masterAddress *string, masterPort *string) {

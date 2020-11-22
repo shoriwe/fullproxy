@@ -2,7 +2,7 @@ package SOCKS5
 
 import (
 	"bufio"
-	"github.com/shoriwe/FullProxy/src/Sockets"
+	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"log"
 )
 

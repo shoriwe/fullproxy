@@ -3,9 +3,9 @@ package ForwardToSocks5
 import (
 	"bufio"
 	"fmt"
-	"github.com/shoriwe/FullProxy/src/BindServer"
-	"github.com/shoriwe/FullProxy/src/ConnectionStructures"
-	"github.com/shoriwe/FullProxy/src/Proxies/Basic"
+	"github.com/shoriwe/FullProxy/pkg/BindServer"
+	"github.com/shoriwe/FullProxy/pkg/ConnectionStructures"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
 	"golang.org/x/net/proxy"
 	"log"
 	"net"

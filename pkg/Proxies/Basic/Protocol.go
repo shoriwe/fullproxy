@@ -2,7 +2,7 @@ package Basic
 
 import (
 	"bufio"
-	"github.com/shoriwe/FullProxy/src/Sockets"
+	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"net"
 	"time"
 )
