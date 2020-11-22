@@ -14,26 +14,26 @@ type LocalForward struct {
 	TargetPort string
 }
 
-func (localForward *LocalForward) SetAuthenticationMethod(_ ConnectionHandlers.AuthenticationFunction) error {
+func (localForward *LocalForward) SetAuthenticationMethod(_ ConnectionHandlers.AuthenticationMethod) error {
 	return nil
 }
 
-func (localForward *LocalForward)Handle(
+func (localForward *LocalForward) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer) error{
+	clientConnectionWriter *bufio.Writer) error {
 	targetConnection, connectionError := Sockets.Connect(&localForward.TargetHost, &localForward.TargetPort)
 	if connectionError == nil {
 		targetReader, targetWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
 		portProxy := Basic.PortProxy{
-			TargetConnection: targetConnection,
+			TargetConnection:       targetConnection,
 			TargetConnectionReader: targetReader,
 			TargetConnectionWriter: targetWriter,
 		}
 		return portProxy.Handle(
 			clientConnection,
 			clientConnectionReader, clientConnectionWriter,
-			)
+		)
 	}
 	_ = clientConnection.Close()
 	return connectionError
