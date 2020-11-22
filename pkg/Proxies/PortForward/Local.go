@@ -25,13 +25,17 @@ func (localForward *LocalForward)Handle(
 	targetConnection, connectionError := Sockets.Connect(&localForward.TargetHost, &localForward.TargetPort)
 	if connectionError == nil {
 		targetReader, targetWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-		Basic.Proxy(
-			clientConnection, targetConnection,
+		portProxy := Basic.PortProxy{
+			TargetConnection: targetConnection,
+			TargetConnectionReader: targetReader,
+			TargetConnectionWriter: targetWriter,
+		}
+		return portProxy.Handle(
+			clientConnection,
 			clientConnectionReader, clientConnectionWriter,
-			targetReader, targetWriter)
-	} else {
-		_ = clientConnection.Close()
+			)
 	}
+	_ = clientConnection.Close()
 	return connectionError
 }
 
