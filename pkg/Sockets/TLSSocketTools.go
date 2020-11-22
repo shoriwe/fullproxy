@@ -82,10 +82,10 @@ func UpgradeClientToTLS(connection net.Conn, configuration *tls.Config) net.Conn
 	return tls.Client(connection, configuration)
 }
 
-func TLSConnect(address *string, port *string, configuration *tls.Config) net.Conn {
-	connection := Connect(address, port)
+func TLSConnect(address *string, port *string, configuration *tls.Config) (net.Conn, error) {
+	connection, connectionError := Connect(address, port)
 	if connection != nil {
-		return UpgradeClientToTLS(connection, configuration)
+		return UpgradeClientToTLS(connection, configuration), nil
 	}
-	return nil
+	return nil, connectionError
 }

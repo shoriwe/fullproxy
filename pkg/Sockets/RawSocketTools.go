@@ -24,14 +24,8 @@ func Receive(connectionReader *bufio.Reader, bufferSize int) (int, []byte, error
 	return NumberOfReceivedBytes, buffer, receivedBytesError
 }
 
-func Connect(address *string, port *string) net.Conn {
-	var connection net.Conn
-	var connectionError error
-	connection, connectionError = net.Dial("tcp", *address+":"+*port)
-	if connectionError != nil {
-		return nil
-	}
-	return connection
+func Connect(address *string, port *string) (net.Conn, error) {
+	return net.Dial("tcp", *address+":"+*port)
 }
 
 func Bind(address *string, port *string) net.Listener {
