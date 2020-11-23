@@ -3,10 +3,11 @@ package ForwardToSocks5
 import (
 	"bufio"
 	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/PortProxy"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/RawProxy"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"golang.org/x/net/proxy"
 	"net"
+	"time"
 )
 
 type ForwardToSocks5 struct {
@@ -14,13 +15,25 @@ type ForwardToSocks5 struct {
 	TargetPort    string
 	Socks5Dialer  proxy.Dialer
 	LoggingMethod ConnectionControllers.LoggingMethod
+	Tries         int
+	Timeout       time.Duration
 }
 
 func (forwardToSocks5 *ForwardToSocks5) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
 	forwardToSocks5.LoggingMethod = loggingMethod
 	return nil
 }
-func (forwardToSocks5 *ForwardToSocks5) SetAuthenticationMethod(authenticationMethod ConnectionControllers.AuthenticationMethod) error {
+func (forwardToSocks5 *ForwardToSocks5) SetAuthenticationMethod(_ ConnectionControllers.AuthenticationMethod) error {
+	return nil
+}
+
+func (forwardToSocks5 *ForwardToSocks5) SetTries(tries int) error {
+	forwardToSocks5.Tries = tries
+	return nil
+}
+
+func (forwardToSocks5 *ForwardToSocks5) SetTimeout(timeout time.Duration) error {
+	forwardToSocks5.Timeout = timeout
 	return nil
 }
 
@@ -35,10 +48,12 @@ func (forwardToSocks5 *ForwardToSocks5) Handle(
 		return connectionError
 	}
 	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-	portProxy := PortProxy.PortProxy{
+	rawProxy := RawProxy.RawProxy{
 		TargetConnection:       targetConnection,
 		TargetConnectionReader: targetConnectionReader,
 		TargetConnectionWriter: targetConnectionWriter,
+		Tries:                  forwardToSocks5.Tries,
+		Timeout:                forwardToSocks5.Timeout,
 	}
-	return portProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
+	return rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 }

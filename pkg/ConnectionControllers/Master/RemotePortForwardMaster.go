@@ -19,6 +19,8 @@ type RemotePortForward struct {
 	RemoteHost             string
 	RemotePort             string
 	LoggingMethod          ConnectionControllers.LoggingMethod
+	Tries                  int
+	Timeout                time.Duration
 }
 
 func (remotePortForward *RemotePortForward) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
@@ -66,7 +68,9 @@ func (remotePortForward *RemotePortForward) Serve() error {
 		}
 		if strings.Split(clientConnection.RemoteAddr().String(), ":")[0] == remotePortForward.RemoteHost {
 			ConnectionControllers.LogData(remotePortForward.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
-			go ConnectionControllers.StartGeneralProxying(clientConnection, targetConnection)
+			go ConnectionControllers.StartGeneralProxying(
+				clientConnection, targetConnection,
+				ConnectionControllers.GetTries(remotePortForward.Tries), ConnectionControllers.GetTimeout(remotePortForward.Timeout))
 		} else {
 			ConnectionControllers.LogData(remotePortForward.LoggingMethod, "(Ignoring) Connection received from a non slave client: ", clientConnection.RemoteAddr().String())
 		}

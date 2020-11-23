@@ -1,12 +1,16 @@
-package SetupControllers
+package ControllersSetup
 
 import (
 	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers/Master"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"log"
+	"time"
 )
 
-func MasterRemote(masterHost *string, masterPort *string, remoteHost *string, remotePort *string) {
+func MasterRemote(
+	masterHost *string, masterPort *string,
+	remoteHost *string, remotePort *string,
+	tries int, timeout time.Duration) {
 	server, bindError := Sockets.Bind(masterHost, masterPort)
 	if bindError != nil {
 		log.Fatal(bindError)
@@ -30,10 +34,12 @@ func MasterRemote(masterHost *string, masterPort *string, remoteHost *string, re
 	controller.Server = server
 	controller.RemoteHost = *remoteHost
 	controller.RemotePort = *remotePort
+	controller.Tries = tries
+	controller.Timeout = timeout
 	log.Fatal(controller.Serve())
 }
 
-func MasterGeneral(host *string, port *string) {
+func MasterGeneral(host *string, port *string, tries int, timeout time.Duration) {
 	server, bindError := Sockets.Bind(host, port)
 	if bindError != nil {
 		log.Fatal(bindError)
@@ -56,6 +62,8 @@ func MasterGeneral(host *string, port *string) {
 	controller.MasterConnectionWriter = masterConnectionWriter
 	controller.TLSConfiguration = tlsConfiguration
 	controller.MasterHost = *host
+	controller.Tries = tries
+	controller.Timeout = timeout
 	controller.SetLoggingMethod(log.Print)
 	log.Fatal(controller.Serve())
 }

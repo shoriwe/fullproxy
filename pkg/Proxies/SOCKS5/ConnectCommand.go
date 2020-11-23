@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"encoding/binary"
 	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/PortProxy"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/RawProxy"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"net"
 )
@@ -39,12 +39,14 @@ func (socks5 *Socks5) PrepareConnect(
 	}
 	ConnectionControllers.LogData(socks5.LoggingMethod, "Client: ", clientConnection.RemoteAddr().String(), "  -> Target: ", targetConnection.RemoteAddr().String())
 	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-	portProxy := PortProxy.PortProxy{
+	rawProxy := RawProxy.RawProxy{
 		TargetConnection:       targetConnection,
 		TargetConnectionReader: targetConnectionReader,
 		TargetConnectionWriter: targetConnectionWriter,
+		Tries:                  ConnectionControllers.GetTries(socks5.Tries),
+		Timeout:                ConnectionControllers.GetTimeout(socks5.Timeout),
 	}
-	return portProxy.Handle(
+	return rawProxy.Handle(
 		clientConnection,
 		clientConnectionReader,
 		clientConnectionWriter)

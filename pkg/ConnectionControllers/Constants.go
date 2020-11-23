@@ -2,9 +2,10 @@ package ConnectionControllers
 
 import (
 	"bufio"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/PortProxy"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/RawProxy"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"net"
+	"time"
 )
 
 var (
@@ -20,6 +21,20 @@ func LogData(loggingMethod LoggingMethod, arguments ...interface{}) {
 	}
 }
 
+func GetTries(tries int) int {
+	if tries != 0 {
+		return tries
+	}
+	return 5
+}
+
+func GetTimeout(timeout time.Duration) time.Duration {
+	if timeout != 0 {
+		return timeout
+	}
+	return 10 * time.Second
+}
+
 type AuthenticationMethod func(username []byte, password []byte) bool
 
 type LoggingMethod func(args ...interface{})
@@ -27,24 +42,30 @@ type LoggingMethod func(args ...interface{})
 type ConnectionController interface {
 	SetLoggingMethod(LoggingMethod)
 	Serve() error
+	SetTries(int) error
+	SetTimeout(time.Duration) error
 }
 
 type ProxyProtocol interface {
 	SetLoggingMethod(LoggingMethod) error
 	SetAuthenticationMethod(AuthenticationMethod) error
 	Handle(net.Conn, *bufio.Reader, *bufio.Writer) error
+	SetTries(int) error
+	SetTimeout(time.Duration) error
 }
 
-func StartGeneralProxying(clientConnection net.Conn, targetConnection net.Conn) {
+func StartGeneralProxying(clientConnection net.Conn, targetConnection net.Conn, tries int, timeout time.Duration) {
 	clientConnectionReader, clientConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(clientConnection)
 	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
 	if targetConnectionReader != nil && targetConnectionWriter != nil {
-		portProxy := PortProxy.PortProxy{
+		rawProxy := RawProxy.RawProxy{
 			TargetConnection:       targetConnection,
 			TargetConnectionReader: targetConnectionReader,
 			TargetConnectionWriter: targetConnectionWriter,
+			Tries:                  tries,
+			Timeout:                timeout,
 		}
-		portProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
+		rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 	} else {
 		_ = clientConnection.Close()
 		_ = targetConnection.Close()
