@@ -2,7 +2,7 @@ package ForwardToSocks5
 
 import (
 	"bufio"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionHandlers"
+	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"golang.org/x/net/proxy"
@@ -15,7 +15,7 @@ type ForwardToSocks5 struct {
 	Socks5Dialer proxy.Dialer
 }
 
-func (forwardToSocks5 *ForwardToSocks5) SetAuthenticationMethod(authenticationMethod ConnectionHandlers.AuthenticationMethod) error {
+func (forwardToSocks5 *ForwardToSocks5) SetAuthenticationMethod(authenticationMethod ConnectionControllers.AuthenticationMethod) error {
 	return nil
 }
 
