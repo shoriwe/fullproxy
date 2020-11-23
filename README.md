@@ -160,7 +160,7 @@ This could be specially useful when you need to proxy a network that a machine h
 This protocol is simple, it receives proxying request in a specific proxying protocol to them forward them to another proxy with another protocol; this means that if you only speaks SOCKS5, you will be able to talk to an HTTP proxy using this "translator" 
 # Installation
 ## Pre-compiled binaries
-You can find pre-compiled binaries for windows and linux [Here](https://github.com/shoriwe/FullProxy/tree/master/build)
+You can find pre-compiled binaries for windows and linux [Here](https://github.com/shoriwe/FullProxy/releases)
 ## Build from source code
 Run this command:
 ```
