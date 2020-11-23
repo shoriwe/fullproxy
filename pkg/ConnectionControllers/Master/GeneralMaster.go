@@ -7,6 +7,7 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"net"
 	"strings"
+	"time"
 )
 
 type General struct {
@@ -17,6 +18,8 @@ type General struct {
 	TLSConfiguration       *tls.Config
 	Server                 net.Listener
 	LoggingMethod          ConnectionControllers.LoggingMethod
+	Tries int
+	Timeout time.Duration
 }
 
 func (general *General) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
@@ -48,7 +51,9 @@ func (general *General) Serve() error {
 		if strings.Split(targetConnection.RemoteAddr().String(), ":")[0] == general.MasterHost {
 			ConnectionControllers.LogData(general.LoggingMethod, "Target connection received from: ", targetConnection.RemoteAddr().String())
 			targetConnection = Sockets.UpgradeServerToTLS(targetConnection, general.TLSConfiguration)
-			go ConnectionControllers.StartGeneralProxying(clientConnection, targetConnection)
+			go ConnectionControllers.StartGeneralProxying(
+				clientConnection, targetConnection,
+				ConnectionControllers.GetTries(general.Tries), ConnectionControllers.GetTimeout(general.Timeout))
 		} else {
 			ConnectionControllers.LogData(general.LoggingMethod, "(Ignoring) Connection received from a non slave client: ", targetConnection.RemoteAddr().String())
 		}

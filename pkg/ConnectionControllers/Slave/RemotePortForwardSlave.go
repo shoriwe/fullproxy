@@ -19,6 +19,8 @@ type RemotePortForward struct {
 	MasterPort             string
 	TLSConfiguration       *tls.Config
 	LoggingMethod          ConnectionControllers.LoggingMethod
+	Tries int
+	Timeout time.Duration
 }
 
 func (remotePortForward *RemotePortForward) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
@@ -58,7 +60,9 @@ func (remotePortForward *RemotePortForward) Serve() error {
 				&remotePortForward.MasterPort,
 				remotePortForward.TLSConfiguration)
 			if connectionError == nil {
-				go ConnectionControllers.StartGeneralProxying(clientConnection, targetConnection)
+				go ConnectionControllers.StartGeneralProxying(
+					clientConnection, targetConnection,
+					ConnectionControllers.GetTries(remotePortForward.Tries), ConnectionControllers.GetTimeout(remotePortForward.Timeout))
 			} else {
 				_ = clientConnection.Close()
 				ConnectionControllers.LogData(remotePortForward.LoggingMethod, "Connectivity issues with master server")

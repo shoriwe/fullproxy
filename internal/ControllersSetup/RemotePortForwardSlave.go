@@ -4,11 +4,13 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers/Slave"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"log"
+	"time"
 )
 
 func RemotePortForwardSlave(
 	socks5Host *string, socks5Port *string,
-	bindHost *string, bindPort *string) {
+	bindHost *string, bindPort *string,
+	tries int, timeout time.Duration) {
 	tlsConfiguration, configurationError := Sockets.CreateSlaveTLSConfiguration()
 	if configurationError != nil {
 		log.Fatal(configurationError)
@@ -31,6 +33,8 @@ func RemotePortForwardSlave(
 	controller.MasterConnection = masterConnection
 	controller.MasterConnectionReader = masterConnectionReader
 	controller.MasterConnectionWriter = masterConnectionWriter
+	controller.Tries = tries
+	controller.Timeout = timeout
 	controller.SetLoggingMethod(log.Print)
 	log.Fatal(controller.Serve())
 }

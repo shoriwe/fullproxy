@@ -54,7 +54,7 @@ type ProxyProtocol interface {
 	SetTimeout(time.Duration) error
 }
 
-func StartGeneralProxying(clientConnection net.Conn, targetConnection net.Conn) {
+func StartGeneralProxying(clientConnection net.Conn, targetConnection net.Conn, tries int, timeout time.Duration) {
 	clientConnectionReader, clientConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(clientConnection)
 	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
 	if targetConnectionReader != nil && targetConnectionWriter != nil {
@@ -62,6 +62,8 @@ func StartGeneralProxying(clientConnection net.Conn, targetConnection net.Conn) 
 			TargetConnection:       targetConnection,
 			TargetConnectionReader: targetConnectionReader,
 			TargetConnectionWriter: targetConnectionWriter,
+			Tries: tries,
+			Timeout: timeout,
 		}
 		rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 	} else {

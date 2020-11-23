@@ -7,7 +7,13 @@ import (
 	"log"
 )
 
-func SetupHTTP(host *string, port *string, slave *bool, tls *bool, username []byte, password []byte) {
+func SetupHTTP(
+	host *string, port *string,
+	slave *bool, tls *bool, username []byte,
+	password []byte) {
+	if *tls {
+		log.Fatal("TLS is not implemented yet")
+	}
 	proxy := new(HTTP.HTTP)
 	proxyController := goproxy.NewProxyHttpServer()
 	proxy.ProxyController = proxyController
