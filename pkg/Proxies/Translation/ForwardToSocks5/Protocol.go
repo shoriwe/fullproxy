@@ -3,7 +3,7 @@ package ForwardToSocks5
 import (
 	"bufio"
 	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/PortProxy"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/RawProxy"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"golang.org/x/net/proxy"
 	"net"
@@ -48,12 +48,12 @@ func (forwardToSocks5 *ForwardToSocks5) Handle(
 		return connectionError
 	}
 	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-	portProxy := PortProxy.PortProxy{
+	rawProxy := RawProxy.RawProxy{
 		TargetConnection:       targetConnection,
 		TargetConnectionReader: targetConnectionReader,
 		TargetConnectionWriter: targetConnectionWriter,
 		Tries: forwardToSocks5.Tries,
 		Timeout: forwardToSocks5.Timeout,
 	}
-	return portProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
+	return rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 }

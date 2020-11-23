@@ -2,7 +2,7 @@ package ConnectionControllers
 
 import (
 	"bufio"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/PortProxy"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/RawProxy"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"net"
 	"time"
@@ -58,12 +58,12 @@ func StartGeneralProxying(clientConnection net.Conn, targetConnection net.Conn) 
 	clientConnectionReader, clientConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(clientConnection)
 	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
 	if targetConnectionReader != nil && targetConnectionWriter != nil {
-		portProxy := PortProxy.PortProxy{
+		rawProxy := RawProxy.RawProxy{
 			TargetConnection:       targetConnection,
 			TargetConnectionReader: targetConnectionReader,
 			TargetConnectionWriter: targetConnectionWriter,
 		}
-		portProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
+		rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 	} else {
 		_ = clientConnection.Close()
 		_ = targetConnection.Close()

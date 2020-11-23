@@ -1,4 +1,4 @@
-package SetupControllers
+package ControllersSetup
 
 import (
 	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers/Master"
