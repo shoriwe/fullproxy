@@ -6,7 +6,7 @@ import (
 	"net"
 )
 
-func (socks5 *Socks5) HandleCommandExecution(
+func (socks5 *Socks5) ExecuteCommand(
 	clientConnection net.Conn, clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer,
 	targetRequestedCommand *byte, targetHostType *byte,
