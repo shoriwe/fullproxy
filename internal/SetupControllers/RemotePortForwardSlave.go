@@ -31,5 +31,6 @@ func RemotePortForwardSlave(
 	controller.MasterConnection = masterConnection
 	controller.MasterConnectionReader = masterConnectionReader
 	controller.MasterConnectionWriter = masterConnectionWriter
+	controller.SetLoggingMethod(log.Print)
 	log.Fatal(controller.Serve())
 }

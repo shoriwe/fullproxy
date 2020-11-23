@@ -15,6 +15,7 @@ func SetupForwardSocks5(
 	proxyProtocol := new(ForwardToSocks5.ForwardToSocks5)
 	proxyProtocol.TargetHost = *targetHost
 	proxyProtocol.TargetPort = *targetPort
+	proxyProtocol.SetLoggingMethod(log.Print)
 	proxyAuth := new(proxy.Auth)
 	if len(*username) > 0 && len(*password) > 0 {
 		proxyAuth.User = *username
