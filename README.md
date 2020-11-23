@@ -37,7 +37,7 @@
 ```
 user@linux:~$ fullproxy help
 Usage:
-         fullproxy.exe PROTOCOL *FLAGS
+         fullproxy PROTOCOL *FLAGS
 
 Protocols available:
          - socks5
@@ -124,7 +124,7 @@ Usage of master:
 ```
 user@linux:~$ fullproxy translate help
 Usage:
-         fullproxy.exe translate TARGET *FLAGS
+         fullproxy translate TARGET *FLAGS
 
 TARGETS available:
          - port_forward-socks5
