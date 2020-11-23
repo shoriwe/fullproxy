@@ -2,12 +2,12 @@ package ProxiesSetup
 
 import (
 	"bytes"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionHandlers"
+	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
 )
 
-func BasicAuthentication(username *[]byte, password *[]byte) ConnectionHandlers.AuthenticationMethod {
+func BasicAuthentication(username []byte, password []byte) ConnectionControllers.AuthenticationMethod {
 	return func(clientUsername []byte, clientPassword []byte) bool {
-		return bytes.Equal(*username, clientUsername) && bytes.Equal(*password, clientPassword)
+		return bytes.Equal(username, clientUsername) && bytes.Equal(password, clientPassword)
 	}
 }
 
