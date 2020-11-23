@@ -3,14 +3,14 @@ package SOCKS5
 import (
 	"bufio"
 	"errors"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionHandlers"
+	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"math/big"
 	"net"
 )
 
 type Socks5 struct {
-	AuthenticationMethod ConnectionHandlers.AuthenticationMethod
+	AuthenticationMethod ConnectionControllers.AuthenticationMethod
 	WantedAuthMethod     byte
 }
 
@@ -42,7 +42,7 @@ func GetTargetHostPort(targetRequestedCommand *byte, targetHostType *byte, rawTa
 	return ConnectionRefused, "", ""
 }
 
-func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod ConnectionHandlers.AuthenticationMethod) error {
+func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod ConnectionControllers.AuthenticationMethod) error {
 	socks5.AuthenticationMethod = authenticationMethod
 	return nil
 }
