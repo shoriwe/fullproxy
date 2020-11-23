@@ -9,8 +9,8 @@ import (
 )
 
 type LocalForward struct {
-	TargetHost string
-	TargetPort string
+	TargetHost    string
+	TargetPort    string
 	LoggingMethod ConnectionControllers.LoggingMethod
 }
 

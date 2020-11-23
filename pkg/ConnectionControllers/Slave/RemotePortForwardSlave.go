@@ -18,7 +18,7 @@ type RemotePortForward struct {
 	MasterHost             string
 	MasterPort             string
 	TLSConfiguration       *tls.Config
-	LoggingMethod ConnectionControllers.LoggingMethod
+	LoggingMethod          ConnectionControllers.LoggingMethod
 }
 
 func (remotePortForward *RemotePortForward) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {

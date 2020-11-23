@@ -10,13 +10,13 @@ import (
 )
 
 type ForwardToSocks5 struct {
-	TargetHost   string
-	TargetPort   string
-	Socks5Dialer proxy.Dialer
+	TargetHost    string
+	TargetPort    string
+	Socks5Dialer  proxy.Dialer
 	LoggingMethod ConnectionControllers.LoggingMethod
 }
 
-func (forwardToSocks5 *ForwardToSocks5)SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
+func (forwardToSocks5 *ForwardToSocks5) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
 	forwardToSocks5.LoggingMethod = loggingMethod
 	return nil
 }

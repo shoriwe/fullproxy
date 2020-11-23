@@ -14,7 +14,7 @@ var (
 	UnknownOperation      = []byte{4}
 )
 
-func LogData(loggingMethod LoggingMethod, arguments...interface{}) {
+func LogData(loggingMethod LoggingMethod, arguments ...interface{}) {
 	if loggingMethod != nil {
 		loggingMethod(arguments...)
 	}
@@ -22,7 +22,7 @@ func LogData(loggingMethod LoggingMethod, arguments...interface{}) {
 
 type AuthenticationMethod func(username []byte, password []byte) bool
 
-type LoggingMethod func(args...interface{})
+type LoggingMethod func(args ...interface{})
 
 type ConnectionController interface {
 	SetLoggingMethod(LoggingMethod)

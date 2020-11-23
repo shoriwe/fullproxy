@@ -12,7 +12,7 @@ import (
 type Socks5 struct {
 	AuthenticationMethod ConnectionControllers.AuthenticationMethod
 	WantedAuthMethod     byte
-	LoggingMethod ConnectionControllers.LoggingMethod
+	LoggingMethod        ConnectionControllers.LoggingMethod
 }
 
 func ReceiveTargetRequest(clientConnectionReader *bufio.Reader) (byte, byte, []byte, []byte) {
@@ -86,5 +86,5 @@ func (socks5 *Socks5) Handle(
 		return errors.New(finalError)
 	}
 	return socks5.ExecuteCommand(clientConnection, clientConnectionReader, clientConnectionWriter,
-			&targetRequestedCommand, &targetHostType, &targetHost, &targetPort)
+		&targetRequestedCommand, &targetHostType, &targetHost, &targetPort)
 }

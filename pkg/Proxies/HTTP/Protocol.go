@@ -41,7 +41,7 @@ func CreateCustomResponseWriter(
 type HTTP struct {
 	AuthenticationMethod ConnectionControllers.AuthenticationMethod
 	ProxyController      *goproxy.ProxyHttpServer
-	LoggingMethod ConnectionControllers.LoggingMethod
+	LoggingMethod        ConnectionControllers.LoggingMethod
 }
 
 func (httpProtocol *HTTP) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {

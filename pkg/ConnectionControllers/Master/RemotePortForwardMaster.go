@@ -18,10 +18,10 @@ type RemotePortForward struct {
 	TLSConfiguration       *tls.Config
 	RemoteHost             string
 	RemotePort             string
-	LoggingMethod ConnectionControllers.LoggingMethod
+	LoggingMethod          ConnectionControllers.LoggingMethod
 }
 
-func (remotePortForward *RemotePortForward)SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
+func (remotePortForward *RemotePortForward) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
 	remotePortForward.LoggingMethod = loggingMethod
 	return nil
 }

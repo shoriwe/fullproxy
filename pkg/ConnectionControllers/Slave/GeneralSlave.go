@@ -17,10 +17,10 @@ type General struct {
 	MasterPort             string
 	TLSConfiguration       *tls.Config
 	ProxyProtocol          ConnectionControllers.ProxyProtocol
-	LoggingMethod ConnectionControllers.LoggingMethod
+	LoggingMethod          ConnectionControllers.LoggingMethod
 }
 
-func (general *General)SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
+func (general *General) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
 	general.LoggingMethod = loggingMethod
 	return nil
 }

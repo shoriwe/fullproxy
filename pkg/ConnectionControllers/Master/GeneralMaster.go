@@ -16,7 +16,7 @@ type General struct {
 	MasterHost             string
 	TLSConfiguration       *tls.Config
 	Server                 net.Listener
-	LoggingMethod ConnectionControllers.LoggingMethod
+	LoggingMethod          ConnectionControllers.LoggingMethod
 }
 
 func (general *General) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
