@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionHandlers"
+	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
 	"gopkg.in/elazarl/goproxy.v1"
 	"log"
 	"net"
@@ -39,11 +39,11 @@ func CreateCustomResponseWriter(
 }
 
 type HTTP struct {
-	AuthenticationMethod ConnectionHandlers.AuthenticationMethod
+	AuthenticationMethod ConnectionControllers.AuthenticationMethod
 	ProxyController      *goproxy.ProxyHttpServer
 }
 
-func (httpProtocol *HTTP) SetAuthenticationMethod(authenticationMethod ConnectionHandlers.AuthenticationMethod) error {
+func (httpProtocol *HTTP) SetAuthenticationMethod(authenticationMethod ConnectionControllers.AuthenticationMethod) error {
 	httpProtocol.ProxyController.OnRequest().DoFunc(func(
 		request *http.Request,
 		proxyCtx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
