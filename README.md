@@ -45,8 +45,8 @@ Protocols available:
 ```
 user@linux:~$ fullproxy socks5 --help
 Usage of socks5:
-  -address string
-        Address to listen on. When "-slave" flag is set, is the IP of master to connect
+  -host string
+        Host to listen on. When "-slave" flag is set, is the IP of master to connect
   -password string
         Password of the running proxy, requires "-username". It will be ignored if is an empty string
   -port string
@@ -61,8 +61,8 @@ HTTP proxy could be implemented thanks to [GoProxy](https://github.com/elazarl/g
 ```
 user@linux:~$ fullproxy local-forward -help
 Usage of http:
-  -address string
-        Address to listen on. When "-slave" flag is set, is the IP of master to connect
+  -host string
+        Host to listen on. When "-slave" flag is set, is the IP of master to connect
   -password string
         Password of the running proxy, requires "-username". It will be ignored if is an empty string
   -port string
@@ -79,12 +79,12 @@ Usage of http:
 ```
 user@linux:~$ fullproxy local-forward -help
 Usage of local-forward:
-  -forward-address string
-        Address to forward the traffic received from master
+  -forward-host string
+        Host to forward the traffic received from master
   -forward-port string
         Port to forward the traffic received from master
-  -master-address string
-        Address of the master
+  -master-host string
+        Host of the master
   -master-port string
         Port of the master
 ```
@@ -92,12 +92,12 @@ Usage of local-forward:
 ```
 user@linux:~$ fullproxy remote-forward -help
 Usage of remote-forward:
-  -local-address string
-        Address to bind by slave
+  -local-host string
+        Host to bind by slave
   -local-port string
         Port to bind by slave
-  -master-address string
-        Address of the master
+  -master-host string
+        Host of the master
   -master-port string
         Port of the master
 ```
@@ -105,9 +105,9 @@ Usage of remote-forward:
 ```
 user@linux:~$ fullproxy remote-forward -help
 Usage of master:
-  -address string
-        Address to listen on. (default "0.0.0.0")
-  -forward-address string
+  -host string
+        Host to listen on. (default "0.0.0.0")
+  -forward-host string
         Argument required to handle correctly the "remote-forward" (This is the service that the master can only acceded)
   -forward-port string
         Argument required to handle correctly the "remote-forward" (This is the service that the master can only acceded)
@@ -127,20 +127,20 @@ TARGETS available:
 ```
 user@linux:~$ fullproxy translate port_forward-socks5 -help
 Usage of port_forward-socks5:
-  -bind-address string
-        Address to listen on. (default "0.0.0.0")
+  -bind-host string
+        Host to listen on. (default "0.0.0.0")
   -bind-port string
         Port to listen on. (default "8080")
-  -socks5-address string
-        SOCKS5 server address to use (default "127.0.0.1")
+  -socks5-host string
+        SOCKS5 server host to use (default "127.0.0.1")
   -socks5-password string
         Password for the SOCKS5 server; leave empty for no AUTH
   -socks5-port string
         SOCKS5 server port to use (default "1080")
   -socks5-username string
         Username for the SOCKS5 server; leave empty for no AUTH
-  -target-address string
-        Address of the target host that is accessible by the SOCKS5 proxy
+  -target-host string
+        Host of the target host that is accessible by the SOCKS5 proxy
   -target-port string
         Port of the target host that is accessible by the SOCKS5 proxy
 ```
@@ -148,7 +148,7 @@ Usage of port_forward-socks5:
 ## Master/Slave
 Handles the proxying between a reverse connected (with encryption) proxy and the clients. In other words, it will receive the connections of the clients and will forward the traffic to the proxy that is reverse connected to it.
 ### How it works
-1. It first binds to the address specified by the user.
+1. It first binds to the host specified by the user.
 2. Then accept the connection from the proxy server.
 3. Finally, it proxy the traffic of all new incoming connections to the proxy server that was reverse connected to it in the second step.
 In other words, is the proxy of another proxy but totally invisible for the client.
