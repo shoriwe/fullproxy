@@ -3,7 +3,7 @@ package PortForward
 import (
 	"bufio"
 	"crypto/tls"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionHandlers"
+	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"net"
@@ -36,6 +36,6 @@ func (remoteForward *RemoteForward) Handle(
 	return connectionError
 }
 
-func (remoteForward *RemoteForward) SetAuthenticationMethod(_ ConnectionHandlers.AuthenticationMethod) error {
+func (remoteForward *RemoteForward) SetAuthenticationMethod(_ ConnectionControllers.AuthenticationMethod) error {
 	return nil
 }
