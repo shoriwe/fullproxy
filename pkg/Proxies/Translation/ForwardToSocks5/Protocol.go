@@ -23,7 +23,7 @@ func (forwardToSocks5 *ForwardToSocks5) SetLoggingMethod(loggingMethod Connectio
 	forwardToSocks5.LoggingMethod = loggingMethod
 	return nil
 }
-func (forwardToSocks5 *ForwardToSocks5) SetAuthenticationMethod(authenticationMethod ConnectionControllers.AuthenticationMethod) error {
+func (forwardToSocks5 *ForwardToSocks5) SetAuthenticationMethod(_ ConnectionControllers.AuthenticationMethod) error {
 	return nil
 }
 
