@@ -19,8 +19,8 @@ type RemotePortForward struct {
 	RemoteHost             string
 	RemotePort             string
 	LoggingMethod          ConnectionControllers.LoggingMethod
-	Tries int
-	Timeout time.Duration
+	Tries                  int
+	Timeout                time.Duration
 }
 
 func (remotePortForward *RemotePortForward) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {

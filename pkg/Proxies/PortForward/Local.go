@@ -13,8 +13,8 @@ type LocalForward struct {
 	TargetHost    string
 	TargetPort    string
 	LoggingMethod ConnectionControllers.LoggingMethod
-	Tries int
-	Timeout time.Duration
+	Tries         int
+	Timeout       time.Duration
 }
 
 func (localForward *LocalForward) SetAuthenticationMethod(_ ConnectionControllers.AuthenticationMethod) error {
@@ -26,12 +26,12 @@ func (localForward *LocalForward) SetLoggingMethod(loggingMethod ConnectionContr
 	return nil
 }
 
-func (localForward *LocalForward)SetTries(tries int) error {
+func (localForward *LocalForward) SetTries(tries int) error {
 	localForward.Tries = tries
 	return nil
 }
 
-func (localForward *LocalForward)SetTimeout(timeout time.Duration) error {
+func (localForward *LocalForward) SetTimeout(timeout time.Duration) error {
 	localForward.Timeout = timeout
 	return nil
 }
@@ -49,8 +49,8 @@ func (localForward *LocalForward) Handle(
 			TargetConnection:       targetConnection,
 			TargetConnectionReader: targetReader,
 			TargetConnectionWriter: targetWriter,
-			Tries: ConnectionControllers.GetTries(localForward.Tries),
-			Timeout: ConnectionControllers.GetTimeout(localForward.Timeout),
+			Tries:                  ConnectionControllers.GetTries(localForward.Tries),
+			Timeout:                ConnectionControllers.GetTimeout(localForward.Timeout),
 		}
 		return rawProxy.Handle(
 			clientConnection,

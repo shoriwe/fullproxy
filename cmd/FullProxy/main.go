@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/shoriwe/FullProxy/internal/ArgumentParser"
-	"github.com/shoriwe/FullProxy/internal/ProxiesSetup"
 	"github.com/shoriwe/FullProxy/internal/ControllersSetup"
+	"github.com/shoriwe/FullProxy/internal/ProxiesSetup"
 	"os"
 )
 

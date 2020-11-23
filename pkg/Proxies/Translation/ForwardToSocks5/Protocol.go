@@ -15,8 +15,8 @@ type ForwardToSocks5 struct {
 	TargetPort    string
 	Socks5Dialer  proxy.Dialer
 	LoggingMethod ConnectionControllers.LoggingMethod
-	Tries int
-	Timeout time.Duration
+	Tries         int
+	Timeout       time.Duration
 }
 
 func (forwardToSocks5 *ForwardToSocks5) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
@@ -27,12 +27,12 @@ func (forwardToSocks5 *ForwardToSocks5) SetAuthenticationMethod(_ ConnectionCont
 	return nil
 }
 
-func (forwardToSocks5 *ForwardToSocks5)SetTries(tries int) error {
+func (forwardToSocks5 *ForwardToSocks5) SetTries(tries int) error {
 	forwardToSocks5.Tries = tries
 	return nil
 }
 
-func (forwardToSocks5 *ForwardToSocks5)SetTimeout(timeout time.Duration) error {
+func (forwardToSocks5 *ForwardToSocks5) SetTimeout(timeout time.Duration) error {
 	forwardToSocks5.Timeout = timeout
 	return nil
 }
@@ -52,8 +52,8 @@ func (forwardToSocks5 *ForwardToSocks5) Handle(
 		TargetConnection:       targetConnection,
 		TargetConnectionReader: targetConnectionReader,
 		TargetConnectionWriter: targetConnectionWriter,
-		Tries: forwardToSocks5.Tries,
-		Timeout: forwardToSocks5.Timeout,
+		Tries:                  forwardToSocks5.Tries,
+		Timeout:                forwardToSocks5.Timeout,
 	}
 	return rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 }

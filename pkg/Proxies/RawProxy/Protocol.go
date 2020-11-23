@@ -13,11 +13,11 @@ type RawProxy struct {
 	TargetConnectionReader *bufio.Reader
 	TargetConnectionWriter *bufio.Writer
 	ConnectionAlive        bool
-	Tries int
-	Timeout time.Duration
+	Tries                  int
+	Timeout                time.Duration
 }
 
-func (rawProxy *RawProxy)HandleReadWrite(
+func (rawProxy *RawProxy) HandleReadWrite(
 	sourceConnection net.Conn,
 	sourceReader *bufio.Reader,
 	destinationWriter *bufio.Writer,

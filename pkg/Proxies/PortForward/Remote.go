@@ -15,8 +15,8 @@ type RemoteForward struct {
 	MasterPort       string
 	TLSConfiguration *tls.Config
 	LoggingMethod    ConnectionControllers.LoggingMethod
-	Tries int
-	Timeout time.Duration
+	Tries            int
+	Timeout          time.Duration
 }
 
 func (remoteForward *RemoteForward) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
@@ -50,8 +50,8 @@ func (remoteForward *RemoteForward) Handle(
 			TargetConnection:       targetConnection,
 			TargetConnectionReader: targetConnectionReader,
 			TargetConnectionWriter: targetConnectionWriter,
-			Tries: ConnectionControllers.GetTries(remoteForward.Tries),
-			Timeout: ConnectionControllers.GetTimeout(remoteForward.Timeout),
+			Tries:                  ConnectionControllers.GetTries(remoteForward.Tries),
+			Timeout:                ConnectionControllers.GetTimeout(remoteForward.Timeout),
 		}
 		return rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 	}

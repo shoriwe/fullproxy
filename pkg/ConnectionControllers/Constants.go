@@ -62,8 +62,8 @@ func StartGeneralProxying(clientConnection net.Conn, targetConnection net.Conn, 
 			TargetConnection:       targetConnection,
 			TargetConnectionReader: targetConnectionReader,
 			TargetConnectionWriter: targetConnectionWriter,
-			Tries: tries,
-			Timeout: timeout,
+			Tries:                  tries,
+			Timeout:                timeout,
 		}
 		rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 	} else {

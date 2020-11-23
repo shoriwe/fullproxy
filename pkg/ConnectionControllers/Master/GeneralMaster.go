@@ -18,8 +18,8 @@ type General struct {
 	TLSConfiguration       *tls.Config
 	Server                 net.Listener
 	LoggingMethod          ConnectionControllers.LoggingMethod
-	Tries int
-	Timeout time.Duration
+	Tries                  int
+	Timeout                time.Duration
 }
 
 func (general *General) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
