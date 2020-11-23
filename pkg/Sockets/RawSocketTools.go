@@ -2,7 +2,6 @@ package Sockets
 
 import (
 	"bufio"
-	"log"
 	"net"
 )
 
@@ -28,12 +27,6 @@ func Connect(host *string, port *string) (net.Conn, error) {
 	return net.Dial("tcp", *host+":"+*port)
 }
 
-func Bind(host *string, port *string) net.Listener {
-	log.Print("Starting Master server")
-	server, BindingError := net.Listen("tcp", *host+":"+*port)
-	if BindingError != nil {
-		log.Fatal("Something goes wrong: " + BindingError.Error())
-	}
-	log.Printf("Bind successfully in %s:%s", *host, *port)
-	return server
+func Bind(host *string, port *string) (net.Listener, error) {
+	return net.Listen("tcp", *host+":"+*port)
 }
