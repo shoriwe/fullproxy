@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/shoriwe/FullProxy/internal/ArgumentParser"
 	"github.com/shoriwe/FullProxy/internal/ProxiesSetup"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionHandlers/Master"
+	"github.com/shoriwe/FullProxy/internal/SetupControllers"
 	"os"
 )
 
@@ -17,10 +17,10 @@ func main() {
 	switch os.Args[1] {
 	case "socks5":
 		host, port, username, password, slave := ArgumentParser.ParseSocks5Arguments()
-		ProxiesSetup.SetupSocks5(host, port, slave, &username, &password)
+		ProxiesSetup.SetupSocks5(host, port, slave, username, password)
 	case "http":
 		host, port, username, password, slave, tls := ArgumentParser.HTTPArguments()
-		ProxiesSetup.SetupHTTP(host, port, slave, tls, &username, &password)
+		ProxiesSetup.SetupHTTP(host, port, slave, tls, username, password)
 	case "local-forward":
 		host, port, masterHost, masterPort := ArgumentParser.LocalPortForwardArguments()
 		ProxiesSetup.SetupLocalForward(host, port, masterHost, masterPort)
@@ -29,7 +29,11 @@ func main() {
 		ProxiesSetup.SetupRemoteForward(localHost, localPort, masterHost, masterPort)
 	case "master":
 		masterHost, masterPort, remoteHost, remotePort := ArgumentParser.ParseMasterArguments()
-		Master.Master(masterHost, masterPort, remoteHost, remotePort)
+		if len(*remoteHost) > 0 && len(*remotePort) > 0 {
+			SetupControllers.MasterRemote(masterHost, masterPort, remoteHost, remotePort)
+		} else {
+			SetupControllers.MasterGeneral(masterHost, masterPort)
+		}
 	case "translate":
 		if numberOfArguments == 2 {
 			_, _ = fmt.Fprintln(os.Stderr, "Try:\n", os.Args[0], " translate help")
