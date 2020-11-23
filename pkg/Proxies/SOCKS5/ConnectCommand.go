@@ -3,7 +3,7 @@ package SOCKS5
 import (
 	"bufio"
 	"encoding/binary"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/PortProxy"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"net"
 )
@@ -26,7 +26,7 @@ func (socks5 *Socks5) PrepareConnect(
 		_, connectionError = Sockets.Send(clientConnectionWriter, &response)
 		if connectionError == nil {
 			targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-			portProxy := Basic.PortProxy{
+			portProxy := PortProxy.PortProxy{
 				TargetConnection:       targetConnection,
 				TargetConnectionReader: targetConnectionReader,
 				TargetConnectionWriter: targetConnectionWriter,

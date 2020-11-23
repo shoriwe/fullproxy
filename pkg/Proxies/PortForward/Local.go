@@ -3,7 +3,7 @@ package PortForward
 import (
 	"bufio"
 	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/PortProxy"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"net"
 )
@@ -24,7 +24,7 @@ func (localForward *LocalForward) Handle(
 	targetConnection, connectionError := Sockets.Connect(&localForward.TargetHost, &localForward.TargetPort)
 	if connectionError == nil {
 		targetReader, targetWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-		portProxy := Basic.PortProxy{
+		portProxy := PortProxy.PortProxy{
 			TargetConnection:       targetConnection,
 			TargetConnectionReader: targetReader,
 			TargetConnectionWriter: targetWriter,

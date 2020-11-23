@@ -49,7 +49,7 @@ func (httpProtocol *HTTP) SetAuthenticationMethod(authenticationMethod Connectio
 		proxyCtx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 		authentication := strings.Split(request.Header.Get("Proxy-Authorization"), " ")
 		if len(authentication) == 2 {
-			if authentication[0] == "Basic" {
+			if authentication[0] == "PortProxy" {
 				rawCredentials, decodingError := base64.StdEncoding.DecodeString(authentication[1])
 				if decodingError == nil {
 					credentials := bytes.Split(rawCredentials, []byte(":"))
