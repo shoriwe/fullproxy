@@ -56,5 +56,6 @@ func MasterGeneral(host *string, port *string) {
 	controller.MasterConnectionWriter = masterConnectionWriter
 	controller.TLSConfiguration = tlsConfiguration
 	controller.MasterHost = *host
+	controller.SetLoggingMethod(log.Print)
 	log.Fatal(controller.Serve())
 }

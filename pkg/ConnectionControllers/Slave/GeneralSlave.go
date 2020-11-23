@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
-	"log"
 	"net"
 	"time"
 )
@@ -18,15 +17,18 @@ type General struct {
 	MasterPort             string
 	TLSConfiguration       *tls.Config
 	ProxyProtocol          ConnectionControllers.ProxyProtocol
+	LoggingMethod          ConnectionControllers.LoggingMethod
+}
+
+func (general *General) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
+	general.LoggingMethod = loggingMethod
+	return nil
 }
 
 func (general *General) Serve() error {
 	var finalError error
 	for {
-		timeoutSetError := general.MasterConnection.SetReadDeadline(time.Now().Add(20 * time.Second))
-		if timeoutSetError != nil {
-			log.Fatal(timeoutSetError)
-		}
+		_ = general.MasterConnection.SetReadDeadline(time.Now().Add(20 * time.Second))
 		NumberOfReceivedBytes, buffer, connectionError := Sockets.Receive(general.MasterConnectionReader, 1024)
 		if connectionError != nil {
 			if parsedConnectionError, ok := connectionError.(net.Error); !(ok && parsedConnectionError.Timeout()) {
@@ -41,7 +43,7 @@ func (general *General) Serve() error {
 			continue
 		}
 		clientConnection, connectionError := Sockets.TLSConnect(&general.MasterHost, &general.MasterPort, general.TLSConfiguration)
-
+		ConnectionControllers.LogData(general.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
 		if connectionError != nil {
 			finalError = connectionError
 			break

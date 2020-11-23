@@ -3,6 +3,7 @@ package ProxiesSetup
 import (
 	"github.com/shoriwe/FullProxy/internal/SetupControllers"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/SOCKS5"
+	"log"
 )
 
 func SetupSocks5(host *string, port *string, slave *bool, username []byte, password []byte) {
@@ -14,6 +15,7 @@ func SetupSocks5(host *string, port *string, slave *bool, username []byte, passw
 		proxy.WantedAuthMethod = SOCKS5.NoAuthRequired
 		proxy.SetAuthenticationMethod(NoAuthentication)
 	}
+	proxy.SetLoggingMethod(log.Print)
 	if *slave {
 		SetupControllers.GeneralSlave(host, port, proxy)
 	} else {

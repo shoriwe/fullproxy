@@ -5,8 +5,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
+	"github.com/shoriwe/FullProxy/pkg/Proxies"
 	"gopkg.in/elazarl/goproxy.v1"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -41,27 +41,37 @@ func CreateCustomResponseWriter(
 type HTTP struct {
 	AuthenticationMethod ConnectionControllers.AuthenticationMethod
 	ProxyController      *goproxy.ProxyHttpServer
+	LoggingMethod        ConnectionControllers.LoggingMethod
+}
+
+func (httpProtocol *HTTP) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
+	httpProtocol.LoggingMethod = loggingMethod
+	return nil
 }
 
 func (httpProtocol *HTTP) SetAuthenticationMethod(authenticationMethod ConnectionControllers.AuthenticationMethod) error {
+	if httpProtocol.ProxyController == nil {
+		panic("No HTTP proxy controller was set")
+	}
 	httpProtocol.ProxyController.OnRequest().DoFunc(func(
 		request *http.Request,
 		proxyCtx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 		authentication := strings.Split(request.Header.Get("Proxy-Authorization"), " ")
 		if len(authentication) == 2 {
-			if authentication[0] == "Basic" {
+			if authentication[0] == "PortProxy" {
 				rawCredentials, decodingError := base64.StdEncoding.DecodeString(authentication[1])
 				if decodingError == nil {
 					credentials := bytes.Split(rawCredentials, []byte(":"))
 					if len(credentials) == 2 {
-						if authenticationMethod(credentials[0], credentials[1]) {
+						if Proxies.Authenticate(authenticationMethod, credentials[0], credentials[1]) {
+							ConnectionControllers.LogData(httpProtocol.LoggingMethod, "Login successful with: ", request.RemoteAddr)
 							return request, nil
 						}
 					}
 				}
 			}
 		}
-		log.Print("Login failed with invalid credentials from: ", request.RemoteAddr)
+		ConnectionControllers.LogData(httpProtocol.LoggingMethod, "Login failed with invalid credentials from: ", request.RemoteAddr)
 		return request, goproxy.NewResponse(request, goproxy.ContentTypeText, http.StatusProxyAuthRequired, "Don't waste your time!")
 	})
 	return nil
@@ -73,7 +83,9 @@ func (httpProtocol *HTTP) Handle(
 	clientConnectionWriter *bufio.Writer) error {
 
 	request, parsingError := http.ReadRequest(clientConnectionReader)
-	if parsingError == nil {
+	if parsingError != nil {
+		ConnectionControllers.LogData(httpProtocol.LoggingMethod, parsingError)
+	} else {
 		request.RemoteAddr = clientConnection.RemoteAddr().String()
 		responseWriter := CreateCustomResponseWriter(clientConnection, clientConnectionReader, clientConnectionWriter)
 		httpProtocol.ProxyController.ServeHTTP(responseWriter, request)

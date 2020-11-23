@@ -18,6 +18,12 @@ type RemotePortForward struct {
 	TLSConfiguration       *tls.Config
 	RemoteHost             string
 	RemotePort             string
+	LoggingMethod          ConnectionControllers.LoggingMethod
+}
+
+func (remotePortForward *RemotePortForward) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
+	remotePortForward.LoggingMethod = loggingMethod
+	return nil
 }
 
 func (remotePortForward *RemotePortForward) Serve() error {
@@ -55,11 +61,16 @@ func (remotePortForward *RemotePortForward) Serve() error {
 
 		if connectionError != nil {
 			// Do Something to notify the client that connection was not possible
+			ConnectionControllers.LogData(remotePortForward.LoggingMethod, connectionError)
 			continue
 		}
 		if strings.Split(clientConnection.RemoteAddr().String(), ":")[0] == remotePortForward.RemoteHost {
+			ConnectionControllers.LogData(remotePortForward.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
 			go ConnectionControllers.StartGeneralProxying(clientConnection, targetConnection)
+		} else {
+			ConnectionControllers.LogData(remotePortForward.LoggingMethod, "(Ignoring) Connection received from a non slave client: ", clientConnection.RemoteAddr().String())
 		}
 	}
+	ConnectionControllers.LogData(remotePortForward.LoggingMethod, finalError)
 	return finalError
 }

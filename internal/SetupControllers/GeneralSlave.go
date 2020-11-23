@@ -26,5 +26,6 @@ func GeneralSlave(host *string, port *string, proxy ConnectionControllers.ProxyP
 	controller.MasterHost = *host
 	controller.MasterPort = *port
 	controller.ProxyProtocol = proxy
+	controller.SetLoggingMethod(log.Print)
 	log.Fatal(controller.Serve())
 }

@@ -16,5 +16,6 @@ func SetupRemoteForward(host *string, port *string, masterHost *string, masterPo
 	proxy.TLSConfiguration = tlsConfiguration
 	proxy.MasterHost = *masterHost
 	proxy.MasterPort = *masterPort
+	proxy.SetLoggingMethod(log.Print)
 	SetupControllers.RemotePortForwardSlave(masterHost, masterPort, host, port)
 }

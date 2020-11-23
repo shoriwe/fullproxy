@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/PortProxy"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"net"
 )
@@ -13,6 +13,12 @@ type RemoteForward struct {
 	MasterHost       string
 	MasterPort       string
 	TLSConfiguration *tls.Config
+	LoggingMethod    ConnectionControllers.LoggingMethod
+}
+
+func (remoteForward *RemoteForward) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
+	remoteForward.LoggingMethod = loggingMethod
+	return nil
 }
 
 func (remoteForward *RemoteForward) Handle(
@@ -23,9 +29,11 @@ func (remoteForward *RemoteForward) Handle(
 		&remoteForward.MasterHost,
 		&remoteForward.MasterPort,
 		(*remoteForward).TLSConfiguration)
-	if connectionError == nil {
+	if connectionError != nil {
+		ConnectionControllers.LogData(remoteForward.LoggingMethod, connectionError)
+	} else {
 		targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-		portProxy := Basic.PortProxy{
+		portProxy := PortProxy.PortProxy{
 			TargetConnection:       targetConnection,
 			TargetConnectionReader: targetConnectionReader,
 			TargetConnectionWriter: targetConnectionWriter,
