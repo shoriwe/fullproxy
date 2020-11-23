@@ -8,7 +8,16 @@ import (
 	"time"
 )
 
-func HandleReadWrite(
+type PortProxy struct {
+	TargetConnection       net.Conn
+	TargetConnectionReader *bufio.Reader
+	TargetConnectionWriter *bufio.Writer
+	ConnectionAlive        bool
+	Tries int
+	Timeout time.Duration
+}
+
+func (portProxy *PortProxy)HandleReadWrite(
 	sourceConnection net.Conn,
 	sourceReader *bufio.Reader,
 	destinationWriter *bufio.Writer,
@@ -16,8 +25,8 @@ func HandleReadWrite(
 
 	var proxyingError error
 	tries := 0
-	for ; tries < 5; tries++ {
-		_ = sourceConnection.SetReadDeadline(time.Now().Add(10 * time.Second))
+	for ; tries < portProxy.Tries; tries++ {
+		_ = sourceConnection.SetReadDeadline(time.Now().Add(portProxy.Timeout))
 		numberOfBytesReceived, buffer, connectionError := Sockets.Receive(sourceReader, 1048576)
 		if connectionError != nil {
 			// If the error is not "Timeout"
@@ -54,24 +63,17 @@ func HandleReadWrite(
 	return proxyingError
 }
 
-type PortProxy struct {
-	TargetConnection       net.Conn
-	TargetConnectionReader *bufio.Reader
-	TargetConnectionWriter *bufio.Writer
-	ConnectionAlive        bool
-}
-
 func (portProxy *PortProxy) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
 	portProxy.ConnectionAlive = true
-	go HandleReadWrite(
+	go portProxy.HandleReadWrite(
 		clientConnection,
 		clientConnectionReader,
 		portProxy.TargetConnectionWriter,
 		&portProxy.ConnectionAlive)
-	return HandleReadWrite(
+	return portProxy.HandleReadWrite(
 		portProxy.TargetConnection,
 		portProxy.TargetConnectionReader,
 		clientConnectionWriter,

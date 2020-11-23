@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"time"
 )
 
 type CustomResponseWriter struct {
@@ -42,6 +43,8 @@ type HTTP struct {
 	AuthenticationMethod ConnectionControllers.AuthenticationMethod
 	ProxyController      *goproxy.ProxyHttpServer
 	LoggingMethod        ConnectionControllers.LoggingMethod
+	// Tries int
+	// Timeout time.Duration
 }
 
 func (httpProtocol *HTTP) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
@@ -74,6 +77,16 @@ func (httpProtocol *HTTP) SetAuthenticationMethod(authenticationMethod Connectio
 		ConnectionControllers.LogData(httpProtocol.LoggingMethod, "Login failed with invalid credentials from: ", request.RemoteAddr)
 		return request, goproxy.NewResponse(request, goproxy.ContentTypeText, http.StatusProxyAuthRequired, "Don't waste your time!")
 	})
+	return nil
+}
+
+func (httpProtocol *HTTP) SetTries(_ int) error {
+	// httpProtocol.Tries = tries
+	return nil
+}
+
+func (httpProtocol *HTTP) SetTimeout(_ time.Duration) error {
+	// httpProtocol.Timeout = timeout
 	return nil
 }
 

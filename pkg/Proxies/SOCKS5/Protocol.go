@@ -7,12 +7,15 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"math/big"
 	"net"
+	"time"
 )
 
 type Socks5 struct {
 	AuthenticationMethod ConnectionControllers.AuthenticationMethod
 	WantedAuthMethod     byte
 	LoggingMethod        ConnectionControllers.LoggingMethod
+	Tries int
+	Timeout time.Duration
 }
 
 func ReceiveTargetRequest(clientConnectionReader *bufio.Reader) (byte, byte, []byte, []byte) {
@@ -53,6 +56,16 @@ func (socks5 *Socks5) SetLoggingMethod(loggingMethod ConnectionControllers.Loggi
 
 func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod ConnectionControllers.AuthenticationMethod) error {
 	socks5.AuthenticationMethod = authenticationMethod
+	return nil
+}
+
+func (socks5 *Socks5)SetTries(tries int) error {
+	socks5.Tries = tries
+	return nil
+}
+
+func (socks5 *Socks5)SetTimeout(timeout time.Duration) error {
+	socks5.Timeout = timeout
 	return nil
 }
 
