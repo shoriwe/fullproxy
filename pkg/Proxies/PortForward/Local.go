@@ -2,7 +2,7 @@ package PortForward
 
 import (
 	"bufio"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionHandlers"
+	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/Basic"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"net"
@@ -13,7 +13,7 @@ type LocalForward struct {
 	TargetPort string
 }
 
-func (localForward *LocalForward) SetAuthenticationMethod(_ ConnectionHandlers.AuthenticationMethod) error {
+func (localForward *LocalForward) SetAuthenticationMethod(_ ConnectionControllers.AuthenticationMethod) error {
 	return nil
 }
 
