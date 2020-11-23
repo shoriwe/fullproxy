@@ -1,7 +1,7 @@
 package ProxiesSetup
 
 import (
-	"github.com/shoriwe/FullProxy/pkg/ConnectionHandlers/Slave"
+	"github.com/shoriwe/FullProxy/internal/SetupControllers"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/PortForward"
 )
 
@@ -9,5 +9,5 @@ func SetupLocalForward(host *string, port *string, masterHost *string, masterPor
 	proxy := new(PortForward.LocalForward)
 	proxy.TargetHost = *host
 	proxy.TargetPort = *port
-	Slave.GeneralSlave(masterHost, masterPort, proxy)
+	SetupControllers.GeneralSlave(masterHost, masterPort, proxy)
 }
