@@ -5,6 +5,7 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/Pipes/Master"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -30,7 +31,7 @@ func GeneralMaster(host *string, port *string, tries int, timeout time.Duration)
 	pipe.MasterConnectionReader = masterConnectionReader
 	pipe.MasterConnectionWriter = masterConnectionWriter
 	pipe.TLSConfiguration = tlsConfiguration
-	pipe.MasterHost = *host
+	pipe.SlaveHost = strings.Split(masterConnection.RemoteAddr().String(), ":")[0]
 	pipe.Tries = tries
 	pipe.Timeout = timeout
 	pipe.SetLoggingMethod(log.Print)

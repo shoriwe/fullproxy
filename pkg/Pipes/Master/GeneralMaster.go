@@ -17,7 +17,7 @@ type General struct {
 	MasterConnection       net.Conn
 	MasterConnectionReader *bufio.Reader
 	MasterConnectionWriter *bufio.Writer
-	MasterHost             string
+	SlaveHost              string
 	TLSConfiguration       *tls.Config
 	Server                 net.Listener
 	LoggingMethod          Types.LoggingMethod
@@ -76,15 +76,17 @@ func (general *General) Serve() error {
 			continue
 		}
 		// Verify that the new connection is also from the slave
-		if strings.Split(targetConnection.RemoteAddr().String(), ":")[0] == general.MasterHost {
-			Templates.LogData(general.LoggingMethod, "Target connection received from: ", targetConnection.RemoteAddr().String())
-			targetConnection = Sockets.UpgradeServerToTLS(targetConnection, general.TLSConfiguration)
-			go Pipes.StartGeneralProxying(
-				clientConnection, targetConnection,
-				Templates.GetTries(general.Tries), Templates.GetTimeout(general.Timeout))
-		} else {
+		if strings.Split(targetConnection.RemoteAddr().String(), ":")[0] != general.SlaveHost {
 			Templates.LogData(general.LoggingMethod, "(Ignoring) Connection received from a non slave client: ", targetConnection.RemoteAddr().String())
+			_ = targetConnection.Close()
+			_ = clientConnection.Close()
+			continue
 		}
+		Templates.LogData(general.LoggingMethod, "Target connection received from: ", targetConnection.RemoteAddr().String())
+		targetConnection = Sockets.UpgradeServerToTLS(targetConnection, general.TLSConfiguration)
+		go Pipes.StartGeneralProxying(
+			clientConnection, targetConnection,
+			Templates.GetTries(general.Tries), Templates.GetTimeout(general.Timeout))
 	}
 	Templates.LogData(general.LoggingMethod, finalError)
 	return finalError
