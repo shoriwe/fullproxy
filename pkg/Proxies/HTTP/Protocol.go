@@ -88,10 +88,10 @@ func (httpProtocol *HTTP) SetOutboundFilter(filter Types.OutboundFilter) error {
 		return errors.New("No HTTP proxy controller was set")
 	}
 	/*
-	httpProtocol.ProxyController.OnRequest().DoFunc(
-		func(request *http.Request, proxyCtx *goproxy.ProxyCtx) (*http.Request,  *http.Response)  {
-			requestURL := request.URL
-		})
+		httpProtocol.ProxyController.OnRequest().DoFunc(
+			func(request *http.Request, proxyCtx *goproxy.ProxyCtx) (*http.Request,  *http.Response)  {
+				requestURL := request.URL
+			})
 	*/
 	return nil
 }
