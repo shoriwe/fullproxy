@@ -1,24 +1,22 @@
 package Templates
 
 import (
-	"errors"
 	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
 	"net"
 	"time"
 )
+
 // Taken from https://play.golang.org/p/dAoV99_7iPY
-func ParseIP(s string) (net.IP, error) {
+func ParseIP(s string) net.IP {
 	ip, _, err := net.SplitHostPort(s)
 	if err == nil {
-		return net.ParseIP(ip), nil
+		return net.ParseIP(ip)
 	}
-
 	ip2 := net.ParseIP(s)
 	if ip2 == nil {
-		return nil, errors.New("invalid IP")
+		return nil
 	}
-
-	return ip2, nil
+	return ip2
 }
 
 func LogData(loggingMethod Types.LoggingMethod, arguments ...interface{}) {

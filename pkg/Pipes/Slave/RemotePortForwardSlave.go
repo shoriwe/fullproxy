@@ -58,7 +58,7 @@ func (remotePortForward *RemotePortForward) Serve() error {
 			finalError = connectionError
 			break
 		}
-		if !Templates.FilterInbound(remotePortForward.InboundFilter, net.ParseIP(clientConnection.RemoteAddr().String())) {
+		if !Templates.FilterInbound(remotePortForward.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
 			errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
 			_ = clientConnection.Close()
 			Templates.LogData(remotePortForward.LoggingMethod, errorMessage)

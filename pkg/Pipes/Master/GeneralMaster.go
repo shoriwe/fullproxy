@@ -58,7 +58,7 @@ func (general *General) Serve() error {
 			finalError = connectionError
 			break
 		}
-		if !Templates.FilterInbound(general.InboundFilter, net.ParseIP(clientConnection.RemoteAddr().String())) {
+		if !Templates.FilterInbound(general.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
 			_ = clientConnection.Close()
 			Templates.LogData(general.LoggingMethod, "Unwanted connection received from "+clientConnection.RemoteAddr().String())
 			continue

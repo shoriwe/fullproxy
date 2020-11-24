@@ -62,7 +62,7 @@ func (httpProtocol *HTTP) SetInboundFilter(filter Types.IOFilter) error {
 	httpProtocol.ProxyController.OnRequest().DoFunc(func(
 		request *http.Request,
 		proxyCtx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		if !Templates.FilterInbound(httpProtocol.InboundFilter, net.ParseIP(request.RemoteAddr)) {
+		if !Templates.FilterInbound(httpProtocol.InboundFilter, Templates.ParseIP(request.RemoteAddr)) {
 			Templates.LogData(httpProtocol.LoggingMethod, "Connection denied to: ", request.RemoteAddr)
 			return request, goproxy.NewResponse(request, goproxy.ContentTypeText, http.StatusProxyAuthRequired, "Don't waste your time!")
 		}

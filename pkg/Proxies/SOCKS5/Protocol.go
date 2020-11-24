@@ -86,13 +86,7 @@ func (socks5 *Socks5) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
-	clientIP, paringError := Templates.ParseIP(clientConnection.RemoteAddr().String())
-	if paringError != nil {
-		Templates.LogData(socks5.LoggingMethod, paringError)
-		_ = clientConnection.Close()
-		return paringError
-	}
-	if !Templates.FilterInbound(socks5.InboundFilter, clientIP) {
+	if !Templates.FilterInbound(socks5.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
 		errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
 		_ = clientConnection.Close()
 		Templates.LogData(socks5.LoggingMethod, errorMessage)
