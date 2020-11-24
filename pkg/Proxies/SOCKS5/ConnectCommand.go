@@ -43,9 +43,10 @@ func (socks5 *Socks5) PrepareConnect(
 		TargetConnection:       targetConnection,
 		TargetConnectionReader: targetConnectionReader,
 		TargetConnectionWriter: targetConnectionWriter,
-		Tries:                  Templates.GetTries(socks5.Tries),
-		Timeout:                Templates.GetTimeout(socks5.Timeout),
 	}
+	_ = rawProxy.SetTimeout(socks5.Timeout)
+	_ = rawProxy.SetTries(socks5.Tries)
+	_ = rawProxy.SetLoggingMethod(socks5.LoggingMethod)
 	return rawProxy.Handle(
 		clientConnection,
 		clientConnectionReader,

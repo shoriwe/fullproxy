@@ -46,31 +46,32 @@ func (remoteForward *RemoteForward) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
-	if !Templates.FilterInbound(remoteForward.InboundFilter, clientConnection.RemoteAddr()) {
-		errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
+	if !Templates.FilterInbound(remoteForward.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
+		errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
 		Templates.LogData(remoteForward.LoggingMethod, errorMessage)
 		_ = clientConnection.Close()
 		return errors.New(errorMessage)
 	}
+	Templates.LogData(remoteForward.LoggingMethod, "Connection Received from: ", clientConnection.RemoteAddr().String())
 	targetConnection, connectionError := Sockets.TLSConnect(
 		&remoteForward.MasterHost,
 		&remoteForward.MasterPort,
 		(*remoteForward).TLSConfiguration)
 	if connectionError != nil {
 		Templates.LogData(remoteForward.LoggingMethod, connectionError)
-	} else {
-		targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-		rawProxy := RawProxy.RawProxy{
-			TargetConnection:       targetConnection,
-			TargetConnectionReader: targetConnectionReader,
-			TargetConnectionWriter: targetConnectionWriter,
-			Tries:                  Templates.GetTries(remoteForward.Tries),
-			Timeout:                Templates.GetTimeout(remoteForward.Timeout),
-		}
-		return rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
+		_ = clientConnection.Close()
+		return connectionError
 	}
-	_ = clientConnection.Close()
-	return connectionError
+	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
+	rawProxy := RawProxy.RawProxy{
+		TargetConnection:       targetConnection,
+		TargetConnectionReader: targetConnectionReader,
+		TargetConnectionWriter: targetConnectionWriter,
+	}
+	_ = rawProxy.SetTries(remoteForward.Tries)
+	_ = rawProxy.SetTimeout(remoteForward.Timeout)
+	_ = rawProxy.SetLoggingMethod(remoteForward.LoggingMethod)
+	return rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 }
 
 func (remoteForward *RemoteForward) SetAuthenticationMethod(_ Types.AuthenticationMethod) error {

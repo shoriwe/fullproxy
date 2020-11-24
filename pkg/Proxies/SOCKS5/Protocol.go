@@ -8,7 +8,6 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
 	"math/big"
 	"net"
-	"strconv"
 	"time"
 )
 
@@ -87,12 +86,13 @@ func (socks5 *Socks5) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
-	if !Templates.FilterInbound(socks5.InboundFilter, clientConnection.RemoteAddr()) {
-		errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
+	if !Templates.FilterInbound(socks5.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
+		errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
 		_ = clientConnection.Close()
 		Templates.LogData(socks5.LoggingMethod, errorMessage)
 		return errors.New(errorMessage)
 	}
+	Templates.LogData(socks5.LoggingMethod, "Connection Received from: ", clientConnection.RemoteAddr().String())
 	var targetRequestedCommand byte
 	// Receive connection
 	authenticationSuccessful := socks5.AuthenticateClient(clientConnection, clientConnectionReader, clientConnectionWriter)
@@ -116,18 +116,8 @@ func (socks5 *Socks5) Handle(
 		Templates.LogData(socks5.LoggingMethod, errorMessage)
 		return errors.New(errorMessage)
 	}
-	strPort, parsingError := strconv.Atoi(targetPort)
-	if parsingError != nil {
-		errorMessage := "Could not parse the port for" + targetHost
-		_ = clientConnection.Close()
-		Templates.LogData(socks5.LoggingMethod, errorMessage)
-		return errors.New(errorMessage)
-	}
-	targetAddress := new(net.TCPAddr)
-	targetAddress.IP = net.IP(targetHost)
-	targetAddress.Port = strPort
-	if !Templates.FilterOutbound(socks5.OutboundFilter, targetAddress) {
-		errorMessage := "Unwanted outbound connection requested by: " + clientConnection.RemoteAddr().String() + " To: " + targetAddress.String()
+	if !Templates.FilterOutbound(socks5.OutboundFilter, Templates.ParseIP(targetHost)) {
+		errorMessage := "Denied connection requested by: " + clientConnection.RemoteAddr().String() + " To: " + targetHost
 		_ = clientConnection.Close()
 		Templates.LogData(socks5.LoggingMethod, errorMessage)
 		return errors.New(errorMessage)

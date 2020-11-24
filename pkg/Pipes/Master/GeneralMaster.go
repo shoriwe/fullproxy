@@ -58,9 +58,9 @@ func (general *General) Serve() error {
 			finalError = connectionError
 			break
 		}
-		if !Templates.FilterInbound(general.InboundFilter, clientConnection.RemoteAddr()) {
+		if !Templates.FilterInbound(general.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
 			_ = clientConnection.Close()
-			Templates.LogData(general.LoggingMethod, "Unwanted connection received from "+clientConnection.RemoteAddr().String())
+			Templates.LogData(general.LoggingMethod, "Connection denied to: "+clientConnection.RemoteAddr().String())
 			continue
 		}
 		Templates.LogData(general.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())

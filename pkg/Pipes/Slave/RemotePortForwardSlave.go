@@ -58,11 +58,11 @@ func (remotePortForward *RemotePortForward) Serve() error {
 			finalError = connectionError
 			break
 		}
-		if !Templates.FilterInbound(remotePortForward.InboundFilter, clientConnection.RemoteAddr()) {
-			errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
+		if !Templates.FilterInbound(remotePortForward.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
+			errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
 			_ = clientConnection.Close()
 			Templates.LogData(remotePortForward.LoggingMethod, errorMessage)
-			return errors.New(errorMessage)
+			continue
 		}
 		Templates.LogData(remotePortForward.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
 		_, connectionError = Sockets.Send(remotePortForward.MasterConnectionWriter, &Pipes.NewConnection)

@@ -53,12 +53,24 @@ user@linux:~$ fullproxy socks5 --help
 Usage of socks5:
   -host string
         Host to listen on. When "-slave" flag is set, is the IP of master to connect
+  -inbound-blacklist string
+        File with a host per line. Denied incoming connections to the proxy (ignored in slave mode and when inbound-whitelist is set)
+  -inbound-whitelist string
+        File with a host per line. Allowed incoming connections to the proxy (ignored in slave  mode and when inbound-blacklist is set)
+  -outbound-blacklist string
+        File with a host per line. Denied outgoing connections (ignored when outbound-whitelist is set)
+  -outbound-whitelist string
+        File with a host per line. Allowed outgoing connections (ignored when outbound-blacklist is set)
   -password string
         Password of the running proxy, requires "-username". It will be ignored if is an empty string
   -port string
         Port to listen on. When "-slave" flag is set, is the Port of the master to connect. I both modes the default port is 1080 (default "1080")
   -slave
         Connect to a master, no bind proxying
+  -timeout int
+        The number of second before re-trying the connection between target and client (default is 10 seconds) (default 10)
+  -tries int
+        The number of re-tries that will maintain the connection between target and client (default is 5 tries) (default 5)
   -username string
         Username of the running proxy, requires "-password". It will be ignored if is an empty string
 ```
@@ -69,6 +81,14 @@ user@linux:~$ fullproxy local-forward -help
 Usage of http:
   -host string
         Host to listen on. When "-slave" flag is set, is the IP of master to connect
+  -inbound-blacklist string
+        File with a host per line. Denied incoming connections to the proxy (ignored in slave mode and when inbound-whitelist is set)
+  -inbound-whitelist string
+        File with a host per line. Allowed incoming connections to the proxy (ignored in slave  mode and when inbound-blacklist is set)
+  -outbound-blacklist string
+        File with a host per line. Denied outgoing connections (ignored when outbound-whitelist is set)
+  -outbound-whitelist string
+        File with a host per line. Allowed outgoing connections (ignored when outbound-blacklist is set)
   -password string
         Password of the running proxy, requires "-username". It will be ignored if is an empty string
   -port string
@@ -89,15 +109,27 @@ Usage of local-forward:
         Host to forward the traffic received from master
   -forward-port string
         Port to forward the traffic received from master
+  -inbound-blacklist string
+        File with a host per line. Denied incoming connections to the proxy (ignored when inbound-whitelist is set)
+  -inbound-whitelist string
+        File with a host per line. Allowed incoming connections to the proxy (ignored when inbound-blacklist is set)
   -master-host string
         Host of the master
   -master-port string
         Port of the master
+  -timeout int
+        The number of second before re-trying the connection between target and client (default is 10 seconds) (default 10)
+  -tries int
+        The number of re-tries that will maintain the connection between target and client (default is 5 tries) (default 5)
 ```
 #### Remote
 ```
 user@linux:~$ fullproxy remote-forward -help
 Usage of remote-forward:
+  -inbound-blacklist string
+        File with a host per line. Denied incoming connections to the proxy (ignored when inbound-whitelist is set)
+  -inbound-whitelist string
+        File with a host per line. Allowed incoming connections to the proxy (ignored when inbound-blacklist is set)
   -local-host string
         Host to bind by slave
   -local-port string
@@ -106,19 +138,31 @@ Usage of remote-forward:
         Host of the master
   -master-port string
         Port of the master
+  -timeout int
+        The number of second before re-trying the connection between target and client (default is 10 seconds) (default 10)
+  -tries int
+        The number of re-tries that will maintain the connection between target and client (default is 5 tries) (default 5)
 ```
 ### Master
 ```
 user@linux:~$ fullproxy remote-forward -help
 Usage of master:
-  -host string
-        Host to listen on. (default "0.0.0.0")
   -forward-host string
         Argument required to handle correctly the "remote-forward" (This is the service that the master can only acceded)
   -forward-port string
         Argument required to handle correctly the "remote-forward" (This is the service that the master can only acceded)
+  -host string
+        Host to listen on. (default "0.0.0.0")
+  -inbound-blacklist string
+        File with a host per line. Denied incoming connections to the proxy (ignored when inbound-whitelist is set)
+  -inbound-whitelist string
+        File with a host per line. Allowed incoming connections to the proxy (ignored when inbound-blacklist is set)
   -port string
         Port to listen on. (default "1080")
+  -timeout int
+        The number of second before re-trying the connection between target and client (default is 10 seconds) (default 10)
+  -tries int
+        The number of re-tries that will maintain the connection between target and client (default is 5 tries) (default 5)
 ```
 ### Translate
 ```
@@ -137,6 +181,10 @@ Usage of port_forward-socks5:
         Host to listen on. (default "0.0.0.0")
   -bind-port string
         Port to listen on. (default "8080")
+  -inbound-blacklist string
+        File with a host per line. Denied incoming connections to the proxy (ignored when inbound-whitelist is set)
+  -inbound-whitelist string
+        File with a host per line. Allowed incoming connections to the proxy (ignored when inbound-blacklist is set)
   -socks5-host string
         SOCKS5 server host to use (default "127.0.0.1")
   -socks5-password string
@@ -149,6 +197,10 @@ Usage of port_forward-socks5:
         Host of the target host that is accessible by the SOCKS5 proxy
   -target-port string
         Port of the target host that is accessible by the SOCKS5 proxy
+  -timeout int
+        The number of second before re-trying the connection between target and client (default is 10 seconds) (default 10)
+  -tries int
+        The number of re-tries that will maintain the connection between target and client (default is 5 tries) (default 5)
 ```
 # Concepts
 ## Master/Slave
