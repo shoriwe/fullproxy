@@ -33,8 +33,8 @@ func RemoteForwardMaster(
 	pipe.MasterConnectionReader = masterConnectionReader
 	pipe.MasterConnectionWriter = masterConnectionWriter
 	pipe.Server = server
-	pipe.RemoteHost = *remoteHost
-	pipe.RemotePort = *remotePort
+	pipe.SlaveHost = *remoteHost
+	pipe.SlavePort = *remotePort
 	pipe.Tries = tries
 	pipe.Timeout = timeout
 	Pipes.Serve(pipe)

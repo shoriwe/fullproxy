@@ -19,8 +19,8 @@ type RemotePortForward struct {
 	MasterConnectionReader *bufio.Reader
 	MasterConnectionWriter *bufio.Writer
 	TLSConfiguration       *tls.Config
-	RemoteHost             string
-	RemotePort             string
+	SlaveHost              string
+	SlavePort              string
 	LoggingMethod          Types.LoggingMethod
 	Tries                  int
 	Timeout                time.Duration
@@ -71,7 +71,7 @@ func (remotePortForward *RemotePortForward) Serve() error {
 		if buffer[0] != Pipes.NewConnection[0] {
 			continue
 		}
-		targetConnection, connectionError := Sockets.Connect(&remotePortForward.RemoteHost, &remotePortForward.RemotePort)
+		targetConnection, connectionError := Sockets.Connect(&remotePortForward.SlaveHost, &remotePortForward.SlavePort)
 		if connectionError != nil {
 			_, _ = Sockets.Send(remotePortForward.MasterConnectionWriter, &Pipes.FailToConnectToTarget)
 			finalError = connectionError
@@ -87,7 +87,7 @@ func (remotePortForward *RemotePortForward) Serve() error {
 			continue
 		}
 		clientConnection = Sockets.UpgradeServerToTLS(clientConnection, remotePortForward.TLSConfiguration)
-		if strings.Split(clientConnection.RemoteAddr().String(), ":")[0] != remotePortForward.RemoteHost {
+		if strings.Split(clientConnection.RemoteAddr().String(), ":")[0] != remotePortForward.SlaveHost {
 			Templates.LogData(remotePortForward.LoggingMethod, "(Ignoring) Connection received from a non slave client: ", clientConnection.RemoteAddr().String())
 			_ = clientConnection.Close()
 			_ = targetConnection.Close()
