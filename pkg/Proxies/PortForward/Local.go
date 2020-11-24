@@ -52,7 +52,7 @@ func (localForward *LocalForward) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
-	if !Templates.FilterInbound(localForward.InboundFilter, clientConnection.RemoteAddr()) {
+	if !Templates.FilterInbound(localForward.InboundFilter, net.ParseIP(clientConnection.RemoteAddr().String())) {
 		errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
 		Templates.LogData(localForward.LoggingMethod, errorMessage)
 		_ = clientConnection.Close()

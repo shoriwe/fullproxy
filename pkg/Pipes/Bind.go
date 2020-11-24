@@ -45,7 +45,7 @@ func (bind *Bind) Serve() error {
 			Templates.LogData(bind.LoggingMethod, connectionError)
 			return connectionError
 		}
-		if !Templates.FilterInbound(bind.InboundFilter, clientConnection.RemoteAddr()) {
+		if !Templates.FilterInbound(bind.InboundFilter, net.ParseIP(clientConnection.RemoteAddr().String())) {
 			Templates.LogData(bind.LoggingMethod, "Unwanted connection received from "+clientConnection.RemoteAddr().String())
 			continue
 		}

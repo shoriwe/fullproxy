@@ -12,7 +12,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -63,16 +62,7 @@ func (httpProtocol *HTTP) SetInboundFilter(filter Types.IOFilter) error {
 	httpProtocol.ProxyController.OnRequest().DoFunc(func(
 		request *http.Request,
 		proxyCtx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		clientRemoteAddressSplit := strings.Split(request.RemoteAddr, ":")
-		clientRemoteAddress := new(net.TCPAddr)
-		clientRemoteAddress.IP = net.IP(clientRemoteAddressSplit[0])
-		portNumber, parsingError := strconv.Atoi(clientRemoteAddressSplit[1])
-		if parsingError != nil {
-			Templates.LogData(httpProtocol.LoggingMethod, parsingError)
-			return request, goproxy.NewResponse(request, goproxy.ContentTypeText, http.StatusProxyAuthRequired, "Don't waste your time!")
-		}
-		clientRemoteAddress.Port = portNumber
-		if !Templates.FilterInbound(httpProtocol.InboundFilter, clientRemoteAddress) {
+		if !Templates.FilterInbound(httpProtocol.InboundFilter, net.ParseIP(request.RemoteAddr)) {
 			Templates.LogData(httpProtocol.LoggingMethod, "Connection denied to: ", request.RemoteAddr)
 			return request, goproxy.NewResponse(request, goproxy.ContentTypeText, http.StatusProxyAuthRequired, "Don't waste your time!")
 		}

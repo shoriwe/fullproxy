@@ -46,7 +46,7 @@ func (remoteForward *RemoteForward) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
-	if !Templates.FilterInbound(remoteForward.InboundFilter, clientConnection.RemoteAddr()) {
+	if !Templates.FilterInbound(remoteForward.InboundFilter, net.ParseIP(clientConnection.RemoteAddr().String())) {
 		errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
 		Templates.LogData(remoteForward.LoggingMethod, errorMessage)
 		_ = clientConnection.Close()

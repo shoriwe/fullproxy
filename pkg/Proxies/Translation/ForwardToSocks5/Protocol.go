@@ -53,7 +53,7 @@ func (forwardToSocks5 *ForwardToSocks5) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
-	if !Templates.FilterInbound(forwardToSocks5.InboundFilter, clientConnection.RemoteAddr()) {
+	if !Templates.FilterInbound(forwardToSocks5.InboundFilter, net.ParseIP(clientConnection.RemoteAddr().String())) {
 		errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
 		Templates.LogData(forwardToSocks5.LoggingMethod, errorMessage)
 		_ = clientConnection.Close()

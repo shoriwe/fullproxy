@@ -16,8 +16,8 @@ func main() {
 	}
 	switch os.Args[1] {
 	case "socks5":
-		host, port, username, password, slave, tries, timeout := ArgumentParser.ParseSocks5Arguments()
-		ProxiesSetup.SetupSocks5(host, port, slave, username, password, *tries, *timeout)
+		host, port, username, password, slave, tries, timeout, inboundLists, outboundLists := ArgumentParser.ParseSocks5Arguments()
+		ProxiesSetup.SetupSocks5(host, port, slave, username, password, tries, timeout, inboundLists, outboundLists)
 	case "http":
 		host, port, username, password, slave, tls := ArgumentParser.HTTPArguments()
 		ProxiesSetup.SetupHTTP(host, port, slave, tls, username, password)

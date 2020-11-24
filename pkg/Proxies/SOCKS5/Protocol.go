@@ -8,7 +8,6 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
 	"math/big"
 	"net"
-	"strconv"
 	"time"
 )
 
@@ -87,7 +86,13 @@ func (socks5 *Socks5) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
-	if !Templates.FilterInbound(socks5.InboundFilter, clientConnection.RemoteAddr()) {
+	clientIP, paringError := Templates.ParseIP(clientConnection.RemoteAddr().String())
+	if paringError != nil {
+		Templates.LogData(socks5.LoggingMethod, paringError)
+		_ = clientConnection.Close()
+		return paringError
+	}
+	if !Templates.FilterInbound(socks5.InboundFilter, clientIP) {
 		errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
 		_ = clientConnection.Close()
 		Templates.LogData(socks5.LoggingMethod, errorMessage)
@@ -116,18 +121,8 @@ func (socks5 *Socks5) Handle(
 		Templates.LogData(socks5.LoggingMethod, errorMessage)
 		return errors.New(errorMessage)
 	}
-	strPort, parsingError := strconv.Atoi(targetPort)
-	if parsingError != nil {
-		errorMessage := "Could not parse the port for" + targetHost
-		_ = clientConnection.Close()
-		Templates.LogData(socks5.LoggingMethod, errorMessage)
-		return errors.New(errorMessage)
-	}
-	targetAddress := new(net.TCPAddr)
-	targetAddress.IP = net.IP(targetHost)
-	targetAddress.Port = strPort
-	if !Templates.FilterOutbound(socks5.OutboundFilter, targetAddress) {
-		errorMessage := "Unwanted outbound connection requested by: " + clientConnection.RemoteAddr().String() + " To: " + targetAddress.String()
+	if !Templates.FilterOutbound(socks5.OutboundFilter, net.ParseIP(targetHost)) {
+		errorMessage := "Unwanted outbound connection requested by: " + clientConnection.RemoteAddr().String() + " To: " + targetHost
 		_ = clientConnection.Close()
 		Templates.LogData(socks5.LoggingMethod, errorMessage)
 		return errors.New(errorMessage)
