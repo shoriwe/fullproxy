@@ -4,3 +4,4 @@
 .idea/misc.xml
 .idea/FullProxy.iml
 build/*
+tests/*
