@@ -1,7 +1,7 @@
 package ProxiesSetup
 
 import (
-	"github.com/shoriwe/FullProxy/internal/ControllersSetup"
+	"github.com/shoriwe/FullProxy/internal/PipesSetup"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/PortForward"
 	"log"
 	"time"
@@ -17,5 +17,5 @@ func SetupLocalForward(
 	proxy.SetTries(tries)
 	proxy.SetTimeout(timeout)
 	proxy.SetLoggingMethod(log.Print)
-	ControllersSetup.GeneralSlave(masterHost, masterPort, proxy)
+	PipesSetup.GeneralSlave(masterHost, masterPort, proxy)
 }

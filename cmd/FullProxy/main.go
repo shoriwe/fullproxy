@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/shoriwe/FullProxy/internal/ArgumentParser"
-	"github.com/shoriwe/FullProxy/internal/ControllersSetup"
+	"github.com/shoriwe/FullProxy/internal/PipesSetup"
 	"github.com/shoriwe/FullProxy/internal/ProxiesSetup"
 	"os"
 )
@@ -30,9 +30,9 @@ func main() {
 	case "master":
 		masterHost, masterPort, remoteHost, remotePort, tries, timeout := ArgumentParser.ParseMasterArguments()
 		if len(*remoteHost) > 0 && len(*remotePort) > 0 {
-			ControllersSetup.MasterRemote(masterHost, masterPort, remoteHost, remotePort, *tries, *timeout)
+			PipesSetup.MasterRemote(masterHost, masterPort, remoteHost, remotePort, *tries, *timeout)
 		} else {
-			ControllersSetup.MasterGeneral(masterHost, masterPort, *tries, *timeout)
+			PipesSetup.MasterGeneral(masterHost, masterPort, *tries, *timeout)
 		}
 	case "translate":
 		if numberOfArguments == 2 {

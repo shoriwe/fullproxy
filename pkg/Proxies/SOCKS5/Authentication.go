@@ -2,8 +2,8 @@ package SOCKS5
 
 import (
 	"bufio"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
+	"github.com/shoriwe/FullProxy/pkg/Templates"
 	"net"
 )
 
@@ -62,7 +62,7 @@ func (socks5 *Socks5) AuthenticateClient(clientConnection net.Conn, clientConnec
 		_, connectionError := Sockets.Send(clientConnectionWriter, &NoAuthRequiredSupported)
 		return connectionError == nil
 	default:
-		ConnectionControllers.LogData(socks5.LoggingMethod, "Client doesn't support authentication methods: ", clientConnection.RemoteAddr().String())
+		Templates.LogData(socks5.LoggingMethod, "Client doesn't support authentication methods: ", clientConnection.RemoteAddr().String())
 		_, _ = Sockets.Send(clientConnectionWriter, &NoSupportedMethods)
 	}
 	return false

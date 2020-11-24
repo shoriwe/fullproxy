@@ -3,19 +3,23 @@ package SOCKS5
 import (
 	"bufio"
 	"errors"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
+	"github.com/shoriwe/FullProxy/pkg/Templates"
+	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
 	"math/big"
 	"net"
+	"strconv"
 	"time"
 )
 
 type Socks5 struct {
-	AuthenticationMethod ConnectionControllers.AuthenticationMethod
+	AuthenticationMethod Types.AuthenticationMethod
 	WantedAuthMethod     byte
-	LoggingMethod        ConnectionControllers.LoggingMethod
+	LoggingMethod        Types.LoggingMethod
 	Tries                int
 	Timeout              time.Duration
+	InboundFilter        Types.InboundFilter
+	OutboundFilter       Types.OutboundFilter
 }
 
 func ReceiveTargetRequest(clientConnectionReader *bufio.Reader) (byte, byte, []byte, []byte) {
@@ -49,12 +53,12 @@ func GetTargetHostPort(targetRequestedCommand *byte, targetHostType *byte, rawTa
 	return ConnectionRefused, "", ""
 }
 
-func (socks5 *Socks5) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
+func (socks5 *Socks5) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
 	socks5.LoggingMethod = loggingMethod
 	return nil
 }
 
-func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod ConnectionControllers.AuthenticationMethod) error {
+func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod Types.AuthenticationMethod) error {
 	socks5.AuthenticationMethod = authenticationMethod
 	return nil
 }
@@ -69,22 +73,36 @@ func (socks5 *Socks5) SetTimeout(timeout time.Duration) error {
 	return nil
 }
 
+func (socks5 *Socks5) SetInboundFilter(filter Types.InboundFilter) error {
+	socks5.InboundFilter = filter
+	return nil
+}
+
+func (socks5 *Socks5) SetOutboundFilter(filter Types.OutboundFilter) error {
+	socks5.OutboundFilter = filter
+	return nil
+}
+
 func (socks5 *Socks5) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
-
+	if !Templates.FilterInbound(socks5.InboundFilter, clientConnection.RemoteAddr()) {
+		errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
+		_ = clientConnection.Close()
+		Templates.LogData(socks5.LoggingMethod, errorMessage)
+		return errors.New(errorMessage)
+	}
 	var targetRequestedCommand byte
-	var finalError string
 	// Receive connection
 	authenticationSuccessful := socks5.AuthenticateClient(clientConnection, clientConnectionReader, clientConnectionWriter)
 	if !authenticationSuccessful {
-		finalError = "Authentication Failed with: " + clientConnection.RemoteAddr().String()
+		errorMessage := "Authentication Failed with: " + clientConnection.RemoteAddr().String()
 		_ = clientConnection.Close()
-		ConnectionControllers.LogData(socks5.LoggingMethod, finalError)
-		return errors.New(finalError)
+		Templates.LogData(socks5.LoggingMethod, errorMessage)
+		return errors.New(errorMessage)
 	}
-	ConnectionControllers.LogData(socks5.LoggingMethod, "Login succeeded from: ", clientConnection.RemoteAddr().String())
+	Templates.LogData(socks5.LoggingMethod, "Login succeeded from: ", clientConnection.RemoteAddr().String())
 	var targetHost string
 	var targetPort string
 	rawTargetRequestedCommand, targetHostType, rawTargetHost, rawTargetPort := ReceiveTargetRequest(
@@ -93,10 +111,26 @@ func (socks5 *Socks5) Handle(
 		&rawTargetRequestedCommand, &targetHostType,
 		rawTargetHost, rawTargetPort)
 	if targetRequestedCommand == ConnectionRefused {
-		finalError = "Target connection refused: " + targetHost + ":" + targetPort
+		errorMessage := "Target connection refused: " + targetHost + ":" + targetPort
 		_ = clientConnection.Close()
-		ConnectionControllers.LogData(socks5.LoggingMethod, finalError)
-		return errors.New(finalError)
+		Templates.LogData(socks5.LoggingMethod, errorMessage)
+		return errors.New(errorMessage)
+	}
+	strPort, parsingError := strconv.Atoi(targetPort)
+	if parsingError != nil {
+		errorMessage := "Could not parse the port for" + targetHost
+		_ = clientConnection.Close()
+		Templates.LogData(socks5.LoggingMethod, errorMessage)
+		return errors.New(errorMessage)
+	}
+	targetAddress := new(net.TCPAddr)
+	targetAddress.IP = net.IP(targetHost)
+	targetAddress.Port = strPort
+	if !Templates.FilterOutbound(socks5.OutboundFilter, targetAddress) {
+		errorMessage := "Unwanted outbound connection requested by: " + clientConnection.RemoteAddr().String() + " To: " + targetAddress.String()
+		_ = clientConnection.Close()
+		Templates.LogData(socks5.LoggingMethod, errorMessage)
+		return errors.New(errorMessage)
 	}
 	return socks5.ExecuteCommand(clientConnection, clientConnectionReader, clientConnectionWriter,
 		&targetRequestedCommand, &targetHostType, &targetHost, &targetPort)
