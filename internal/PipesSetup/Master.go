@@ -1,7 +1,8 @@
-package ControllersSetup
+package PipesSetup
 
 import (
-	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers/Master"
+	"github.com/shoriwe/FullProxy/pkg/Pipes"
+	"github.com/shoriwe/FullProxy/pkg/Pipes/Master"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"log"
 	"time"
@@ -25,18 +26,18 @@ func MasterRemote(
 	}
 	masterConnection = Sockets.UpgradeServerToTLS(masterConnection, tlsConfiguration)
 	masterConnectionReader, masterConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(masterConnection)
-	controller := new(Master.RemotePortForward)
+	pipe := new(Master.RemotePortForward)
 
-	controller.TLSConfiguration = tlsConfiguration
-	controller.MasterConnection = masterConnection
-	controller.MasterConnectionReader = masterConnectionReader
-	controller.MasterConnectionWriter = masterConnectionWriter
-	controller.Server = server
-	controller.RemoteHost = *remoteHost
-	controller.RemotePort = *remotePort
-	controller.Tries = tries
-	controller.Timeout = timeout
-	log.Fatal(controller.Serve())
+	pipe.TLSConfiguration = tlsConfiguration
+	pipe.MasterConnection = masterConnection
+	pipe.MasterConnectionReader = masterConnectionReader
+	pipe.MasterConnectionWriter = masterConnectionWriter
+	pipe.Server = server
+	pipe.RemoteHost = *remoteHost
+	pipe.RemotePort = *remotePort
+	pipe.Tries = tries
+	pipe.Timeout = timeout
+	Pipes.Serve(pipe)
 }
 
 func MasterGeneral(host *string, port *string, tries int, timeout time.Duration) {
@@ -55,15 +56,15 @@ func MasterGeneral(host *string, port *string, tries int, timeout time.Duration)
 	masterConnection = Sockets.UpgradeServerToTLS(masterConnection, tlsConfiguration)
 	masterConnectionReader, masterConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(masterConnection)
 
-	controller := new(Master.General)
-	controller.Server = server
-	controller.MasterConnection = masterConnection
-	controller.MasterConnectionReader = masterConnectionReader
-	controller.MasterConnectionWriter = masterConnectionWriter
-	controller.TLSConfiguration = tlsConfiguration
-	controller.MasterHost = *host
-	controller.Tries = tries
-	controller.Timeout = timeout
-	controller.SetLoggingMethod(log.Print)
-	log.Fatal(controller.Serve())
+	pipe := new(Master.General)
+	pipe.Server = server
+	pipe.MasterConnection = masterConnection
+	pipe.MasterConnectionReader = masterConnectionReader
+	pipe.MasterConnectionWriter = masterConnectionWriter
+	pipe.TLSConfiguration = tlsConfiguration
+	pipe.MasterHost = *host
+	pipe.Tries = tries
+	pipe.Timeout = timeout
+	pipe.SetLoggingMethod(log.Print)
+	Pipes.Serve(pipe)
 }
