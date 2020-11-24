@@ -1,7 +1,8 @@
 package ProxiesSetup
 
 import (
-	"github.com/shoriwe/FullProxy/internal/ControllersSetup"
+	"github.com/shoriwe/FullProxy/internal/PipesSetup"
+	"github.com/shoriwe/FullProxy/internal/Templates"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/SOCKS5"
 	"log"
 	"time"
@@ -15,17 +16,17 @@ func SetupSocks5(
 	proxy := new(SOCKS5.Socks5)
 	if len(username) > 0 && len(password) > 0 {
 		proxy.WantedAuthMethod = SOCKS5.UsernamePassword
-		proxy.SetAuthenticationMethod(BasicAuthentication(username, password))
+		proxy.SetAuthenticationMethod(Templates.BasicAuthentication(username, password))
 	} else {
 		proxy.WantedAuthMethod = SOCKS5.NoAuthRequired
-		proxy.SetAuthenticationMethod(NoAuthentication)
+		proxy.SetAuthenticationMethod(Templates.NoAuthentication)
 	}
 	proxy.SetTries(tries)
 	proxy.SetTimeout(timeout)
 	proxy.SetLoggingMethod(log.Print)
 	if *slave {
-		ControllersSetup.GeneralSlave(host, port, proxy)
+		PipesSetup.GeneralSlave(host, port, proxy)
 	} else {
-		ControllersSetup.Bind(host, port, proxy)
+		PipesSetup.Bind(host, port, proxy)
 	}
 }

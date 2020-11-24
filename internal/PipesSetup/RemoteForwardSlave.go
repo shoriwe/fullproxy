@@ -1,13 +1,14 @@
-package ControllersSetup
+package PipesSetup
 
 import (
-	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers/Slave"
+	"github.com/shoriwe/FullProxy/pkg/Pipes"
+	"github.com/shoriwe/FullProxy/pkg/Pipes/Slave"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
 	"log"
 	"time"
 )
 
-func RemotePortForwardSlave(
+func RemoteForwardSlave(
 	socks5Host *string, socks5Port *string,
 	bindHost *string, bindPort *string,
 	tries int, timeout time.Duration) {
@@ -25,16 +26,15 @@ func RemotePortForwardSlave(
 	}
 	masterConnection = Sockets.UpgradeClientToTLS(masterConnection, tlsConfiguration)
 	masterConnectionReader, masterConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(masterConnection)
-	controller := new(Slave.RemotePortForward)
-	controller.MasterHost = *socks5Host
-	controller.MasterPort = *socks5Port
-	controller.TLSConfiguration = tlsConfiguration
-	controller.LocalServer = localServer
-	controller.MasterConnection = masterConnection
-	controller.MasterConnectionReader = masterConnectionReader
-	controller.MasterConnectionWriter = masterConnectionWriter
-	controller.Tries = tries
-	controller.Timeout = timeout
-	controller.SetLoggingMethod(log.Print)
-	log.Fatal(controller.Serve())
+	pipe := new(Slave.RemotePortForward)
+	pipe.MasterHost = *socks5Host
+	pipe.MasterPort = *socks5Port
+	pipe.TLSConfiguration = tlsConfiguration
+	pipe.LocalServer = localServer
+	pipe.MasterConnection = masterConnection
+	pipe.MasterConnectionReader = masterConnectionReader
+	pipe.MasterConnectionWriter = masterConnectionWriter
+	pipe.Tries = tries
+	pipe.Timeout = timeout
+	Pipes.Serve(pipe)
 }

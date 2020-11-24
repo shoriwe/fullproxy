@@ -1,7 +1,8 @@
 package ProxiesSetup
 
 import (
-	"github.com/shoriwe/FullProxy/internal/ControllersSetup"
+	"github.com/shoriwe/FullProxy/internal/PipesSetup"
+	"github.com/shoriwe/FullProxy/internal/Templates"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/HTTP"
 	"gopkg.in/elazarl/goproxy.v1"
 	"log"
@@ -19,11 +20,11 @@ func SetupHTTP(
 	proxy.ProxyController = proxyController
 	proxy.SetLoggingMethod(log.Print)
 	if len(username) > 0 && len(password) > 0 {
-		proxy.SetAuthenticationMethod(BasicAuthentication(username, password))
+		proxy.SetAuthenticationMethod(Templates.BasicAuthentication(username, password))
 	}
 	if *slave {
-		ControllersSetup.GeneralSlave(host, port, proxy)
+		PipesSetup.GeneralSlave(host, port, proxy)
 	} else {
-		ControllersSetup.Bind(host, port, proxy)
+		PipesSetup.Bind(host, port, proxy)
 	}
 }

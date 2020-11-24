@@ -1,9 +1,10 @@
-package ConnectionControllers
+package Pipes
 
 import (
-	"bufio"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/RawProxy"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
+	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"log"
 	"net"
 	"time"
 )
@@ -15,43 +16,8 @@ var (
 	UnknownOperation      = []byte{4}
 )
 
-func LogData(loggingMethod LoggingMethod, arguments ...interface{}) {
-	if loggingMethod != nil {
-		loggingMethod(arguments...)
-	}
-}
-
-func GetTries(tries int) int {
-	if tries != 0 {
-		return tries
-	}
-	return 5
-}
-
-func GetTimeout(timeout time.Duration) time.Duration {
-	if timeout != 0 {
-		return timeout
-	}
-	return 10 * time.Second
-}
-
-type AuthenticationMethod func(username []byte, password []byte) bool
-
-type LoggingMethod func(args ...interface{})
-
-type ConnectionController interface {
-	SetLoggingMethod(LoggingMethod)
-	Serve() error
-	SetTries(int) error
-	SetTimeout(time.Duration) error
-}
-
-type ProxyProtocol interface {
-	SetLoggingMethod(LoggingMethod) error
-	SetAuthenticationMethod(AuthenticationMethod) error
-	Handle(net.Conn, *bufio.Reader, *bufio.Writer) error
-	SetTries(int) error
-	SetTimeout(time.Duration) error
+func Serve(pipe Types.Pipe) {
+	log.Fatal(pipe.Serve())
 }
 
 func StartGeneralProxying(clientConnection net.Conn, targetConnection net.Conn, tries int, timeout time.Duration) {

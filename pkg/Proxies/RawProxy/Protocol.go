@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"errors"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
+	"github.com/shoriwe/FullProxy/pkg/Templates"
+	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
 	"net"
 	"time"
 )
@@ -13,6 +15,7 @@ type RawProxy struct {
 	TargetConnectionReader *bufio.Reader
 	TargetConnectionWriter *bufio.Writer
 	ConnectionAlive        bool
+	LoggingMethod          Types.LoggingMethod
 	Tries                  int
 	Timeout                time.Duration
 }
@@ -60,7 +63,35 @@ func (rawProxy *RawProxy) HandleReadWrite(
 	if *connectionAlive {
 		*connectionAlive = false
 	}
+	Templates.LogData(rawProxy.LoggingMethod, proxyingError)
 	return proxyingError
+}
+
+func (rawProxy *RawProxy) SetAuthenticationMethod(_ Types.AuthenticationMethod) error {
+	return errors.New("This kind of proxy doesn't support authentication methods")
+}
+
+func (rawProxy *RawProxy) SetInboundFilter(_ Types.IOFilter) error {
+	return errors.New("This kind of proxy doesn't support InboundFilters")
+}
+
+func (rawProxy *RawProxy) SetOutboundFilter(_ Types.IOFilter) error {
+	return errors.New("This kind of proxy doesn't support OutboundFilters")
+}
+
+func (rawProxy *RawProxy) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
+	rawProxy.LoggingMethod = loggingMethod
+	return nil
+}
+
+func (rawProxy *RawProxy) SetTries(tries int) error {
+	rawProxy.Tries = tries
+	return nil
+}
+
+func (rawProxy *RawProxy) SetTimeout(timeout time.Duration) error {
+	rawProxy.Timeout = timeout
+	return nil
 }
 
 func (rawProxy *RawProxy) Handle(

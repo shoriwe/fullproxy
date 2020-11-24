@@ -1,7 +1,7 @@
 package ProxiesSetup
 
 import (
-	"github.com/shoriwe/FullProxy/internal/ControllersSetup"
+	"github.com/shoriwe/FullProxy/internal/PipesSetup"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/Translation/ForwardToSocks5"
 	"golang.org/x/net/proxy"
 	"log"
@@ -32,5 +32,5 @@ func SetupForwardSocks5(
 		log.Fatal(dialerCreationError)
 	}
 	proxyProtocol.Socks5Dialer = proxyDialer
-	ControllersSetup.Bind(bindHost, bindPort, proxyProtocol)
+	PipesSetup.Bind(bindHost, bindPort, proxyProtocol)
 }

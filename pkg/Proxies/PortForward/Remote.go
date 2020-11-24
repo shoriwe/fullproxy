@@ -3,9 +3,11 @@ package PortForward
 import (
 	"bufio"
 	"crypto/tls"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
+	"errors"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/RawProxy"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
+	"github.com/shoriwe/FullProxy/pkg/Templates"
+	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
 	"net"
 	"time"
 )
@@ -14,12 +16,13 @@ type RemoteForward struct {
 	MasterHost       string
 	MasterPort       string
 	TLSConfiguration *tls.Config
-	LoggingMethod    ConnectionControllers.LoggingMethod
+	LoggingMethod    Types.LoggingMethod
 	Tries            int
 	Timeout          time.Duration
+	InboundFilter    Types.IOFilter
 }
 
-func (remoteForward *RemoteForward) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
+func (remoteForward *RemoteForward) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
 	remoteForward.LoggingMethod = loggingMethod
 	return nil
 }
@@ -34,24 +37,35 @@ func (remoteForward *RemoteForward) SetTimeout(timeout time.Duration) error {
 	return nil
 }
 
+func (remoteForward *RemoteForward) SetInboundFilter(filter Types.IOFilter) error {
+	remoteForward.InboundFilter = filter
+	return nil
+}
+
 func (remoteForward *RemoteForward) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
+	if !Templates.FilterInbound(remoteForward.InboundFilter, clientConnection.RemoteAddr()) {
+		errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
+		Templates.LogData(remoteForward.LoggingMethod, errorMessage)
+		_ = clientConnection.Close()
+		return errors.New(errorMessage)
+	}
 	targetConnection, connectionError := Sockets.TLSConnect(
 		&remoteForward.MasterHost,
 		&remoteForward.MasterPort,
 		(*remoteForward).TLSConfiguration)
 	if connectionError != nil {
-		ConnectionControllers.LogData(remoteForward.LoggingMethod, connectionError)
+		Templates.LogData(remoteForward.LoggingMethod, connectionError)
 	} else {
 		targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
 		rawProxy := RawProxy.RawProxy{
 			TargetConnection:       targetConnection,
 			TargetConnectionReader: targetConnectionReader,
 			TargetConnectionWriter: targetConnectionWriter,
-			Tries:                  ConnectionControllers.GetTries(remoteForward.Tries),
-			Timeout:                ConnectionControllers.GetTimeout(remoteForward.Timeout),
+			Tries:                  Templates.GetTries(remoteForward.Tries),
+			Timeout:                Templates.GetTimeout(remoteForward.Timeout),
 		}
 		return rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 	}
@@ -59,6 +73,6 @@ func (remoteForward *RemoteForward) Handle(
 	return connectionError
 }
 
-func (remoteForward *RemoteForward) SetAuthenticationMethod(_ ConnectionControllers.AuthenticationMethod) error {
-	return nil
+func (remoteForward *RemoteForward) SetAuthenticationMethod(_ Types.AuthenticationMethod) error {
+	return errors.New("This kind of proxy doesn't support authentication methods")
 }

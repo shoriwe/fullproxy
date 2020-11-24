@@ -3,8 +3,11 @@ package Slave
 import (
 	"bufio"
 	"crypto/tls"
-	"github.com/shoriwe/FullProxy/pkg/ConnectionControllers"
+	"errors"
+	"github.com/shoriwe/FullProxy/pkg/Pipes"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
+	"github.com/shoriwe/FullProxy/pkg/Templates"
+	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
 	"net"
 	"time"
 )
@@ -16,11 +19,27 @@ type General struct {
 	MasterHost             string
 	MasterPort             string
 	TLSConfiguration       *tls.Config
-	ProxyProtocol          ConnectionControllers.ProxyProtocol
-	LoggingMethod          ConnectionControllers.LoggingMethod
+	ProxyProtocol          Types.ProxyProtocol
+	LoggingMethod          Types.LoggingMethod
 }
 
-func (general *General) SetLoggingMethod(loggingMethod ConnectionControllers.LoggingMethod) error {
+func (general *General) SetInboundFilter(_ Types.IOFilter) error {
+	return errors.New("This kind of PIPE doesn't support InboundFilters")
+}
+
+func (general *General) SetOutboundFilter(_ Types.IOFilter) error {
+	return errors.New("This kind of PIPE doesn't support OutboundFilters")
+}
+
+func (general *General) SetTries(tries int) error {
+	return general.ProxyProtocol.SetTries(tries)
+}
+
+func (general *General) SetTimeout(timeout time.Duration) error {
+	return general.ProxyProtocol.SetTimeout(timeout)
+}
+
+func (general *General) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
 	general.LoggingMethod = loggingMethod
 	return nil
 }
@@ -39,15 +58,15 @@ func (general *General) Serve() error {
 		if NumberOfReceivedBytes != 1 {
 			continue
 		}
-		if buffer[0] != ConnectionControllers.NewConnection[0] {
+		if buffer[0] != Pipes.NewConnection[0] {
 			continue
 		}
 		clientConnection, connectionError := Sockets.TLSConnect(&general.MasterHost, &general.MasterPort, general.TLSConfiguration)
-		ConnectionControllers.LogData(general.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
 		if connectionError != nil {
 			finalError = connectionError
 			break
 		}
+		Templates.LogData(general.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
 		clientConnectionReader, clientConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(clientConnection)
 		go general.ProxyProtocol.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 	}
