@@ -19,8 +19,8 @@ func ParseForwardToSocks5Arguments() (*string, *string, *string, *string, *strin
 	targetPort := protocolFlagSet.String("target-port", "", "Port of the target host that is accessible by the SOCKS5 proxy")
 	tries := protocolFlagSet.Int("tries", 5, "The number of re-tries that will maintain the connection between target and client (default is 5 tries)")
 	rawTimeout := protocolFlagSet.Int("timeout", 10, "The number of second before re-trying the connection between target and client (default is 10 seconds)")
-	inboundWhitelist := protocolFlagSet.String("inbound-whitelist", "", "File with a host per line. Allowed incoming connections to the proxy (ignored in slave  mode and when inbound-blacklist is set)")
-	inboundBlacklist := protocolFlagSet.String("inbound-blacklist", "", "File with a host per line. Denied incoming connections to the proxy (ignored in slave mode and when inbound-whitelist is set)")
+	inboundWhitelist := protocolFlagSet.String("inbound-whitelist", "", "File with a host per line. Allowed incoming connections to the proxy (ignored when inbound-blacklist is set)")
+	inboundBlacklist := protocolFlagSet.String("inbound-blacklist", "", "File with a host per line. Denied incoming connections to the proxy (ignored when inbound-whitelist is set)")
 	_ = protocolFlagSet.Parse(os.Args[3:])
 	timeout := time.Duration(*rawTimeout) * time.Second
 	if len(*inboundWhitelist) > 0 && len(*inboundBlacklist) > 0 {
