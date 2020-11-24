@@ -53,28 +53,29 @@ func (localForward *LocalForward) Handle(
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
 	if !Templates.FilterInbound(localForward.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
-		errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
+		errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
 		Templates.LogData(localForward.LoggingMethod, errorMessage)
 		_ = clientConnection.Close()
 		return errors.New(errorMessage)
 	}
+	Templates.LogData(localForward.LoggingMethod, "Connection Received from: ", clientConnection.RemoteAddr().String())
 	targetConnection, connectionError := Sockets.Connect(&localForward.TargetHost, &localForward.TargetPort)
 	if connectionError != nil {
 		Templates.LogData(localForward.LoggingMethod, connectionError)
-	} else {
-		targetReader, targetWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-		rawProxy := RawProxy.RawProxy{
-			TargetConnection:       targetConnection,
-			TargetConnectionReader: targetReader,
-			TargetConnectionWriter: targetWriter,
-			Tries:                  Templates.GetTries(localForward.Tries),
-			Timeout:                Templates.GetTimeout(localForward.Timeout),
-		}
-		return rawProxy.Handle(
-			clientConnection,
-			clientConnectionReader, clientConnectionWriter,
-		)
+		_ = clientConnection.Close()
+		return connectionError
 	}
-	_ = clientConnection.Close()
-	return connectionError
+	targetReader, targetWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
+	rawProxy := RawProxy.RawProxy{
+		TargetConnection:       targetConnection,
+		TargetConnectionReader: targetReader,
+		TargetConnectionWriter: targetWriter,
+	}
+	_ = rawProxy.SetTries(localForward.Tries)
+	_ = rawProxy.SetTimeout(localForward.Timeout)
+	_ = rawProxy.SetLoggingMethod(localForward.LoggingMethod)
+	return rawProxy.Handle(
+		clientConnection,
+		clientConnectionReader, clientConnectionWriter,
+	)
 }

@@ -11,11 +11,12 @@ import (
 func RemoteForwardMaster(
 	masterHost *string, masterPort *string,
 	remoteHost *string, remotePort *string,
-	tries int, timeout time.Duration) {
+	tries *int, timeout *time.Duration) {
 	server, bindError := Sockets.Bind(masterHost, masterPort)
 	if bindError != nil {
 		log.Fatal(bindError)
 	}
+	log.Print("Bind successfully in: ", *masterHost, ":", *masterPort)
 	tlsConfiguration, creationError := Sockets.CreateMasterTLSConfiguration()
 	if creationError != nil {
 		log.Fatal(creationError)
@@ -24,6 +25,7 @@ func RemoteForwardMaster(
 	if connectionError != nil {
 		log.Fatal(connectionError)
 	}
+	log.Println("Slave connected from: ", masterConnection.RemoteAddr().String())
 	masterConnection = Sockets.UpgradeServerToTLS(masterConnection, tlsConfiguration)
 	masterConnectionReader, masterConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(masterConnection)
 	pipe := new(Master.RemotePortForward)
@@ -35,7 +37,7 @@ func RemoteForwardMaster(
 	pipe.Server = server
 	pipe.SlaveHost = *remoteHost
 	pipe.SlavePort = *remotePort
-	pipe.Tries = tries
-	pipe.Timeout = timeout
+	_ = pipe.SetTries(*tries)
+	_ = pipe.SetTimeout(*timeout)
 	Pipes.Serve(pipe)
 }

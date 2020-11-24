@@ -13,6 +13,7 @@ func GeneralSlave(host *string, port *string, proxy Types.ProxyProtocol) {
 	if connectionError != nil {
 		log.Fatal(connectionError)
 	}
+	log.Println("Connected to master: ", masterConnection.RemoteAddr().String())
 	tlsConfiguration, creationError := Sockets.CreateSlaveTLSConfiguration()
 	if creationError != nil {
 		log.Fatal(creationError)
@@ -27,6 +28,6 @@ func GeneralSlave(host *string, port *string, proxy Types.ProxyProtocol) {
 	pipe.MasterHost = *host
 	pipe.MasterPort = *port
 	pipe.ProxyProtocol = proxy
-	pipe.SetLoggingMethod(log.Print)
+	_ = pipe.SetLoggingMethod(log.Print)
 	Pipes.Serve(pipe)
 }

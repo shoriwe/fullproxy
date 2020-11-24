@@ -14,7 +14,7 @@ func Bind(host *string, port *string, proxy Types.ProxyProtocol) {
 	}
 	log.Print("Bind successfully in: ", *host, ":", *port)
 	pipe := new(Pipes.Bind)
-	pipe.SetLoggingMethod(log.Print)
+	_ = pipe.SetLoggingMethod(log.Print)
 	pipe.Server = server
 	pipe.ProxyProtocol = proxy
 	Pipes.Serve(pipe)

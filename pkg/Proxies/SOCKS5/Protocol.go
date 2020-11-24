@@ -87,11 +87,12 @@ func (socks5 *Socks5) Handle(
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
 	if !Templates.FilterInbound(socks5.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
-		errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
+		errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
 		_ = clientConnection.Close()
 		Templates.LogData(socks5.LoggingMethod, errorMessage)
 		return errors.New(errorMessage)
 	}
+	Templates.LogData(socks5.LoggingMethod, "Connection Received from: ", clientConnection.RemoteAddr().String())
 	var targetRequestedCommand byte
 	// Receive connection
 	authenticationSuccessful := socks5.AuthenticateClient(clientConnection, clientConnectionReader, clientConnectionWriter)
@@ -115,8 +116,8 @@ func (socks5 *Socks5) Handle(
 		Templates.LogData(socks5.LoggingMethod, errorMessage)
 		return errors.New(errorMessage)
 	}
-	if !Templates.FilterOutbound(socks5.OutboundFilter, net.ParseIP(targetHost)) {
-		errorMessage := "Unwanted outbound connection requested by: " + clientConnection.RemoteAddr().String() + " To: " + targetHost
+	if !Templates.FilterOutbound(socks5.OutboundFilter, Templates.ParseIP(targetHost)) {
+		errorMessage := "Denied connection requested by: " + clientConnection.RemoteAddr().String() + " To: " + targetHost
 		_ = clientConnection.Close()
 		Templates.LogData(socks5.LoggingMethod, errorMessage)
 		return errors.New(errorMessage)

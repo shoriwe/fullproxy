@@ -54,11 +54,12 @@ func (forwardToSocks5 *ForwardToSocks5) Handle(
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
 	if !Templates.FilterInbound(forwardToSocks5.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
-		errorMessage := "Unwanted connection received from " + clientConnection.RemoteAddr().String()
+		errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
 		Templates.LogData(forwardToSocks5.LoggingMethod, errorMessage)
 		_ = clientConnection.Close()
 		return errors.New(errorMessage)
 	}
+	Templates.LogData(forwardToSocks5.LoggingMethod, "Connection Received from: ", clientConnection.RemoteAddr().String())
 	targetConnection, connectionError := forwardToSocks5.Socks5Dialer.Dial("tcp", forwardToSocks5.TargetHost+":"+forwardToSocks5.TargetPort)
 	if connectionError != nil {
 		Templates.LogData(forwardToSocks5.LoggingMethod, connectionError)
@@ -70,8 +71,9 @@ func (forwardToSocks5 *ForwardToSocks5) Handle(
 		TargetConnection:       targetConnection,
 		TargetConnectionReader: targetConnectionReader,
 		TargetConnectionWriter: targetConnectionWriter,
-		Tries:                  forwardToSocks5.Tries,
-		Timeout:                forwardToSocks5.Timeout,
 	}
+	_ = rawProxy.SetTries(forwardToSocks5.Tries)
+	_ = rawProxy.SetTimeout(forwardToSocks5.Timeout)
+	_ = rawProxy.SetLoggingMethod(forwardToSocks5.LoggingMethod)
 	return rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
 }

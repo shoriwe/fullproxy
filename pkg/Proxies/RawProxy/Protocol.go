@@ -28,8 +28,8 @@ func (rawProxy *RawProxy) HandleReadWrite(
 
 	var proxyingError error
 	tries := 0
-	for ; tries < rawProxy.Tries; tries++ {
-		_ = sourceConnection.SetReadDeadline(time.Now().Add(rawProxy.Timeout))
+	for ; tries < Templates.GetTries(rawProxy.Tries); tries++ {
+		_ = sourceConnection.SetReadDeadline(time.Now().Add(Templates.GetTimeout(rawProxy.Timeout)))
 		numberOfBytesReceived, buffer, connectionError := Sockets.Receive(sourceReader, 1048576)
 		if connectionError != nil {
 			// If the error is not "Timeout"
@@ -63,7 +63,9 @@ func (rawProxy *RawProxy) HandleReadWrite(
 	if *connectionAlive {
 		*connectionAlive = false
 	}
-	Templates.LogData(rawProxy.LoggingMethod, proxyingError)
+	if proxyingError != nil {
+		Templates.LogData(rawProxy.LoggingMethod, proxyingError)
+	}
 	return proxyingError
 }
 

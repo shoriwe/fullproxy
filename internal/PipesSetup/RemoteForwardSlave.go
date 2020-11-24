@@ -1,6 +1,7 @@
 package PipesSetup
 
 import (
+	"github.com/shoriwe/FullProxy/internal/IOTools"
 	"github.com/shoriwe/FullProxy/pkg/Pipes"
 	"github.com/shoriwe/FullProxy/pkg/Pipes/Slave"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
@@ -11,7 +12,8 @@ import (
 func RemoteForwardSlave(
 	socks5Host *string, socks5Port *string,
 	bindHost *string, bindPort *string,
-	tries int, timeout time.Duration) {
+	tries *int, timeout *time.Duration,
+	inboundLists [2]string) {
 	tlsConfiguration, configurationError := Sockets.CreateSlaveTLSConfiguration()
 	if configurationError != nil {
 		log.Fatal(configurationError)
@@ -20,10 +22,12 @@ func RemoteForwardSlave(
 	if connectionError != nil {
 		log.Fatal(connectionError)
 	}
+	log.Println("Connected to master: ", masterConnection.RemoteAddr().String())
 	localServer, bindError := Sockets.Bind(bindHost, bindPort)
 	if bindError != nil {
 		log.Fatal(bindError)
 	}
+	log.Print("Bind successfully in: ", *bindHost, ":", *bindPort)
 	masterConnection = Sockets.UpgradeClientToTLS(masterConnection, tlsConfiguration)
 	masterConnectionReader, masterConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(masterConnection)
 	pipe := new(Slave.RemotePortForward)
@@ -34,7 +38,12 @@ func RemoteForwardSlave(
 	pipe.MasterConnection = masterConnection
 	pipe.MasterConnectionReader = masterConnectionReader
 	pipe.MasterConnectionWriter = masterConnectionWriter
-	pipe.Tries = tries
-	pipe.Timeout = timeout
+	_ = pipe.SetTries(*tries)
+	_ = pipe.SetTimeout(*timeout)
+	_ = pipe.SetLoggingMethod(log.Print)
+	filter, loadingError := IOTools.LoadList(inboundLists[0], inboundLists[1])
+	if loadingError == nil {
+		_ = pipe.SetInboundFilter(filter)
+	}
 	Pipes.Serve(pipe)
 }

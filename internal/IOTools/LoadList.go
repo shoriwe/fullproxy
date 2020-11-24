@@ -36,19 +36,19 @@ func CreateBlacklistFilter(addresses []net.IP) Types.IOFilter {
 	}
 }
 
-func LoadList(l1 string, l2 string) (Types.IOFilter, error) {
-	if len(l1) > 0 {
-		if len(l2) > 0 {
+func LoadList(whitelist string, blacklist string) (Types.IOFilter, error) {
+	if len(whitelist) > 0 {
+		if len(blacklist) > 0 {
 			return nil, errors.New("Both parameters are set")
 		}
-		lines, readingError := ReadLines(l1)
+		lines, readingError := ReadLines(whitelist)
 		if readingError != nil {
 			return nil, readingError
 		}
 		return CreateWhitelistFilter(ParseAddresses(lines)), nil
 	}
-	if len(l2) > 0 {
-		lines, readingError := ReadLines(l2)
+	if len(blacklist) > 0 {
+		lines, readingError := ReadLines(blacklist)
 		if readingError != nil {
 			return nil, readingError
 		}
