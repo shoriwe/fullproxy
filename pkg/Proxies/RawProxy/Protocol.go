@@ -71,11 +71,11 @@ func (rawProxy *RawProxy) SetAuthenticationMethod(_ Types.AuthenticationMethod) 
 	return errors.New("This kind of proxy doesn't support authentication methods")
 }
 
-func (rawProxy *RawProxy) SetInboundFilter(_ Types.InboundFilter) error {
+func (rawProxy *RawProxy) SetInboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of proxy doesn't support InboundFilters")
 }
 
-func (rawProxy *RawProxy) SetOutboundFilter(_ Types.OutboundFilter) error {
+func (rawProxy *RawProxy) SetOutboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of proxy doesn't support OutboundFilters")
 }
 

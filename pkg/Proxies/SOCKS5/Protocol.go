@@ -18,8 +18,8 @@ type Socks5 struct {
 	LoggingMethod        Types.LoggingMethod
 	Tries                int
 	Timeout              time.Duration
-	InboundFilter        Types.InboundFilter
-	OutboundFilter       Types.OutboundFilter
+	InboundFilter        Types.IOFilter
+	OutboundFilter       Types.IOFilter
 }
 
 func ReceiveTargetRequest(clientConnectionReader *bufio.Reader) (byte, byte, []byte, []byte) {
@@ -73,12 +73,12 @@ func (socks5 *Socks5) SetTimeout(timeout time.Duration) error {
 	return nil
 }
 
-func (socks5 *Socks5) SetInboundFilter(filter Types.InboundFilter) error {
+func (socks5 *Socks5) SetInboundFilter(filter Types.IOFilter) error {
 	socks5.InboundFilter = filter
 	return nil
 }
 
-func (socks5 *Socks5) SetOutboundFilter(filter Types.OutboundFilter) error {
+func (socks5 *Socks5) SetOutboundFilter(filter Types.IOFilter) error {
 	socks5.OutboundFilter = filter
 	return nil
 }

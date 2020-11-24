@@ -26,11 +26,11 @@ type RemotePortForward struct {
 	Timeout                time.Duration
 }
 
-func (remotePortForward *RemotePortForward) SetInboundFilter(_ Types.InboundFilter) error {
+func (remotePortForward *RemotePortForward) SetInboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of PIPE doesn't support InboundFilters")
 }
 
-func (remotePortForward *RemotePortForward) SetOutboundFilter(_ Types.OutboundFilter) error {
+func (remotePortForward *RemotePortForward) SetOutboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of PIPE doesn't support OutboundFilters")
 }
 

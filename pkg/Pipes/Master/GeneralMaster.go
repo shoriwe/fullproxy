@@ -23,15 +23,15 @@ type General struct {
 	LoggingMethod          Types.LoggingMethod
 	Tries                  int
 	Timeout                time.Duration
-	InboundFilter          Types.InboundFilter
+	InboundFilter          Types.IOFilter
 }
 
-func (general *General) SetInboundFilter(filter Types.InboundFilter) error {
+func (general *General) SetInboundFilter(filter Types.IOFilter) error {
 	general.InboundFilter = filter
 	return nil
 }
 
-func (general *General) SetOutboundFilter(_ Types.OutboundFilter) error {
+func (general *General) SetOutboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of PIPE doesn't support OutboundFilters")
 }
 

@@ -19,15 +19,15 @@ type ForwardToSocks5 struct {
 	LoggingMethod Types.LoggingMethod
 	Tries         int
 	Timeout       time.Duration
-	InboundFilter Types.InboundFilter
+	InboundFilter Types.IOFilter
 }
 
-func (forwardToSocks5 *ForwardToSocks5) SetInboundFilter(filter Types.InboundFilter) error {
+func (forwardToSocks5 *ForwardToSocks5) SetInboundFilter(filter Types.IOFilter) error {
 	forwardToSocks5.InboundFilter = filter
 	return nil
 }
 
-func (ForwardToSocks5) SetOutboundFilter(_ Types.OutboundFilter) error {
+func (ForwardToSocks5) SetOutboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of proxy doesn't support OutboundFilters")
 }
 

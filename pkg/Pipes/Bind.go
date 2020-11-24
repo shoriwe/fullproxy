@@ -13,15 +13,15 @@ type Bind struct {
 	Server        net.Listener
 	ProxyProtocol Types.ProxyProtocol
 	LoggingMethod Types.LoggingMethod
-	InboundFilter Types.InboundFilter
+	InboundFilter Types.IOFilter
 }
 
-func (bind *Bind) SetInboundFilter(filter Types.InboundFilter) error {
+func (bind *Bind) SetInboundFilter(filter Types.IOFilter) error {
 	bind.InboundFilter = filter
 	return nil
 }
 
-func (bind *Bind) SetOutboundFilter(_ Types.OutboundFilter) error {
+func (bind *Bind) SetOutboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of PIPE doesn't support OutboundFilters")
 }
 

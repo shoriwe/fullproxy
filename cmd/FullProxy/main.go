@@ -30,9 +30,9 @@ func main() {
 	case "master":
 		masterHost, masterPort, remoteHost, remotePort, tries, timeout := ArgumentParser.ParseMasterArguments()
 		if len(*remoteHost) > 0 && len(*remotePort) > 0 {
-			PipesSetup.MasterRemote(masterHost, masterPort, remoteHost, remotePort, *tries, *timeout)
+			PipesSetup.RemoteForwardMaster(masterHost, masterPort, remoteHost, remotePort, *tries, *timeout)
 		} else {
-			PipesSetup.MasterGeneral(masterHost, masterPort, *tries, *timeout)
+			PipesSetup.GeneralMaster(masterHost, masterPort, *tries, *timeout)
 		}
 	case "translate":
 		if numberOfArguments == 2 {

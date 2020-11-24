@@ -1,4 +1,4 @@
-package ProxiesSetup
+package Templates
 
 import (
 	"bytes"

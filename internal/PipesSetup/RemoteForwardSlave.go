@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func RemotePortForwardSlave(
+func RemoteForwardSlave(
 	socks5Host *string, socks5Port *string,
 	bindHost *string, bindPort *string,
 	tries int, timeout time.Duration) {
@@ -36,6 +36,5 @@ func RemotePortForwardSlave(
 	pipe.MasterConnectionWriter = masterConnectionWriter
 	pipe.Tries = tries
 	pipe.Timeout = timeout
-	pipe.SetLoggingMethod(log.Print)
 	Pipes.Serve(pipe)
 }

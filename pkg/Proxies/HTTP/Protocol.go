@@ -46,8 +46,8 @@ type HTTP struct {
 	AuthenticationMethod Types.AuthenticationMethod
 	ProxyController      *goproxy.ProxyHttpServer
 	LoggingMethod        Types.LoggingMethod
-	InboundFilter        Types.InboundFilter
-	OutboundFilter       Types.OutboundFilter
+	InboundFilter        Types.IOFilter
+	OutboundFilter       Types.IOFilter
 }
 
 func (httpProtocol *HTTP) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
@@ -55,7 +55,7 @@ func (httpProtocol *HTTP) SetLoggingMethod(loggingMethod Types.LoggingMethod) er
 	return nil
 }
 
-func (httpProtocol *HTTP) SetInboundFilter(filter Types.InboundFilter) error {
+func (httpProtocol *HTTP) SetInboundFilter(filter Types.IOFilter) error {
 	if httpProtocol.ProxyController == nil {
 		return errors.New("No HTTP proxy controller was set")
 	}
@@ -82,12 +82,12 @@ func (httpProtocol *HTTP) SetInboundFilter(filter Types.InboundFilter) error {
 	return nil
 }
 
-func (httpProtocol *HTTP) SetOutboundFilter(filter Types.OutboundFilter) error {
+func (httpProtocol *HTTP) SetOutboundFilter(filter Types.IOFilter) error {
 	panic("Not implemented yet")
 	/*
-	if httpProtocol.ProxyController == nil {
-		return errors.New("No HTTP proxy controller was set")
-	}
+		if httpProtocol.ProxyController == nil {
+			return errors.New("No HTTP proxy controller was set")
+		}
 	*/
 	return nil
 }

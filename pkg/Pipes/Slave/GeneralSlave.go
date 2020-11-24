@@ -23,11 +23,11 @@ type General struct {
 	LoggingMethod          Types.LoggingMethod
 }
 
-func (general *General) SetInboundFilter(_ Types.InboundFilter) error {
+func (general *General) SetInboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of PIPE doesn't support InboundFilters")
 }
 
-func (general *General) SetOutboundFilter(_ Types.OutboundFilter) error {
+func (general *General) SetOutboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of PIPE doesn't support OutboundFilters")
 }
 

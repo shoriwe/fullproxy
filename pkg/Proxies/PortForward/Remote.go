@@ -19,7 +19,7 @@ type RemoteForward struct {
 	LoggingMethod    Types.LoggingMethod
 	Tries            int
 	Timeout          time.Duration
-	InboundFilter    Types.InboundFilter
+	InboundFilter    Types.IOFilter
 }
 
 func (remoteForward *RemoteForward) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
@@ -37,7 +37,7 @@ func (remoteForward *RemoteForward) SetTimeout(timeout time.Duration) error {
 	return nil
 }
 
-func (remoteForward *RemoteForward) SetInboundFilter(filter Types.InboundFilter) error {
+func (remoteForward *RemoteForward) SetInboundFilter(filter Types.IOFilter) error {
 	remoteForward.InboundFilter = filter
 	return nil
 }

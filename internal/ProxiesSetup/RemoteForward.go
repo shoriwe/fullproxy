@@ -23,5 +23,5 @@ func SetupRemoteForward(
 	proxy.SetTries(tries)
 	proxy.SetTimeout(timeout)
 	proxy.SetLoggingMethod(log.Print)
-	PipesSetup.RemotePortForwardSlave(masterHost, masterPort, host, port, tries, timeout)
+	PipesSetup.RemoteForwardSlave(masterHost, masterPort, host, port, tries, timeout)
 }

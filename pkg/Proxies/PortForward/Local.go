@@ -17,7 +17,7 @@ type LocalForward struct {
 	LoggingMethod Types.LoggingMethod
 	Tries         int
 	Timeout       time.Duration
-	InboundFilter Types.InboundFilter
+	InboundFilter Types.IOFilter
 }
 
 func (localForward *LocalForward) SetAuthenticationMethod(_ Types.AuthenticationMethod) error {
@@ -39,12 +39,12 @@ func (localForward *LocalForward) SetTimeout(timeout time.Duration) error {
 	return nil
 }
 
-func (localForward *LocalForward) SetInboundFilter(filter Types.InboundFilter) error {
+func (localForward *LocalForward) SetInboundFilter(filter Types.IOFilter) error {
 	localForward.InboundFilter = filter
 	return nil
 }
 
-func (localForward *LocalForward) SetOutboundFilter(_ Types.OutboundFilter) error {
+func (localForward *LocalForward) SetOutboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of proxy doesn't support OutboundFilters")
 }
 

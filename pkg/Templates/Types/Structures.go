@@ -12,14 +12,14 @@ type ProxyProtocol interface {
 	Handle(net.Conn, *bufio.Reader, *bufio.Writer) error
 	SetTries(int) error
 	SetTimeout(time.Duration) error
-	SetInboundFilter(InboundFilter) error
-	SetOutboundFilter(OutboundFilter) error
+	SetInboundFilter(IOFilter) error
+	SetOutboundFilter(IOFilter) error
 }
 
 type Pipe interface {
 	SetLoggingMethod(LoggingMethod) error
-	SetInboundFilter(InboundFilter) error
-	SetOutboundFilter(OutboundFilter) error
+	SetInboundFilter(IOFilter) error
+	SetOutboundFilter(IOFilter) error
 	Serve() error
 	SetTries(int) error
 	SetTimeout(time.Duration) error
