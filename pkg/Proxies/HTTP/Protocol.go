@@ -84,14 +84,10 @@ func (httpProtocol *HTTP) SetInboundFilter(filter Types.InboundFilter) error {
 
 func (httpProtocol *HTTP) SetOutboundFilter(filter Types.OutboundFilter) error {
 	panic("Not implemented yet")
+	/*
 	if httpProtocol.ProxyController == nil {
 		return errors.New("No HTTP proxy controller was set")
 	}
-	/*
-		httpProtocol.ProxyController.OnRequest().DoFunc(
-			func(request *http.Request, proxyCtx *goproxy.ProxyCtx) (*http.Request,  *http.Response)  {
-				requestURL := request.URL
-			})
 	*/
 	return nil
 }
