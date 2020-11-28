@@ -28,7 +28,6 @@
     * [Master/Slave](#masterslave)
         * [How it works](#how-it-works)
         * [Applications](#applications)
-        * [Considerations](#considerations)
     * [Translation](#translation)
 * [Installation](#installation)
     * [Pre-compiled binaries](#pre-compiled-binaries)
