@@ -286,7 +286,7 @@ go get github.com/shoriwe/FullProxy
 ```
 - Go to the source `cmd/FullProxy`
 ```shell
-cd go/src/github/shoriwe/FullProxy/cmd/FullProxy
+cd go/src/github.com/shoriwe/FullProxy/cmd/FullProxy
 ```
 - Compile it
 ```shell
