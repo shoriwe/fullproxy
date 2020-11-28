@@ -22,6 +22,8 @@
         * [Master](#master)
         * [Translate](#translate)
             * [Forward To SOCKS5](#port-forward-to-socks5)
+    * [Implemented tools](#implemented-tools)
+        * [Database](#database)
 * [Concepts](#concepts)
     * [Master/Slave](#masterslave)
         * [How it works](#how-it-works)
@@ -34,10 +36,10 @@
 * [Suggestions](#suggestions)
 # Usage
 ## Implemented protocols
-```
+```shell
 user@linux:~$ fullproxy help
 Usage:
-         fullproxy PROTOCOL *FLAGS
+         fullproxy PROTOCOL|TOOL *FLAGS
 
 Protocols available:
          - socks5
@@ -46,11 +48,19 @@ Protocols available:
          - remote-forward
          - master
          - translate
+
+Tools available:
+         - database
 ```
 ### SOCKS5
-```
+```shell
 user@linux:~$ fullproxy socks5 --help
 Usage of socks5:
+  -command-auth string
+        Command with it's default args to pass the Username and Password received from clients, please notice that ExitCode = 0 will mean that the login was successful, any other way i
+t not and the username and password will be passed as base64 encoded arguments to it, this auth method will ignore any other supplied
+  -database-auth string
+        Path to the SQLite3 database generated with the 'database create' command and filled with the 'database user add' command, this auth method will ignore any other supplied
   -host string
         Host to listen on. When "-slave" flag is set, is the IP of master to connect
   -inbound-blacklist string
@@ -61,8 +71,8 @@ Usage of socks5:
         File with a host per line. Denied outgoing connections (ignored when outbound-whitelist is set)
   -outbound-whitelist string
         File with a host per line. Allowed outgoing connections (ignored when outbound-blacklist is set)
-  -password string
-        Password of the running proxy, requires "-username". It will be ignored if is an empty string
+  -password-auth string
+        Password of the running proxy, requires "-username". It will be ignored if is an empty string, this auth method will ignore any other supplied
   -port string
         Port to listen on. When "-slave" flag is set, is the Port of the master to connect. I both modes the default port is 1080 (default "1080")
   -slave
@@ -71,14 +81,19 @@ Usage of socks5:
         The number of second before re-trying the connection between target and client (default is 10 seconds) (default 10)
   -tries int
         The number of re-tries that will maintain the connection between target and client (default is 5 tries) (default 5)
-  -username string
-        Username of the running proxy, requires "-password". It will be ignored if is an empty string
+  -username-auth string
+        Username of the running proxy, requires "-password". It will be ignored if is an empty string, this auth method will ignore any other supplied
 ```
 ### HTTP
 HTTP proxy could be implemented thanks to [GoProxy](https://github.com/elazarl/goproxy)
-```
+```shell
 user@linux:~$ fullproxy local-forward -help
 Usage of http:
+  -command-auth string
+        Command with it's default args to pass the Username and Password received from clients, please notice that ExitCode = 0 will mean that the login was successful, any other way i
+t not and the username and password will be passed as base64 encoded arguments to it, this auth method will ignore any other supplied
+  -database-auth string
+        Path to the SQLite3 database generated with the 'database create' command and filled with the 'database user add' command, this auth method will ignore any other supplied
   -host string
         Host to listen on. When "-slave" flag is set, is the IP of master to connect
   -inbound-blacklist string
@@ -89,20 +104,20 @@ Usage of http:
         File with a host per line. Denied outgoing connections (ignored when outbound-whitelist is set)
   -outbound-whitelist string
         File with a host per line. Allowed outgoing connections (ignored when outbound-blacklist is set)
-  -password string
-        Password of the running proxy, requires "-username". It will be ignored if is an empty string
+  -password-auth string
+        Password of the running proxy, requires "-username". It will be ignored if is an empty string, this auth method will ignore any other supplied
   -port string
         Port to listen on. When "-slave" flag is set, is the Port of the master to connect. I both modes the default port is 8080 (default "8080")
   -slave
         Connect to a master, no bind proxying
   -tls
         Use HTTPS
-  -username string
-        Username of the running proxy, requires "-password". It will be ignored if is an empty string
+  -username-auth string
+        Username of the running proxy, requires "-password". It will be ignored if is an empty string, this auth method will ignore any other supplied
 ```
 ### Forward
 #### Local
-```
+```shell
 user@linux:~$ fullproxy local-forward -help
 Usage of local-forward:
   -forward-host string
@@ -123,7 +138,7 @@ Usage of local-forward:
         The number of re-tries that will maintain the connection between target and client (default is 5 tries) (default 5)
 ```
 #### Remote
-```
+```shell
 user@linux:~$ fullproxy remote-forward -help
 Usage of remote-forward:
   -inbound-blacklist string
@@ -144,7 +159,7 @@ Usage of remote-forward:
         The number of re-tries that will maintain the connection between target and client (default is 5 tries) (default 5)
 ```
 ### Master
-```
+```shell
 user@linux:~$ fullproxy remote-forward -help
 Usage of master:
   -forward-host string
@@ -165,7 +180,7 @@ Usage of master:
         The number of re-tries that will maintain the connection between target and client (default is 5 tries) (default 5)
 ```
 ### Translate
-```
+```shell
 user@linux:~$ fullproxy translate help
 Usage:
          fullproxy translate TARGET *FLAGS
@@ -174,7 +189,7 @@ TARGETS available:
          - port_forward-socks5
 ```
 #### Port Forward To SOCKS5
-```
+```shell
 user@linux:~$ fullproxy translate port_forward-socks5 -help
 Usage of port_forward-socks5:
   -bind-host string
@@ -202,6 +217,54 @@ Usage of port_forward-socks5:
   -tries int
         The number of re-tries that will maintain the connection between target and client (default is 5 tries) (default 5)
 ```
+## Implemented tools
+### Database
+This tool helps the user in the creation and administration of `SQLite3` database with the actual structure that `FullProxy` supports
+```shell
+user@linux:~$ fullproxy database help
+Usage:
+         fullproxy database CMD
+
+CMDs available:
+         - create
+         - user
+```
+#### Create
+Tools here are used to maintain an already created database
+```shell
+user@linux:~$ fullproxy database create
+Usage:
+        fullproxy database create DATABASE_FILE
+```
+#### User
+```shell
+user@linux:~$ fullproxy database user help
+Usage:
+         fullproxy database user CMD
+
+CMDs available:
+         - add
+         - update
+         - delete
+```
+##### Add
+```shell
+user@linux:~$ fullproxy database user add help
+Usage:
+        fullproxy database user add DATABASE_FILE USERNAME PASSWORD
+```
+##### Delete
+```shell
+user@linux:~$ fullproxy database user delete help
+Usage:
+        fullproxy database user delete DATABASE_FILE USERNAME
+```
+##### Update
+```shell
+user@linux:~$ fullproxy database user update help
+Usage:
+        fullproxy database user update DATABASE_FILE USERNAME NEW_PASSWORD
+```
 # Concepts
 ## Master/Slave
 Handles the proxying between a reverse connected (with encryption) proxy and the clients. In other words, it will receive the connections of the clients and will forward the traffic to the proxy that is reverse connected to it.
@@ -212,8 +275,6 @@ Handles the proxying between a reverse connected (with encryption) proxy and the
 In other words, is the proxy of another proxy but totally invisible for the client.
 ### Applications
 This could be specially useful when you need to proxy a network that a machine have access to, but you can't bind with it
-### Considerations
-- The `master` protocol may loss some setup connections if it is extremely stressed, but it should work `just fine` if the connections where already made
 ## Translation
 This protocol is simple, it receives proxying request in a specific proxying protocol to them forward them to another proxy with another protocol; this means that if you only speaks SOCKS5, you will be able to talk to an HTTP proxy using this "translator" 
 # Installation
