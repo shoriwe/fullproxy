@@ -281,9 +281,17 @@ This protocol is simple, it receives proxying request in a specific proxying pro
 ## Pre-compiled binaries
 You can find pre-compiled binaries for windows and linux [Here](https://github.com/shoriwe/FullProxy/releases)
 ## Build from source code
-Run this command:
-```
+- Download the source code:
+```shell
 go get github.com/shoriwe/FullProxy
+```
+- Go to the source `cmd/FullProxy`
+```shell
+cd go/src/github/shoriwe/FullProxy/cmd/FullProxy
+```
+- Compile it
+```shell
+CGO_ENABLED=1 go build
 ```
 # Suggestions
 If you have any suggestion for new features, also leave them in the issue section or create the proper branch, add what do you want and request a pull request
