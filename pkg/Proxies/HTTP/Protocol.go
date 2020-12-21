@@ -127,15 +127,14 @@ func (httpProtocol *HTTP) Handle(
 	request, parsingError := http.ReadRequest(clientConnectionReader)
 	if parsingError != nil {
 		Templates.LogData(httpProtocol.LoggingMethod, parsingError)
-	} else {
-		request.RemoteAddr = clientConnection.RemoteAddr().String()
-		responseWriter := CreateCustomResponseWriter(clientConnection, clientConnectionReader, clientConnectionWriter)
-		httpProtocol.ProxyController.ServeHTTP(responseWriter, request)
-		if responseWriter.Result().ContentLength > 0 {
-			_ = responseWriter.Result().Write(clientConnectionWriter)
-			_ = clientConnectionWriter.Flush()
-		}
+		return parsingError
 	}
-	_ = clientConnection.Close()
-	return parsingError
+	request.RemoteAddr = clientConnection.RemoteAddr().String()
+	responseWriter := CreateCustomResponseWriter(clientConnection, clientConnectionReader, clientConnectionWriter)
+	httpProtocol.ProxyController.ServeHTTP(responseWriter, request)
+	if responseWriter.Result().ContentLength > 0 {
+		_ = responseWriter.Result().Write(clientConnectionWriter)
+		_ = clientConnectionWriter.Flush()
+	}
+	return nil
 }

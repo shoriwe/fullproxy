@@ -59,27 +59,27 @@ func main() {
 			Templates.Exit("No command received\nTry:\n\t%s database user help\n", 4, numberOfArguments, os.Args[0])
 			switch os.Args[3] {
 			case "add":
-				Templates.Exit("Usage:\n\t%s database user add DATABASE_FILE USERNAME PASSWORD", 7, numberOfArguments, os.Args[0])
+				Templates.Exit("Usage:\n\t%s database user add DATABASE_FILE USERNAME PASSWORD\n", 7, numberOfArguments, os.Args[0])
 				Database.Add(os.Args[4], os.Args[5], os.Args[6])
 			case "delete":
-				Templates.Exit("Usage:\n\t%s database user delete DATABASE_FILE USERNAME", 6, numberOfArguments, os.Args[0])
+				Templates.Exit("Usage:\n\t%s database user delete DATABASE_FILE USERNAME\n", 6, numberOfArguments, os.Args[0])
 				Database.Delete(os.Args[4], os.Args[5])
 			case "update":
-				Templates.Exit("Usage:\n\t%s database user update DATABASE_FILE USERNAME NEW_PASSWORD", 7, numberOfArguments, os.Args[0])
+				Templates.Exit("Usage:\n\t%s database user update DATABASE_FILE USERNAME NEW_PASSWORD\n", 7, numberOfArguments, os.Args[0])
 				Database.Update(os.Args[4], os.Args[5], os.Args[6])
 			case "help":
 				ArgumentParser.ShowDatabaseUserHelpMessage()
 			default:
-				Templates.Exit("Unknown command\nTry: %s database user help", 1, 0, os.Args[0])
+				Templates.Exit("Unknown command\nTry: %s database user help\n", 1, 0, os.Args[0])
 			}
 		case "help":
 			ArgumentParser.ShowDatabaseHelpMessage()
 		default:
-			Templates.Exit("Unknown command\nTry: %s database help", 1, 0, os.Args[0])
+			Templates.Exit("Unknown command\nTry: %s database help\n", 1, 0, os.Args[0])
 		}
 	case "help":
 		ArgumentParser.ShowGeneralHelpMessage()
 	default:
-		Templates.Exit("Unknown command\nTry: %s help", 1, 0, os.Args[0])
+		Templates.Exit("Unknown command\nTry: %s help\n", 1, 0, os.Args[0])
 	}
 }

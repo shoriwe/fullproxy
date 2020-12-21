@@ -23,28 +23,21 @@ type RawProxy struct {
 func (rawProxy *RawProxy) HandleReadWrite(
 	sourceConnection net.Conn,
 	sourceReader *bufio.Reader,
-	destinationWriter *bufio.Writer,
-	connectionAlive *bool) error {
+	destinationWriter *bufio.Writer) error {
 
 	var proxyingError error
 	tries := 0
-	for ; tries < Templates.GetTries(rawProxy.Tries); tries++ {
+	for ; tries < Templates.GetTries(rawProxy.Tries) && rawProxy.ConnectionAlive; tries++ {
 		_ = sourceConnection.SetReadDeadline(time.Now().Add(Templates.GetTimeout(rawProxy.Timeout)))
-		numberOfBytesReceived, buffer, connectionError := Sockets.Receive(sourceReader, 1048576)
+		numberOfBytesReceived, buffer, connectionError := Sockets.Receive(sourceReader, 1024)
 		if connectionError != nil {
 			// If the error is not "Timeout"
 			if parsedConnectionError, ok := connectionError.(net.Error); !(ok && parsedConnectionError.Timeout()) {
 				proxyingError = parsedConnectionError
 				break
-			} else {
-				if !(*connectionAlive) {
-					proxyingError = errors.New("connection died")
-					break
-				}
 			}
-		} else {
-			tries = 0
 		}
+		tries = 0
 		if numberOfBytesReceived > 0 {
 			realChunk := buffer[:numberOfBytesReceived]
 			_, connectionError = Sockets.Send(destinationWriter, &realChunk)
@@ -56,12 +49,14 @@ func (rawProxy *RawProxy) HandleReadWrite(
 		}
 		buffer = nil
 	}
+	_ = sourceConnection.Close()
+	if !rawProxy.ConnectionAlive {
+		proxyingError = errors.New("connection died")
+	} else {
+		rawProxy.ConnectionAlive = false
+	}
 	if tries >= 5 {
 		proxyingError = errors.New("max retries exceeded")
-	}
-	_ = sourceConnection.Close()
-	if *connectionAlive {
-		*connectionAlive = false
 	}
 	if proxyingError != nil {
 		Templates.LogData(rawProxy.LoggingMethod, proxyingError)
@@ -104,11 +99,9 @@ func (rawProxy *RawProxy) Handle(
 	go rawProxy.HandleReadWrite(
 		clientConnection,
 		clientConnectionReader,
-		rawProxy.TargetConnectionWriter,
-		&rawProxy.ConnectionAlive)
+		rawProxy.TargetConnectionWriter)
 	return rawProxy.HandleReadWrite(
 		rawProxy.TargetConnection,
 		rawProxy.TargetConnectionReader,
-		clientConnectionWriter,
-		&rawProxy.ConnectionAlive)
+		clientConnectionWriter)
 }
