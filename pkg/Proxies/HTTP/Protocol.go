@@ -136,6 +136,5 @@ func (httpProtocol *HTTP) Handle(
 			_ = clientConnectionWriter.Flush()
 		}
 	}
-	_ = clientConnection.Close()
 	return parsingError
 }
