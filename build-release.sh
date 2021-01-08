@@ -44,19 +44,23 @@ then
 fi
 
 echo "Windows - 64 _ Static"
-CC=$WIN64CC CXX=$WIN64CXX  make windows-64-static
+make windows-64-static CC="$WIN64CC" CXX="$WIN64CXX"
 echo "Windows - 64 _ Dynamic"
-CC=$WIN64CC CXX=$WIN64CXX make windows-64-dynamic
+make windows-64-dynamic CC="$WIN64CC" CXX="$WIN64CXX"
 echo "Windows - 32 _ Static"
-CC=$WIN32CC CXX=$WIN32CXX make windows-32-static
+make windows-32-static CC="$WIN32CC" CXX="$WIN32CXX"
 echo "Windows - 32 _ Dynamic"
-CC=$WIN32CC CXX=$WIN32CXX make windows-32-dynamic
+make windows-32-dynamic CC="$WIN32CC" CXX="$WIN32CXX"
 
 echo "Linux - 64 _ Static"
-CC=$LIN64CC CXX=$LIN64CXX make linux-64-static
+# shellcheck disable=SC2086
+make linux-64-static CC="$LIN64CC" CXX=$LIN64CXX
 echo "Linux - 64 _ Dynamic"
-CC=$LIN64CC CXX=$LIN64CXX make linux-64-dynamic
+# shellcheck disable=SC2086
+make linux-64-dynamic CC="$LIN64CC" CXX=$LIN64CXX
 echo "Linux - 32 _ Static"
-CC=$LIN32CC CXX=$LIN32CXX make linux-32-static
+# shellcheck disable=SC2086
+make linux-32-static CC="$LIN32CC" CXX=$LIN32CXX
 echo "Linux - 32 _ Dynamic"
-CC=$LIN32CC CXX=$LIN32CXX make linux-32-dynamic
+# shellcheck disable=SC2086
+make linux-32-dynamic CC=$LIN32CC CXX="$LIN32CXX"
