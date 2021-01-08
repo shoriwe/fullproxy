@@ -1,0 +1,18 @@
+# github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
+## explicit
+github.com/google/shlex
+# github.com/mattn/go-sqlite3 v1.14.5
+## explicit
+github.com/mattn/go-sqlite3
+# golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9
+## explicit
+golang.org/x/crypto/sha3
+# golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
+## explicit
+golang.org/x/net/internal/socks
+golang.org/x/net/proxy
+# golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
+golang.org/x/sys/cpu
+# gopkg.in/elazarl/goproxy.v1 v1.0.0-20180725130230-947c36da3153
+## explicit
+gopkg.in/elazarl/goproxy.v1
