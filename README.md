@@ -310,7 +310,7 @@ cd ~/go/src/github.com/shoriwe/FullProxy/cmd/FullProxy
 - Compile it
 ```shell
 # Statically
-CGO_ENABLED=1 go build -trimpath -ldflags "-s -w -linkmode external -extldflags=-static" -tags sqlite_omit_load_extension -mod vendor
+CGO_ENABLED=1 go build -trimpath -ldflags "-s -w -linkmode external -extldflags=-static" -tags sqlite_omit_load_extension,netgo -mod vendor
 # Or Dynamically
 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -mod vendor
 ```
