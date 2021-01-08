@@ -33,6 +33,9 @@
 * [Installation](#installation)
     * [Pre-compiled binaries](#pre-compiled-binaries)
     * [Build from source code](#build-from-source-code)
+        * [Makefile](#makefile)
+        * [Manual build](#manual-build)
+        * [Note](#note)
 * [Suggestions](#suggestions)
 # Usage
 ## Implemented protocols
@@ -281,17 +284,37 @@ This protocol is simple, it receives proxying request in a specific proxying pro
 ## Pre-compiled binaries
 You can find pre-compiled binaries for windows and linux [Here](https://github.com/shoriwe/FullProxy/releases)
 ## Build from source code
+### Makefile
+You can approach the `Makefile` that I prepare for the project, you just need to set the environment variables `CC` and `CXX` and compiled based on:
+```bash
+make OS-ARCH-LINKING
+```
+For example:
+- Compiling a static binary for a 64-bit based linux
+```bash
+make linux-64-static
+```
+- Compiling a dynamic binary for 32-bit based windows
+```bash
+make windows-32-dynamic
+```
+### Manual build
 - Download the source code:
 ```shell
 go get github.com/shoriwe/FullProxy
 ```
-- Go to the source `cmd/FullProxy`
+- Go to `cmd/FullProxy`
 ```shell
-cd go/src/github.com/shoriwe/FullProxy/cmd/FullProxy
+cd ~/go/src/github.com/shoriwe/FullProxy/cmd/FullProxy
 ```
 - Compile it
 ```shell
-CGO_ENABLED=1 go build
+# Statically
+CGO_ENABLED=1 go build -trimpath -ldflags "-s -w -linkmode external -extldflags=-static" -tags sqlite_omit_load_extension -mod vendor
+# Or Dynamically
+CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -mod vendor
 ```
+### Note
+In some systems it will be better to dynamically compile the binary instead of statically and in others, the other way, this probably happens because in how each manage it's networking features and/or the dependencies of the sqlite3 library
 # Suggestions
 If you have any suggestion for new features, also leave them in the issue section or create the proper branch, add what do you want and request a pull request
