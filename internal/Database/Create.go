@@ -8,16 +8,6 @@ import (
 )
 
 func Create(filePath string) {
-	_, fileStatError := os.Stat(filePath)
-	if fileStatError != nil {
-		if os.IsExist(fileStatError) {
-			log.Fatal(fileStatError)
-		}
-		fileDeleteError := os.Remove(filePath)
-		if fileDeleteError != nil {
-			log.Fatal(fileDeleteError)
-		}
-	}
 	file, creationError := os.Create(filePath)
 	if creationError != nil {
 		log.Fatal(creationError)
