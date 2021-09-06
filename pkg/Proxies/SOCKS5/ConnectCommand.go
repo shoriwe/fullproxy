@@ -63,7 +63,7 @@ func (socks5 *Socks5) Connect(clientConnection net.Conn) error {
 
 	host, target := clean(addressType[0], rawTargetHost, rawTargetPort)
 	if !Tools.FilterOutbound(socks5.OutboundFilter, host) {
-		Tools.LogData(socks5.LoggingMethod, "Forbidden connection to: " + host)
+		Tools.LogData(socks5.LoggingMethod, "Forbidden connection to: "+host)
 		return nil
 	}
 	// Try to connect to the target

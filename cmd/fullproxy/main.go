@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	Templates "github.com/shoriwe/FullProxy/internal/Tools"
 	"github.com/shoriwe/FullProxy/pkg/Pipes"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/SOCKS5"
 	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
@@ -95,6 +96,14 @@ func configAuthMethod(command, usersFile string) Types.AuthenticationMethod {
 			return true, nil
 		}
 	} else if usersFile != "" {
+		reference := Templates.LoadUsers(usersFile)
+		return func(username []byte, password []byte) (bool, error) {
+			passwordHash, found := reference[string(username)]
+			if !found {
+				return false, nil
+			}
+			return Templates.SHA3512(password) == passwordHash, nil
+		}
 
 	}
 	return nil
