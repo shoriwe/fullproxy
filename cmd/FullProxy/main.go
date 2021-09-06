@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/shoriwe/FullProxy/internal/ArgumentParser"
-	"github.com/shoriwe/FullProxy/internal/Database"
 	"github.com/shoriwe/FullProxy/internal/PipesSetup"
 	"github.com/shoriwe/FullProxy/internal/ProxiesSetup"
 	"github.com/shoriwe/FullProxy/internal/Templates"
@@ -48,34 +47,6 @@ func main() {
 			ArgumentParser.ShowTranslateHelpMessage()
 		default:
 			Templates.Exit("Unknown command\nTry:\n\t%s translate help\n", 1, 0, os.Args[0])
-		}
-	case "database":
-		Templates.Exit("No command supplied\nTry:\n\t%s database help\n", 3, numberOfArguments, os.Args[0])
-		switch os.Args[2] {
-		case "create":
-			Templates.Exit("Usage:\n\t%s database create DATABASE_FILE\n", 4, numberOfArguments, os.Args[0])
-			Database.Create(os.Args[3])
-		case "user":
-			Templates.Exit("No command received\nTry:\n\t%s database user help\n", 4, numberOfArguments, os.Args[0])
-			switch os.Args[3] {
-			case "add":
-				Templates.Exit("Usage:\n\t%s database user add DATABASE_FILE USERNAME PASSWORD\n", 7, numberOfArguments, os.Args[0])
-				Database.Add(os.Args[4], os.Args[5], os.Args[6])
-			case "delete":
-				Templates.Exit("Usage:\n\t%s database user delete DATABASE_FILE USERNAME\n", 6, numberOfArguments, os.Args[0])
-				Database.Delete(os.Args[4], os.Args[5])
-			case "update":
-				Templates.Exit("Usage:\n\t%s database user update DATABASE_FILE USERNAME NEW_PASSWORD\n", 7, numberOfArguments, os.Args[0])
-				Database.Update(os.Args[4], os.Args[5], os.Args[6])
-			case "help":
-				ArgumentParser.ShowDatabaseUserHelpMessage()
-			default:
-				Templates.Exit("Unknown command\nTry: %s database user help\n", 1, 0, os.Args[0])
-			}
-		case "help":
-			ArgumentParser.ShowDatabaseHelpMessage()
-		default:
-			Templates.Exit("Unknown command\nTry: %s database help\n", 1, 0, os.Args[0])
 		}
 	case "help":
 		ArgumentParser.ShowGeneralHelpMessage()
