@@ -10,7 +10,6 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"io"
 	"log"
-	"net"
 	"os"
 	"os/exec"
 	"strings"
@@ -38,14 +37,14 @@ func loadList(filePath string) map[string]uint8 {
 func configInboundFilter(whiteList, blackList string) Types.IOFilter {
 	if whiteList != "" {
 		reference := loadList(whiteList)
-		return func(address net.IP) bool {
-			_, found := reference[address.To4().String()]
+		return func(host string) bool {
+			_, found := reference[host]
 			return found
 		}
 	} else if blackList != "" {
 		reference := loadList(whiteList)
-		return func(address net.IP) bool {
-			_, found := reference[address.To4().String()]
+		return func(host string) bool {
+			_, found := reference[host]
 			return !found
 		}
 	}
@@ -55,14 +54,14 @@ func configInboundFilter(whiteList, blackList string) Types.IOFilter {
 func configOutboundFilter(whiteList, blackList string) Types.IOFilter {
 	if whiteList != "" {
 		reference := loadList(whiteList)
-		return func(address net.IP) bool {
-			_, found := reference[address.To4().String()]
+		return func(host string) bool {
+			_, found := reference[host]
 			return found
 		}
 	} else if blackList != "" {
 		reference := loadList(whiteList)
-		return func(address net.IP) bool {
-			_, found := reference[address.To4().String()]
+		return func(host string) bool {
+			_, found := reference[host]
 			return !found
 		}
 	}

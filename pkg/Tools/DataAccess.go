@@ -25,16 +25,16 @@ func LogData(loggingMethod Types.LoggingMethod, arguments ...interface{}) {
 	}
 }
 
-func FilterInbound(filter Types.IOFilter, address net.IP) bool {
+func FilterInbound(filter Types.IOFilter, host string) bool {
 	if filter != nil {
-		return filter(address)
+		return filter(host)
 	}
 	return true
 }
 
-func FilterOutbound(filter Types.IOFilter, address net.IP) bool {
+func FilterOutbound(filter Types.IOFilter, host string) bool {
 	if filter != nil {
-		return filter(address)
+		return filter(host)
 	}
 	return true
 }

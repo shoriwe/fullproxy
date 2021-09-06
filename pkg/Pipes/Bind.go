@@ -41,7 +41,7 @@ func (bind *Bind) Serve() error {
 			_ = clientConnection.Close()
 			continue
 		}
-		if !Tools.FilterInbound(bind.InboundFilter, Tools.ParseIP(clientConnection.RemoteAddr().String())) {
+		if !Tools.FilterInbound(bind.InboundFilter, Tools.ParseIP(clientConnection.RemoteAddr().String()).String()) {
 			_ = clientConnection.Close()
 			Tools.LogData(bind.LoggingMethod, "Connection denied to: "+clientConnection.RemoteAddr().String())
 			continue

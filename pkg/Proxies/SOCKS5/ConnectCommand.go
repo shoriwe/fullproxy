@@ -3,6 +3,7 @@ package SOCKS5
 import (
 	"encoding/binary"
 	"github.com/shoriwe/FullProxy/pkg/Pipes"
+	"github.com/shoriwe/FullProxy/pkg/Tools"
 	"net"
 	"strconv"
 	"strings"
@@ -60,8 +61,11 @@ func (socks5 *Socks5) Connect(clientConnection net.Conn) error {
 
 	// Cleanup the address
 
-	target := clean(addressType[0], rawTargetHost, rawTargetPort)
-
+	host, target := clean(addressType[0], rawTargetHost, rawTargetPort)
+	if !Tools.FilterOutbound(socks5.OutboundFilter, host) {
+		Tools.LogData(socks5.LoggingMethod, "Forbidden connection to: " + host)
+		return nil
+	}
 	// Try to connect to the target
 
 	var targetConnection net.Conn

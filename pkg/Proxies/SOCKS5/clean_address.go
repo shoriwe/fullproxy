@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func clean(hostType uint8, rawHost []byte, rawPort []byte) string {
+func clean(hostType uint8, rawHost []byte, rawPort []byte) (string, string) {
 	var host string
 	switch hostType {
 	case IPv4:
@@ -21,6 +21,5 @@ func clean(hostType uint8, rawHost []byte, rawPort []byte) string {
 		)
 	}
 	port := binary.BigEndian.Uint16(rawPort)
-	fmt.Println(fmt.Sprintf("%s:%d", host, port))
-	return fmt.Sprintf("%s:%d", host, port)
+	return host, fmt.Sprintf("%s:%d", host, port)
 }
