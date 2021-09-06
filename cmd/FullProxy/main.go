@@ -14,7 +14,6 @@ import (
 	"os/exec"
 	"strings"
 	"syscall"
-	"time"
 )
 
 func loadList(filePath string) map[string]uint8 {
@@ -103,9 +102,9 @@ func configAuthMethod(command, usersFile string) Types.AuthenticationMethod {
 
 func configSocks5() (Types.IOFilter, Types.ProxyProtocol, error) {
 	if len(os.Args) < 5 {
-		return nil, SOCKS5.NewSocks5(nil, log.Print, 2*time.Second, nil), nil
+		return nil, SOCKS5.NewSocks5(nil, log.Print, nil), nil
 	}
-	flagSet := flag.NewFlagSet("socks5", flag.PanicOnError)
+	flagSet := flag.NewFlagSet("socks5", flag.ExitOnError)
 	authCommand := flagSet.String("auth-cmd", "", "shell command to pass the hex encoded username and password, exit code 0 means login success")
 	usersFiles := flagSet.String("users-file", "", "json file with username as keys and sha3-513 of the password as values")
 
@@ -114,15 +113,13 @@ func configSocks5() (Types.IOFilter, Types.ProxyProtocol, error) {
 	outboundBlackList := flagSet.String("outbound-blacklist", "", "plain text file list with all the forbidden proxy targets")
 	outboundWhiteList := flagSet.String("outbound-whitelist", "", "plain text file list with all the permitted proxy targets")
 
-	timeout := flagSet.Int("timeout", 2, "max timeout in second for each request between client, proxy and serber")
-
 	parsingError := flagSet.Parse(os.Args[5:])
 
 	if parsingError != nil {
 		panic(parsingError)
 	}
 
-	return configInboundFilter(*inboundWhiteList, *inboundBlackList), SOCKS5.NewSocks5(configAuthMethod(*authCommand, *usersFiles), log.Print, time.Duration(*timeout)*time.Second, configOutboundFilter(*outboundWhiteList, *outboundBlackList)), nil
+	return configInboundFilter(*inboundWhiteList, *inboundBlackList), SOCKS5.NewSocks5(configAuthMethod(*authCommand, *usersFiles), log.Print, configOutboundFilter(*outboundWhiteList, *outboundBlackList)), nil
 }
 
 func configProtocol(protocol string) (Types.IOFilter, Types.ProxyProtocol, error) {

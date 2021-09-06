@@ -5,7 +5,6 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/Tools"
 	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"net"
-	"time"
 )
 
 type Bind struct {
@@ -22,10 +21,6 @@ func (bind *Bind) SetInboundFilter(filter Types.IOFilter) error {
 
 func (bind *Bind) SetOutboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of PIPE doesn't support OutboundFilters")
-}
-
-func (bind *Bind) SetTimeout(timeout time.Duration) error {
-	return bind.ProxyProtocol.SetTimeout(timeout)
 }
 
 func (bind *Bind) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {

@@ -4,13 +4,11 @@ import (
 	"errors"
 	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"net"
-	"time"
 )
 
 type Socks5 struct {
 	AuthenticationMethod Types.AuthenticationMethod
 	LoggingMethod        Types.LoggingMethod
-	Timeout              time.Duration
 	OutboundFilter       Types.IOFilter
 }
 
@@ -21,11 +19,6 @@ func (socks5 *Socks5) SetLoggingMethod(loggingMethod Types.LoggingMethod) error 
 
 func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod Types.AuthenticationMethod) error {
 	socks5.AuthenticationMethod = authenticationMethod
-	return nil
-}
-
-func (socks5 *Socks5) SetTimeout(timeout time.Duration) error {
-	socks5.Timeout = timeout
 	return nil
 }
 
@@ -82,6 +75,6 @@ func (socks5 *Socks5) Handle(clientConnection net.Conn) error {
 	}
 }
 
-func NewSocks5(authenticationMethod Types.AuthenticationMethod, loggingMethod Types.LoggingMethod, timeout time.Duration, outboundFilter Types.IOFilter) *Socks5 {
-	return &Socks5{AuthenticationMethod: authenticationMethod, LoggingMethod: loggingMethod, Timeout: timeout, OutboundFilter: outboundFilter}
+func NewSocks5(authenticationMethod Types.AuthenticationMethod, loggingMethod Types.LoggingMethod, outboundFilter Types.IOFilter) *Socks5 {
+	return &Socks5{AuthenticationMethod: authenticationMethod, LoggingMethod: loggingMethod, OutboundFilter: outboundFilter}
 }
