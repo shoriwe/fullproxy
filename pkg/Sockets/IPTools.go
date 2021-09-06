@@ -1,6 +1,8 @@
 package Sockets
 
-import "strconv"
+import (
+	"strconv"
+)
 
 func GetIPv6(rawIPv6Host []byte) string {
 	ipv6 := ""

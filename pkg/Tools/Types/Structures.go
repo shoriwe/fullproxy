@@ -1,7 +1,6 @@
 package Types
 
 import (
-	"bufio"
 	"net"
 	"time"
 )
@@ -9,7 +8,7 @@ import (
 type ProxyProtocol interface {
 	SetLoggingMethod(LoggingMethod) error
 	SetAuthenticationMethod(AuthenticationMethod) error
-	Handle(net.Conn, *bufio.Reader, *bufio.Writer) error
+	Handle(net.Conn) error
 	SetTries(int) error
 	SetTimeout(time.Duration) error
 	SetInboundFilter(IOFilter) error

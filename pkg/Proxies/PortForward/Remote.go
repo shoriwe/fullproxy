@@ -1,18 +1,18 @@
 package PortForward
 
 import (
-	"bufio"
 	"crypto/tls"
 	"errors"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/RawProxy"
+	"github.com/shoriwe/FullProxy/pkg/Pipes"
 	"github.com/shoriwe/FullProxy/pkg/Sockets"
-	"github.com/shoriwe/FullProxy/pkg/Templates"
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"github.com/shoriwe/FullProxy/pkg/Tools"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"net"
 	"time"
 )
 
 type RemoteForward struct {
+	MasterAddress    string
 	MasterHost       string
 	MasterPort       string
 	TLSConfiguration *tls.Config
@@ -42,36 +42,23 @@ func (remoteForward *RemoteForward) SetInboundFilter(filter Types.IOFilter) erro
 	return nil
 }
 
-func (remoteForward *RemoteForward) Handle(
-	clientConnection net.Conn,
-	clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer) error {
-	if !Templates.FilterInbound(remoteForward.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
+func (remoteForward *RemoteForward) Handle(clientConnection net.Conn) error {
+	if !Tools.FilterInbound(remoteForward.InboundFilter, Tools.ParseIP(clientConnection.RemoteAddr().String())) {
 		errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
-		Templates.LogData(remoteForward.LoggingMethod, errorMessage)
+		Tools.LogData(remoteForward.LoggingMethod, errorMessage)
 		_ = clientConnection.Close()
 		return errors.New(errorMessage)
 	}
-	Templates.LogData(remoteForward.LoggingMethod, "Connection Received from: ", clientConnection.RemoteAddr().String())
+	Tools.LogData(remoteForward.LoggingMethod, "Connection Received from: ", clientConnection.RemoteAddr().String())
 	targetConnection, connectionError := Sockets.TLSConnect(
-		&remoteForward.MasterHost,
-		&remoteForward.MasterPort,
+		remoteForward.MasterAddress,
 		(*remoteForward).TLSConfiguration)
 	if connectionError != nil {
-		Templates.LogData(remoteForward.LoggingMethod, connectionError)
+		Tools.LogData(remoteForward.LoggingMethod, connectionError)
 		_ = clientConnection.Close()
 		return connectionError
 	}
-	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-	rawProxy := RawProxy.RawProxy{
-		TargetConnection:       targetConnection,
-		TargetConnectionReader: targetConnectionReader,
-		TargetConnectionWriter: targetConnectionWriter,
-	}
-	_ = rawProxy.SetTries(remoteForward.Tries)
-	_ = rawProxy.SetTimeout(remoteForward.Timeout)
-	_ = rawProxy.SetLoggingMethod(remoteForward.LoggingMethod)
-	return rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
+	return Pipes.ForwardTraffic(clientConnection, targetConnection)
 }
 
 func (remoteForward *RemoteForward) SetAuthenticationMethod(_ Types.AuthenticationMethod) error {

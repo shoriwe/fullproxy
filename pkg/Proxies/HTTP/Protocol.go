@@ -5,9 +5,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"errors"
-	"github.com/shoriwe/FullProxy/pkg/Proxies"
-	"github.com/shoriwe/FullProxy/pkg/Templates"
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"github.com/shoriwe/FullProxy/pkg/Tools"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"gopkg.in/elazarl/goproxy.v1"
 	"net"
 	"net/http"
@@ -62,11 +61,11 @@ func (httpProtocol *HTTP) SetInboundFilter(filter Types.IOFilter) error {
 	httpProtocol.ProxyController.OnRequest().DoFunc(func(
 		request *http.Request,
 		proxyCtx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		if !Templates.FilterInbound(httpProtocol.InboundFilter, Templates.ParseIP(request.RemoteAddr)) {
-			Templates.LogData(httpProtocol.LoggingMethod, "Connection denied to: ", request.RemoteAddr)
+		if !Tools.FilterInbound(httpProtocol.InboundFilter, Tools.ParseIP(request.RemoteAddr)) {
+			Tools.LogData(httpProtocol.LoggingMethod, "Connection denied to: ", request.RemoteAddr)
 			return request, goproxy.NewResponse(request, goproxy.ContentTypeText, http.StatusProxyAuthRequired, "Don't waste your time!")
 		}
-		Templates.LogData(httpProtocol.LoggingMethod, "Connection Received from: ", request.RemoteAddr)
+		Tools.LogData(httpProtocol.LoggingMethod, "Connection Received from: ", request.RemoteAddr)
 		return request, nil
 	})
 	return nil
@@ -87,27 +86,31 @@ func (httpProtocol *HTTP) SetAuthenticationMethod(authenticationMethod Types.Aut
 		return errors.New("No HTTP proxy controller was set")
 	}
 	httpProtocol.AuthenticationMethod = authenticationMethod
-	httpProtocol.ProxyController.OnRequest().DoFunc(func(
-		request *http.Request,
-		proxyCtx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		authentication := strings.Split(request.Header.Get("Proxy-Authorization"), " ")
-		if len(authentication) == 2 {
-			if authentication[0] == "Basic" {
-				rawCredentials, decodingError := base64.StdEncoding.DecodeString(authentication[1])
-				if decodingError == nil {
-					credentials := bytes.Split(rawCredentials, []byte(":"))
-					if len(credentials) == 2 {
-						if Proxies.Authenticate(httpProtocol.AuthenticationMethod, credentials[0], credentials[1]) {
-							Templates.LogData(httpProtocol.LoggingMethod, "Login successful with: ", request.RemoteAddr)
-							return request, nil
+	httpProtocol.ProxyController.OnRequest().DoFunc(
+		func(request *http.Request, proxyCtx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+			authentication := strings.Split(request.Header.Get("Proxy-Authorization"), " ")
+			if len(authentication) == 2 {
+				if authentication[0] == "Basic" {
+					rawCredentials, decodingError := base64.StdEncoding.DecodeString(authentication[1])
+					if decodingError == nil {
+						credentials := bytes.Split(rawCredentials, []byte(":"))
+						if len(credentials) == 2 {
+							if httpProtocol.AuthenticationMethod != nil {
+								success, authenticationError := httpProtocol.AuthenticationMethod(credentials[0], credentials[1])
+								if authenticationError != nil {
+									Tools.LogData(httpProtocol.LoggingMethod, authenticationError.Error())
+								} else if success {
+									Tools.LogData(httpProtocol.LoggingMethod, "Login successful with: ", request.RemoteAddr)
+									return request, nil
+								}
+							}
 						}
 					}
 				}
 			}
-		}
-		Templates.LogData(httpProtocol.LoggingMethod, "Login failed with invalid credentials from: ", request.RemoteAddr)
-		return request, goproxy.NewResponse(request, goproxy.ContentTypeText, http.StatusProxyAuthRequired, "Don't waste your time!")
-	})
+			Tools.LogData(httpProtocol.LoggingMethod, "Login failed with invalid credentials from: ", request.RemoteAddr)
+			return request, goproxy.NewResponse(request, goproxy.ContentTypeText, http.StatusProxyAuthRequired, "Don't waste your time!")
+		})
 	return nil
 }
 
@@ -126,7 +129,7 @@ func (httpProtocol *HTTP) Handle(
 
 	request, parsingError := http.ReadRequest(clientConnectionReader)
 	if parsingError != nil {
-		Templates.LogData(httpProtocol.LoggingMethod, parsingError)
+		Tools.LogData(httpProtocol.LoggingMethod, parsingError)
 		return parsingError
 	}
 	request.RemoteAddr = clientConnection.RemoteAddr().String()

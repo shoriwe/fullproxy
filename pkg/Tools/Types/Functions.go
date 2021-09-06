@@ -2,7 +2,7 @@ package Types
 
 import "net"
 
-type AuthenticationMethod func(username []byte, password []byte) bool
+type AuthenticationMethod func(username []byte, password []byte) (bool, error)
 
 type LoggingMethod func(args ...interface{})
 

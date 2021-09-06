@@ -1,17 +1,16 @@
 package PortForward
 
 import (
-	"bufio"
 	"errors"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/RawProxy"
-	"github.com/shoriwe/FullProxy/pkg/Sockets"
-	"github.com/shoriwe/FullProxy/pkg/Templates"
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"github.com/shoriwe/FullProxy/pkg/Pipes"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"net"
 	"time"
 )
 
 type LocalForward struct {
+	TargetAddress string
+	NetworkType   string
 	TargetHost    string
 	TargetPort    string
 	LoggingMethod Types.LoggingMethod
@@ -48,34 +47,11 @@ func (localForward *LocalForward) SetOutboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of proxy doesn't support OutboundFilters")
 }
 
-func (localForward *LocalForward) Handle(
-	clientConnection net.Conn,
-	clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer) error {
-	if !Templates.FilterInbound(localForward.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
-		errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
-		Templates.LogData(localForward.LoggingMethod, errorMessage)
-		_ = clientConnection.Close()
-		return errors.New(errorMessage)
-	}
-	Templates.LogData(localForward.LoggingMethod, "Connection Received from: ", clientConnection.RemoteAddr().String())
-	targetConnection, connectionError := Sockets.Connect(&localForward.TargetHost, &localForward.TargetPort)
+func (localForward *LocalForward) Handle(clientConnection net.Conn) error {
+	defer clientConnection.Close()
+	targetConnection, connectionError := net.Dial(localForward.NetworkType, localForward.TargetAddress)
 	if connectionError != nil {
-		Templates.LogData(localForward.LoggingMethod, connectionError)
-		_ = clientConnection.Close()
 		return connectionError
 	}
-	targetReader, targetWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-	rawProxy := RawProxy.RawProxy{
-		TargetConnection:       targetConnection,
-		TargetConnectionReader: targetReader,
-		TargetConnectionWriter: targetWriter,
-	}
-	_ = rawProxy.SetTries(localForward.Tries)
-	_ = rawProxy.SetTimeout(localForward.Timeout)
-	_ = rawProxy.SetLoggingMethod(localForward.LoggingMethod)
-	return rawProxy.Handle(
-		clientConnection,
-		clientConnectionReader, clientConnectionWriter,
-	)
+	return Pipes.ForwardTraffic(clientConnection, targetConnection)
 }

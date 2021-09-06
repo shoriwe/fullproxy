@@ -1,12 +1,10 @@
 package Pipes
 
 import (
-	"github.com/shoriwe/FullProxy/pkg/Proxies/RawProxy"
-	"github.com/shoriwe/FullProxy/pkg/Sockets"
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
+	"io"
 	"log"
 	"net"
-	"time"
 )
 
 var (
@@ -20,20 +18,14 @@ func Serve(pipe Types.Pipe) {
 	log.Fatal(pipe.Serve())
 }
 
-func StartGeneralProxying(clientConnection net.Conn, targetConnection net.Conn, tries int, timeout time.Duration) {
-	clientConnectionReader, clientConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(clientConnection)
-	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-	if targetConnectionReader != nil && targetConnectionWriter != nil {
-		rawProxy := RawProxy.RawProxy{
-			TargetConnection:       targetConnection,
-			TargetConnectionReader: targetConnectionReader,
-			TargetConnectionWriter: targetConnectionWriter,
-		}
-		_ = rawProxy.SetTries(tries)
-		_ = rawProxy.SetTimeout(timeout)
-		rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
-	} else {
-		_ = clientConnection.Close()
-		_ = targetConnection.Close()
-	}
+func closer(conn1, conn2 io.Closer) {
+	conn1.Close()
+	conn2.Close()
+}
+
+func ForwardTraffic(clientConnection net.Conn, targetConnection net.Conn) error {
+	defer closer(clientConnection, targetConnection)
+	go io.Copy(clientConnection, targetConnection)
+	_, writeError := io.Copy(targetConnection, clientConnection)
+	return writeError
 }

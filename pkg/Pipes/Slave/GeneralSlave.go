@@ -4,10 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"errors"
-	"github.com/shoriwe/FullProxy/pkg/Pipes"
-	"github.com/shoriwe/FullProxy/pkg/Sockets"
-	"github.com/shoriwe/FullProxy/pkg/Templates"
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"net"
 	"time"
 )
@@ -47,28 +44,7 @@ func (general *General) SetLoggingMethod(loggingMethod Types.LoggingMethod) erro
 func (general *General) Serve() error {
 	var finalError error
 	for {
-		_ = general.MasterConnection.SetReadDeadline(time.Now().Add(20 * time.Second))
-		NumberOfReceivedBytes, buffer, connectionError := Sockets.Receive(general.MasterConnectionReader, 1024)
-		if connectionError != nil {
-			if parsedConnectionError, ok := connectionError.(net.Error); !(ok && parsedConnectionError.Timeout()) {
-				finalError = connectionError
-				break
-			}
-		}
-		if NumberOfReceivedBytes != 1 {
-			continue
-		}
-		if buffer[0] != Pipes.NewConnection[0] {
-			continue
-		}
-		clientConnection, connectionError := Sockets.TLSConnect(&general.MasterHost, &general.MasterPort, general.TLSConfiguration)
-		if connectionError != nil {
-			finalError = connectionError
-			break
-		}
-		Templates.LogData(general.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
-		clientConnectionReader, clientConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(clientConnection)
-		go general.ProxyProtocol.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
+
 	}
 	return finalError
 }

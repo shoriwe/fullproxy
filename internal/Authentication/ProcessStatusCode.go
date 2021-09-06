@@ -2,7 +2,7 @@ package Authentication
 
 import (
 	"encoding/base64"
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"log"
 	"os/exec"
 )
@@ -11,7 +11,7 @@ import (
 Pass base64 encoded username and password to a command, ExitCode = 0 means "Login success", any other way will mean it not
 */
 func CommandAuth(executable string, defaultArgv []string) Types.AuthenticationMethod {
-	return func(username []byte, password []byte) bool {
+	return func(username []byte, password []byte) (bool, error) {
 		command := exec.Command(executable,
 			append(defaultArgv, []string{
 				base64.StdEncoding.EncodeToString(username),
@@ -20,15 +20,15 @@ func CommandAuth(executable string, defaultArgv []string) Types.AuthenticationMe
 		startError := command.Start()
 		if startError != nil {
 			log.Print(startError)
-			return false
+			return false, startError
 		}
 		waitError := command.Wait()
 		if waitError != nil {
 			if _, ok := waitError.(*exec.ExitError); !ok {
 				log.Print(waitError)
 			}
-			return false
+			return false, waitError
 		}
-		return true
+		return true, nil
 	}
 }

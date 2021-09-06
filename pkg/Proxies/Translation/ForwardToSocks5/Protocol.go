@@ -3,10 +3,9 @@ package ForwardToSocks5
 import (
 	"bufio"
 	"errors"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/RawProxy"
-	"github.com/shoriwe/FullProxy/pkg/Sockets"
-	"github.com/shoriwe/FullProxy/pkg/Templates"
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"github.com/shoriwe/FullProxy/pkg/Pipes"
+	"github.com/shoriwe/FullProxy/pkg/Tools"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"golang.org/x/net/proxy"
 	"net"
 	"time"
@@ -53,27 +52,18 @@ func (forwardToSocks5 *ForwardToSocks5) Handle(
 	clientConnection net.Conn,
 	clientConnectionReader *bufio.Reader,
 	clientConnectionWriter *bufio.Writer) error {
-	if !Templates.FilterInbound(forwardToSocks5.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
+	if !Tools.FilterInbound(forwardToSocks5.InboundFilter, Tools.ParseIP(clientConnection.RemoteAddr().String())) {
 		errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
-		Templates.LogData(forwardToSocks5.LoggingMethod, errorMessage)
+		Tools.LogData(forwardToSocks5.LoggingMethod, errorMessage)
 		_ = clientConnection.Close()
 		return errors.New(errorMessage)
 	}
-	Templates.LogData(forwardToSocks5.LoggingMethod, "Connection Received from: ", clientConnection.RemoteAddr().String())
+	Tools.LogData(forwardToSocks5.LoggingMethod, "Connection Received from: ", clientConnection.RemoteAddr().String())
 	targetConnection, connectionError := forwardToSocks5.Socks5Dialer.Dial("tcp", forwardToSocks5.TargetHost+":"+forwardToSocks5.TargetPort)
 	if connectionError != nil {
-		Templates.LogData(forwardToSocks5.LoggingMethod, connectionError)
+		Tools.LogData(forwardToSocks5.LoggingMethod, connectionError)
 		_ = clientConnection.Close()
 		return connectionError
 	}
-	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-	rawProxy := RawProxy.RawProxy{
-		TargetConnection:       targetConnection,
-		TargetConnectionReader: targetConnectionReader,
-		TargetConnectionWriter: targetConnectionWriter,
-	}
-	_ = rawProxy.SetTries(forwardToSocks5.Tries)
-	_ = rawProxy.SetTimeout(forwardToSocks5.Timeout)
-	_ = rawProxy.SetLoggingMethod(forwardToSocks5.LoggingMethod)
-	return rawProxy.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
+	return Pipes.ForwardTraffic(clientConnection, targetConnection)
 }

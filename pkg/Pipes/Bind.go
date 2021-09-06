@@ -2,9 +2,8 @@ package Pipes
 
 import (
 	"errors"
-	"github.com/shoriwe/FullProxy/pkg/Sockets"
-	"github.com/shoriwe/FullProxy/pkg/Templates"
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"github.com/shoriwe/FullProxy/pkg/Tools"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"net"
 	"time"
 )
@@ -42,15 +41,16 @@ func (bind *Bind) Serve() error {
 	for {
 		clientConnection, connectionError := bind.Server.Accept()
 		if connectionError != nil {
-			Templates.LogData(bind.LoggingMethod, connectionError)
-			return connectionError
-		}
-		if !Templates.FilterInbound(bind.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
-			Templates.LogData(bind.LoggingMethod, "Connection denied to: "+clientConnection.RemoteAddr().String())
+			Tools.LogData(bind.LoggingMethod, connectionError)
+			_ = clientConnection.Close()
 			continue
 		}
-		Templates.LogData(bind.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
-		clientConnectionReader, clientConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(clientConnection)
-		go bind.ProxyProtocol.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
+		if !Tools.FilterInbound(bind.InboundFilter, Tools.ParseIP(clientConnection.RemoteAddr().String())) {
+			_ = clientConnection.Close()
+			Tools.LogData(bind.LoggingMethod, "Connection denied to: "+clientConnection.RemoteAddr().String())
+			continue
+		}
+		Tools.LogData(bind.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
+		go bind.ProxyProtocol.Handle(clientConnection)
 	}
 }

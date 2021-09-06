@@ -2,20 +2,22 @@ package PipesSetup
 
 import (
 	"github.com/shoriwe/FullProxy/pkg/Pipes"
-	"github.com/shoriwe/FullProxy/pkg/Sockets"
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"log"
+	"net"
 )
 
-func Bind(host *string, port *string, proxy Types.ProxyProtocol) {
-	server, bindError := Sockets.Bind(host, port)
+func Bind(networkType string, address string, proxy Types.ProxyProtocol, inboundFilter Types.IOFilter) {
+	server, bindError := net.Listen(networkType, address)
 	if bindError != nil {
 		log.Fatal("Could not bind to wanted address")
 	}
-	log.Print("Bind successfully in: ", *host, ":", *port)
-	pipe := new(Pipes.Bind)
-	_ = pipe.SetLoggingMethod(log.Print)
-	pipe.Server = server
-	pipe.ProxyProtocol = proxy
+	log.Print("Bind successfully in: ", address)
+	pipe := &Pipes.Bind{
+		Server:        server,
+		ProxyProtocol: proxy,
+		LoggingMethod: log.Print,
+		InboundFilter: inboundFilter,
+	}
 	Pipes.Serve(pipe)
 }

@@ -1,7 +1,7 @@
-package Templates
+package Tools
 
 import (
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"net"
 	"time"
 )

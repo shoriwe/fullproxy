@@ -2,7 +2,7 @@ package IOTools
 
 import (
 	"errors"
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"net"
 )
 
