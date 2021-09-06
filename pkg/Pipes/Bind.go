@@ -24,10 +24,6 @@ func (bind *Bind) SetOutboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of PIPE doesn't support OutboundFilters")
 }
 
-func (bind *Bind) SetTries(tries int) error {
-	return bind.ProxyProtocol.SetTries(tries)
-}
-
 func (bind *Bind) SetTimeout(timeout time.Duration) error {
 	return bind.ProxyProtocol.SetTimeout(timeout)
 }
@@ -53,4 +49,18 @@ func (bind *Bind) Serve() error {
 		Tools.LogData(bind.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
 		go bind.ProxyProtocol.Handle(clientConnection)
 	}
+}
+
+func NewBindPipe(networkType, bindAddress string, protocol Types.ProxyProtocol, method Types.LoggingMethod, inboundFilter Types.IOFilter) (*Bind, error) {
+	listener, listenError := net.Listen(networkType, bindAddress)
+	if listenError != nil {
+		return nil, listenError
+	}
+	Tools.LogData(method, "Successfully listening at: "+bindAddress)
+	return &Bind{
+		Server:        listener,
+		ProxyProtocol: protocol,
+		LoggingMethod: method,
+		InboundFilter: inboundFilter,
+	}, nil
 }

@@ -9,11 +9,8 @@ import (
 
 type Socks5 struct {
 	AuthenticationMethod Types.AuthenticationMethod
-	WantedAuthMethod     byte
 	LoggingMethod        Types.LoggingMethod
-	Tries                int
 	Timeout              time.Duration
-	InboundFilter        Types.IOFilter
 	OutboundFilter       Types.IOFilter
 }
 
@@ -27,18 +24,8 @@ func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod Types.Authent
 	return nil
 }
 
-func (socks5 *Socks5) SetTries(tries int) error {
-	socks5.Tries = tries
-	return nil
-}
-
 func (socks5 *Socks5) SetTimeout(timeout time.Duration) error {
 	socks5.Timeout = timeout
-	return nil
-}
-
-func (socks5 *Socks5) SetInboundFilter(filter Types.IOFilter) error {
-	socks5.InboundFilter = filter
 	return nil
 }
 
@@ -93,4 +80,8 @@ func (socks5 *Socks5) Handle(clientConnection net.Conn) error {
 	default:
 		return protocolError
 	}
+}
+
+func NewSocks5(authenticationMethod Types.AuthenticationMethod, loggingMethod Types.LoggingMethod, timeout time.Duration, outboundFilter Types.IOFilter) *Socks5 {
+	return &Socks5{AuthenticationMethod: authenticationMethod, LoggingMethod: loggingMethod, Timeout: timeout, OutboundFilter: outboundFilter}
 }

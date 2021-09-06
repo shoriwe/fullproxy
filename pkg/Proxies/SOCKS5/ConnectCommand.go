@@ -73,13 +73,18 @@ func (socks5 *Socks5) Connect(clientConnection net.Conn) error {
 
 	// Respond to client
 
-	local := net.ParseIP(targetConnection.LocalAddr().String()).To16()
-	localAddressBytes, _ := local.MarshalText()
-	response := []byte{SocksV5, Succeeded, 0, IPv6, byte(len(localAddressBytes))}
+	local := strings.Split(targetConnection.LocalAddr().String(), ":")
+	var localAddressBytes []byte
+	for _, rawNumber := range strings.Split(local[0], ".") {
+		number, _ := strconv.Atoi(rawNumber)
+		localAddressBytes = append(localAddressBytes, uint8(number))
+	}
+	response := []byte{SocksV5, Succeeded, 0, IPv4}
 	response = append(response, localAddressBytes...)
-	portAsInt, _ := strconv.Atoi(strings.ReplaceAll(targetConnection.LocalAddr().String(), local.String(), ""))
+	portAsInt, _ := strconv.Atoi(local[1])
 	port := make([]byte, 2)
 	binary.BigEndian.PutUint16(port, uint16(portAsInt))
+
 	response = append(response, port...)
 	_, connectionError = clientConnection.Write(response)
 	if connectionError != nil {

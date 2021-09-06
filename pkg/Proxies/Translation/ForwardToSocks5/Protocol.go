@@ -1,7 +1,6 @@
 package ForwardToSocks5
 
 import (
-	"bufio"
 	"errors"
 	"github.com/shoriwe/FullProxy/pkg/Pipes"
 	"github.com/shoriwe/FullProxy/pkg/Tools"
@@ -49,9 +48,7 @@ func (forwardToSocks5 *ForwardToSocks5) SetTimeout(timeout time.Duration) error 
 }
 
 func (forwardToSocks5 *ForwardToSocks5) Handle(
-	clientConnection net.Conn,
-	clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer) error {
+	clientConnection net.Conn) error {
 	if !Tools.FilterInbound(forwardToSocks5.InboundFilter, Tools.ParseIP(clientConnection.RemoteAddr().String())) {
 		errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
 		Tools.LogData(forwardToSocks5.LoggingMethod, errorMessage)

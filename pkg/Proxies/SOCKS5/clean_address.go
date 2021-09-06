@@ -20,6 +20,7 @@ func clean(hostType uint8, rawHost []byte, rawPort []byte) string {
 			rawHost[12], rawHost[13], rawHost[14], rawHost[15],
 		)
 	}
-	port := binary.BigEndian.Uint64(rawPort)
+	port := binary.BigEndian.Uint16(rawPort)
+	fmt.Println(fmt.Sprintf("%s:%d", host, port))
 	return fmt.Sprintf("%s:%d", host, port)
 }
