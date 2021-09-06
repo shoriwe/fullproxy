@@ -83,7 +83,7 @@ func (socks5 *Socks5) Connect(clientConnection net.Conn) error {
 		number, _ := strconv.Atoi(rawNumber)
 		localAddressBytes = append(localAddressBytes, uint8(number))
 	}
-	response := []byte{SocksV5, Succeeded, 0, IPv4}
+	response := []byte{SocksV5, 0x00, 0, IPv4}
 	response = append(response, localAddressBytes...)
 	portAsInt, _ := strconv.Atoi(local[1])
 	port := make([]byte, 2)

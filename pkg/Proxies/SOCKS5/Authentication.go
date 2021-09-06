@@ -36,7 +36,7 @@ func (socks5 *Socks5) UsernamePasswordAuthentication(clientConnection net.Conn) 
 	numberOfBytesReceived, connectionError = clientConnection.Read(username)
 	if connectionError != nil {
 		return false, connectionError
-	} else if numberOfBytesReceived != 1 {
+	} else if numberOfBytesReceived != int(userLength[0]) {
 		return false, nil
 	}
 	passwordLength := make([]byte, 1)
@@ -46,11 +46,11 @@ func (socks5 *Socks5) UsernamePasswordAuthentication(clientConnection net.Conn) 
 	} else if numberOfBytesReceived != 1 {
 		return false, nil
 	}
-	password := make([]byte, userLength[0])
+	password := make([]byte, passwordLength[0])
 	numberOfBytesReceived, connectionError = clientConnection.Read(password)
 	if connectionError != nil {
 		return false, connectionError
-	} else if numberOfBytesReceived != 1 {
+	} else if numberOfBytesReceived != int(passwordLength[0]) {
 		return false, nil
 	}
 	loginSuccess, loginError := socks5.AuthenticationMethod(username, password)
@@ -65,6 +65,7 @@ func (socks5 *Socks5) UsernamePasswordAuthentication(clientConnection net.Conn) 
 	if connectionError != nil {
 		return false, connectionError
 	}
+	Tools.LogData(socks5.LoggingMethod, "Logging succeeded for: "+clientConnection.RemoteAddr().String())
 	return true, nil
 }
 
@@ -92,11 +93,11 @@ func (socks5 *Socks5) AuthenticateClient(clientConnection net.Conn) (bool, error
 	} else if bytesReceived != 1 {
 		return false, nil
 	}
-	clientSupportedMethods := make([]byte, bytesReceived)
+	clientSupportedMethods := make([]byte, numberOfMethods[0])
 	bytesReceived, connectionError = clientConnection.Read(clientSupportedMethods)
 	if connectionError != nil {
 		return false, connectionError
-	} else if bytesReceived != 1 {
+	} else if bytesReceived != int(numberOfMethods[0]) {
 		return false, nil
 	}
 

@@ -18,6 +18,10 @@ func main() {
 	case "new":
 		fmt.Print("Password: ")
 		password, _ := stdinReader.ReadString('\n')
+		if os.PathSeparator == '\\' {
+			password = password[:len(password)-1]
+		}
+		password = password[:len(password)-1]
 		passwordHash := Templates.SHA3512([]byte(password))
 		file, creationError := os.Create(os.Args[2])
 		if creationError != nil {
@@ -35,11 +39,15 @@ func main() {
 	case "set":
 		fmt.Print("Password: ")
 		password, _ := stdinReader.ReadString('\n')
+
+		if os.PathSeparator == '\\' {
+			password = password[:len(password)-1]
+		}
+		password = password[:len(password)-1]
+
 		passwordHash := Templates.SHA3512([]byte(password))
 		users := Templates.LoadUsers(os.Args[2])
-		fmt.Println(users)
 		users[os.Args[3]] = passwordHash
-		fmt.Println(users)
 		bytes, marshalError := json.Marshal(users)
 		if marshalError != nil {
 			panic(marshalError)
