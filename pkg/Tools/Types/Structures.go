@@ -14,5 +14,5 @@ type ProxyProtocol interface {
 type Pipe interface {
 	SetLoggingMethod(LoggingMethod) error
 	SetInboundFilter(IOFilter) error
-	Serve() error
+	Serve()
 }

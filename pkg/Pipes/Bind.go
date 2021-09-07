@@ -28,21 +28,29 @@ func (bind *Bind) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
 	return nil
 }
 
-func (bind *Bind) Serve() error {
+func (bind *Bind) serve(clientConnection net.Conn) {
+	if !Tools.FilterInbound(bind.InboundFilter, Tools.ParseIP(clientConnection.RemoteAddr().String()).String()) {
+		_ = clientConnection.Close()
+		Tools.LogData(bind.LoggingMethod, "Connection denied to: "+clientConnection.RemoteAddr().String())
+		return
+	}
+	Tools.LogData(bind.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
+	handleError := bind.ProxyProtocol.Handle(clientConnection)
+	if handleError != nil {
+		Tools.LogData(bind.LoggingMethod, handleError.Error)
+	}
+	return
+}
+
+func (bind *Bind) Serve() {
 	for {
 		clientConnection, connectionError := bind.Server.Accept()
 		if connectionError != nil {
 			Tools.LogData(bind.LoggingMethod, connectionError)
-			_ = clientConnection.Close()
+			// _ = clientConnection.Close()
 			continue
 		}
-		if !Tools.FilterInbound(bind.InboundFilter, Tools.ParseIP(clientConnection.RemoteAddr().String()).String()) {
-			_ = clientConnection.Close()
-			Tools.LogData(bind.LoggingMethod, "Connection denied to: "+clientConnection.RemoteAddr().String())
-			continue
-		}
-		Tools.LogData(bind.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
-		go bind.ProxyProtocol.Handle(clientConnection)
+		go bind.serve(clientConnection)
 	}
 }
 

@@ -179,5 +179,5 @@ func main() {
 	default:
 		panic("Unknown mode")
 	}
-	log.Fatal(pipe.Serve())
+	pipe.Serve()
 }
