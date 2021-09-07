@@ -39,6 +39,8 @@ func TestInitHTTPServer(t *testing.T) {
 	go http.Serve(httpListener, nil)
 }
 
+// Test Bind
+
 func TestNoAuthInitialization(t *testing.T) {
 	var pipeInitializationError error
 	bindPipe, pipeInitializationError = Pipes.NewBindPipe(
@@ -54,23 +56,20 @@ func TestNoAuthInitialization(t *testing.T) {
 	go bindPipe.Serve()
 }
 
+//// Test No auth
+
 func TestNoAuthHTTPRequest(t *testing.T) {
-	// create a socks5 dialer
 	dialer, err := proxy.SOCKS5(networkType, proxyAddress, nil, proxy.Direct)
 	if err != nil {
 		t.Fatal("can't connect to the proxy:", err)
 	}
-	// setup a http client
 	httpTransport := &http.Transport{}
 	httpClient := &http.Client{Transport: httpTransport}
-	// set our socks5 as the dialer
 	httpTransport.Dial = dialer.Dial
-	// create a request
 	req, err := http.NewRequest("GET", testUrl, nil)
 	if err != nil {
 		t.Fatal("can't create request:", err)
 	}
-	// use the http client to fetch the page
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		t.Fatal("can't GET page:", err)
@@ -80,7 +79,6 @@ func TestNoAuthHTTPRequest(t *testing.T) {
 	if err != nil {
 		t.Fatal("error reading body:", err)
 	}
-	// t.Log(string(b))
 }
 
 func TestCloseNoAuthPipe(t *testing.T) {
@@ -89,6 +87,8 @@ func TestCloseNoAuthPipe(t *testing.T) {
 		t.Fatal(closingError)
 	}
 }
+
+//// Test Auth
 
 func TestUserPasswordAuthSocks5Init(t *testing.T) {
 	var pipeInitializationError error
@@ -116,7 +116,6 @@ func TestUserPasswordAuthSocks5Init(t *testing.T) {
 }
 
 func TestUsernamePasswordHTTPRequest(t *testing.T) {
-	// create a socks5 dialer
 	dialer, err := proxy.SOCKS5(networkType, proxyAddress, &proxy.Auth{
 		User:     username,
 		Password: password,
@@ -124,17 +123,13 @@ func TestUsernamePasswordHTTPRequest(t *testing.T) {
 	if err != nil {
 		t.Fatal("can't connect to the proxy:", err)
 	}
-	// setup a http client
 	httpTransport := &http.Transport{}
 	httpClient := &http.Client{Transport: httpTransport}
-	// set our socks5 as the dialer
 	httpTransport.Dial = dialer.Dial
-	// create a request
 	req, err := http.NewRequest("GET", testUrl, nil)
 	if err != nil {
 		t.Fatal("can't create request:", err)
 	}
-	// use the http client to fetch the page
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		t.Fatal("can't GET page:", err)
@@ -144,26 +139,20 @@ func TestUsernamePasswordHTTPRequest(t *testing.T) {
 	if err != nil {
 		t.Fatal("error reading body:", err)
 	}
-	// t.Log(string(b))
 }
 
 func TestUsernamePasswordWithNoAuthHTTPRequest(t *testing.T) {
-	// create a socks5 dialer
 	dialer, err := proxy.SOCKS5(networkType, proxyAddress, nil, proxy.Direct)
 	if err != nil {
 		t.Fatal("can't connect to the proxy:", err)
 	}
-	// setup a http client
 	httpTransport := &http.Transport{}
 	httpClient := &http.Client{Transport: httpTransport}
-	// set our socks5 as the dialer
 	httpTransport.Dial = dialer.Dial
-	// create a request
 	req, err := http.NewRequest("GET", testUrl, nil)
 	if err != nil {
 		t.Fatal("can't create request:", err)
 	}
-	// use the http client to fetch the page
 	_, err = httpClient.Do(req)
 	if err != nil {
 		return
@@ -177,6 +166,22 @@ func TestCloseUserPasswordAuthPipe(t *testing.T) {
 		t.Fatal(closingError)
 	}
 }
+
+//// Test inbound rules
+
+//// Test outbound rules
+
+// Test Master Slave
+
+//// Test No auth
+
+//// Test Auth
+
+//// Test inbound rules
+
+//// Test outbound rules
+
+// Finally, close the HTTP server
 
 func TestFinishHTTPServer(t *testing.T) {
 	_ = httpListener.Close()
