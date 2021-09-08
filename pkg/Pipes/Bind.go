@@ -8,6 +8,8 @@ import (
 )
 
 type Bind struct {
+	NetworkType   string
+	BindAddress   string
 	Server        net.Listener
 	ProxyProtocol Types.ProxyProtocol
 	LoggingMethod Types.LoggingMethod
@@ -42,29 +44,30 @@ func (bind *Bind) serve(clientConnection net.Conn) {
 	return
 }
 
-func (bind *Bind) Serve() {
+func (bind *Bind) Serve() error {
+	listener, listenError := net.Listen(bind.NetworkType, bind.BindAddress)
+	if listenError != nil {
+		return listenError
+	}
+	bind.ProxyProtocol.SetDial(net.Dial)
+	Tools.LogData(bind.LoggingMethod, "Successfully listening at: "+bind.BindAddress)
+	bind.Server = listener
 	for {
 		clientConnection, connectionError := bind.Server.Accept()
 		if connectionError != nil {
 			Tools.LogData(bind.LoggingMethod, connectionError)
-			// _ = clientConnection.Close()
 			continue
 		}
 		go bind.serve(clientConnection)
 	}
 }
 
-func NewBindPipe(networkType, bindAddress string, protocol Types.ProxyProtocol, method Types.LoggingMethod, inboundFilter Types.IOFilter) (*Bind, error) {
-	listener, listenError := net.Listen(networkType, bindAddress)
-	if listenError != nil {
-		return nil, listenError
-	}
-	protocol.SetDial(net.Dial)
-	Tools.LogData(method, "Successfully listening at: "+bindAddress)
+func NewBindPipe(networkType, bindAddress string, protocol Types.ProxyProtocol, method Types.LoggingMethod, inboundFilter Types.IOFilter) *Bind {
 	return &Bind{
-		Server:        listener,
+		NetworkType:   networkType,
+		BindAddress:   bindAddress,
 		ProxyProtocol: protocol,
 		LoggingMethod: method,
 		InboundFilter: inboundFilter,
-	}, nil
+	}
 }

@@ -5,8 +5,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	Templates "github.com/shoriwe/FullProxy/internal/Tools"
+	"github.com/shoriwe/FullProxy/internal/Tools"
 	"github.com/shoriwe/FullProxy/pkg/Pipes"
+	"github.com/shoriwe/FullProxy/pkg/Pipes/Reverse/Master"
+	"github.com/shoriwe/FullProxy/pkg/Pipes/Reverse/Slave"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/SOCKS5"
 	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"io"
@@ -16,6 +18,16 @@ import (
 	"strings"
 	"syscall"
 )
+
+var (
+	c2Address = "127.0.0.1:9051"
+)
+
+func init() {
+	if os.Getenv("C2Address") != "" {
+		c2Address = os.Getenv("C2Address")
+	}
+}
 
 func loadList(filePath string) map[string]uint8 {
 	file, openError := os.Open(filePath)
@@ -147,7 +159,9 @@ func main() {
 				"\t- MODE:         bind|master|slave\n"+
 				"\t- NETWORK_TYPE: tcp|udp\n"+
 				"\t- ADDRESS:      IPv4|IPv6 or Domain followed by \":\" and the PORT; For Example -> \"127.0.0.1:80\"\n"+
-				"\t- PROTOCOL:     socks5|http|r-forward|l-forward|translate-socks5\n",
+				"\t- PROTOCOL:     socks5|http|r-forward|l-forward|translate-socks5\n"+
+				"Environment Variables:\n"+
+				"\t- C2Address     Host and port of the C2 port of the master server\n",
 		)
 
 		os.Exit(1)
@@ -163,21 +177,17 @@ func main() {
 		log.Fatal(setupError)
 	}
 	var (
-		pipe              Types.Pipe
-		pipeCreationError error
+		pipe Types.Pipe
 	)
 	switch mode {
 	case "bind":
-		pipe, pipeCreationError = Pipes.NewBindPipe(networkType, address, proxyProtocol, log.Print, inboundFilter)
-		if pipeCreationError != nil {
-			panic(pipeCreationError)
-		}
+		pipe = Pipes.NewBindPipe(networkType, address, proxyProtocol, log.Print, inboundFilter)
 	case "master":
-		break
+		pipe = Master.NewMaster(networkType, c2Address, address, log.Print, inboundFilter, proxyProtocol)
 	case "slave":
-		break
+		pipe = Slave.NewSlave(networkType, c2Address, address, log.Print)
 	default:
 		panic("Unknown mode")
 	}
-	pipe.Serve()
+	log.Fatal(pipe.Serve())
 }

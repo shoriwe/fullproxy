@@ -51,8 +51,8 @@ func TestNoAuthInitialization(t *testing.T) {
 	bindPipe, pipeInitializationError = Pipes.NewBindPipe(
 		networkType,
 		proxyAddress,
-		SOCKS5.NewSocks5(nil, log.Print, nil),
-		log.Print,
+		SOCKS5.NewSocks5(nil, nil, nil),
+		nil,
 		nil,
 	)
 	if pipeInitializationError != nil {
@@ -108,10 +108,10 @@ func TestUserPasswordAuthSocks5Init(t *testing.T) {
 				}
 				return false, nil
 			},
-			log.Print,
+			nil,
 			nil,
 		),
-		log.Print,
+		nil,
 		nil,
 	)
 	if pipeInitializationError != nil {
@@ -186,10 +186,10 @@ func TestInboundRulesSocks5Init(t *testing.T) {
 				}
 				return false, nil
 			},
-			log.Print,
+			nil,
 			nil,
 		),
-		log.Print,
+		nil,
 		func(host string) bool {
 			if host == "127.0.0.1" {
 				return false
@@ -247,7 +247,7 @@ func TestOutboundRulesSocks5Init(t *testing.T) {
 				}
 				return false, nil
 			},
-			log.Print,
+			nil,
 			func(host string) bool {
 				if host == "google.com" {
 					return false
@@ -255,7 +255,7 @@ func TestOutboundRulesSocks5Init(t *testing.T) {
 				return true
 			},
 		),
-		log.Print,
+		nil,
 		nil,
 	)
 	if pipeInitializationError != nil {
@@ -329,9 +329,9 @@ func TestNoAuthMasterSlaveInitialization(t *testing.T) {
 		"127.0.0.1",
 		"9051",
 		"9050",
-		log.Print,
 		nil,
-		SOCKS5.NewSocks5(nil, log.Print, nil),
+		nil,
+		SOCKS5.NewSocks5(nil, nil, nil),
 	)
 	if pipeInitializationError != nil {
 		t.Fatal(pipeInitializationError)
@@ -341,7 +341,7 @@ func TestNoAuthMasterSlaveInitialization(t *testing.T) {
 		"tcp",
 		"127.0.0.1:9051",
 		"127.0.0.1:9050",
-		log.Print,
+		nil,
 	)
 	if pipeInitializationError != nil {
 		t.Fatal(pipeInitializationError)
@@ -374,10 +374,6 @@ func TestNoAuthMasterSlaveHTTPRequest(t *testing.T) {
 
 func TestCloseNoAuthMasterSlavePipe(t *testing.T) {
 	closingError := masterPipe.ProxyListener.Close()
-	if closingError != nil {
-		t.Fatal(closingError)
-	}
-	closingError = masterPipe.C2Listener.Close()
 	if closingError != nil {
 		t.Fatal(closingError)
 	}

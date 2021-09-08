@@ -3,6 +3,7 @@ package Slave
 import (
 	"errors"
 	"github.com/shoriwe/FullProxy/pkg/Pipes/Reverse"
+	"github.com/shoriwe/FullProxy/pkg/Tools"
 	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"io"
 	"net"
@@ -16,12 +17,12 @@ type Slave struct {
 	LoggingMethod      Types.LoggingMethod
 }
 
-func NewSlave(networkType string, masterC2Address string, masterProxyAddress string, loggingMethod Types.LoggingMethod) (*Slave, error) {
-	masterConnection, connectionError := net.Dial(networkType, masterC2Address)
-	if connectionError != nil {
-		return nil, connectionError
-	}
-	return &Slave{MasterConnection: masterConnection, NetworkType: networkType, MasterC2Address: masterC2Address, MasterProxyAddress: masterProxyAddress, LoggingMethod: loggingMethod}, nil
+func (slave *Slave) SetInboundFilter(_ Types.IOFilter) error {
+	panic("inbound rules not supported")
+}
+
+func NewSlave(networkType string, masterC2Address string, masterProxyAddress string, loggingMethod Types.LoggingMethod) *Slave {
+	return &Slave{NetworkType: networkType, MasterC2Address: masterC2Address, MasterProxyAddress: masterProxyAddress, LoggingMethod: loggingMethod}
 }
 
 func (slave *Slave) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
@@ -60,6 +61,7 @@ func (slave *Slave) dial(clientConnection net.Conn) error {
 	}
 	networkType := string(rawNetworkType)
 	address := string(rawAddress)
+	Tools.LogData(slave.LoggingMethod, "Connecting to: ", address)
 	var targetConnection net.Conn
 	targetConnection, connectionError = net.Dial(networkType, address)
 	if connectionError != nil {
@@ -90,6 +92,7 @@ func (slave *Slave) command(command byte, clientConnection net.Conn) error {
 }
 
 func (slave *Slave) serve(request []byte) error {
+	Tools.LogData(slave.LoggingMethod, "Received client connection from master")
 	switch request[0] {
 	case Reverse.RequestNewMasterConnection:
 		break
@@ -113,9 +116,17 @@ func (slave *Slave) serve(request []byte) error {
 }
 
 func (slave *Slave) Serve() error {
+	Tools.LogData(slave.LoggingMethod, "Connecting to master at: "+slave.MasterC2Address)
+	masterConnection, connectionError := net.Dial(slave.NetworkType, slave.MasterC2Address)
+	if connectionError != nil {
+		return connectionError
+	}
+	Tools.LogData(slave.LoggingMethod, "Successfully connected to target at: "+slave.MasterC2Address)
+	slave.MasterConnection = masterConnection
+	var bytesReceived int
 	for {
 		request := make([]byte, 1)
-		bytesReceived, connectionError := slave.MasterConnection.Read(request)
+		bytesReceived, connectionError = slave.MasterConnection.Read(request)
 		if connectionError != nil {
 			return connectionError
 		} else if bytesReceived != 1 {
