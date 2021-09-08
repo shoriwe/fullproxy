@@ -7,7 +7,6 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/Pipes/Reverse/Slave"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/SOCKS5"
 	"golang.org/x/net/proxy"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -15,8 +14,6 @@ import (
 )
 
 const (
-	username     = "sulcud"
-	password     = "password"
 	testUrl      = "http://127.0.0.1:8080/big.txt"
 	networkType  = "tcp"
 	proxyAddress = "127.0.0.1:9050"
@@ -29,6 +26,58 @@ var (
 	slavePipe    *Slave.Slave
 )
 
+func basicAuthFunc(username []byte, password []byte) (bool, error) {
+	if bytes.Equal(username, []byte("sulcud")) &&
+		bytes.Equal(password, []byte("password")) {
+		return true, nil
+	}
+	return false, nil
+}
+
+func basicOutboundRule(host string) bool {
+	if host == "google.com" {
+		return false
+	}
+	return true
+}
+
+func basicInboundRule(host string) bool {
+	if host == "127.0.0.1" {
+		return false
+	}
+	return true
+}
+
+const (
+	Success = iota
+	FailedProxySetup
+	FailedRequest
+)
+
+func getRequest(url string, username, password string) uint8 {
+	dialer, err := proxy.SOCKS5(networkType, proxyAddress,
+		&proxy.Auth{
+			User:     username,
+			Password: password,
+		}, proxy.Direct)
+	if err != nil {
+		return FailedProxySetup
+	}
+	httpTransport := &http.Transport{}
+	httpClient := &http.Client{Transport: httpTransport}
+	httpTransport.Dial = dialer.Dial
+	var req *http.Request
+	req, err = http.NewRequest("GET", url, nil)
+	if err != nil {
+		return FailedRequest
+	}
+	_, err = httpClient.Do(req)
+	if err != nil {
+		return FailedRequest
+	}
+	return Success
+}
+
 func init() {
 	var listenError error
 	httpListener, listenError = net.Listen(networkType, "127.0.0.1:8080")
@@ -40,49 +89,27 @@ func init() {
 			_, _ = writer.Write(bytes.Repeat([]byte{'A'}, 0xFFFF))
 		},
 	)
-
 	go http.Serve(httpListener, nil)
 }
 
 // Test Bind
 
 func TestNoAuthInitialization(t *testing.T) {
-	var pipeInitializationError error
-	bindPipe, pipeInitializationError = Pipes.NewBindPipe(
+	bindPipe = Pipes.NewBindPipe(
 		networkType,
 		proxyAddress,
 		SOCKS5.NewSocks5(nil, nil, nil),
 		nil,
 		nil,
 	)
-	if pipeInitializationError != nil {
-		t.Fatal(pipeInitializationError)
-	}
 	go bindPipe.Serve()
 }
 
 //// Test No auth
 
 func TestNoAuthHTTPRequest(t *testing.T) {
-	dialer, err := proxy.SOCKS5(networkType, proxyAddress, nil, proxy.Direct)
-	if err != nil {
-		t.Fatal("can't connect to the proxy:", err)
-	}
-	httpTransport := &http.Transport{}
-	httpClient := &http.Client{Transport: httpTransport}
-	httpTransport.Dial = dialer.Dial
-	req, err := http.NewRequest("GET", testUrl, nil)
-	if err != nil {
-		t.Fatal("can't create request:", err)
-	}
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		t.Fatal("can't GET page:", err)
-	}
-	defer resp.Body.Close()
-	_, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatal("error reading body:", err)
+	if getRequest(testUrl, "", "") != Success {
+		t.Fatal(testUrl)
 	}
 }
 
@@ -96,73 +123,30 @@ func TestCloseNoAuthPipe(t *testing.T) {
 //// Test Auth
 
 func TestUserPasswordAuthSocks5Init(t *testing.T) {
-	var pipeInitializationError error
-	bindPipe, pipeInitializationError = Pipes.NewBindPipe(
+	bindPipe = Pipes.NewBindPipe(
 		networkType,
 		proxyAddress,
 		SOCKS5.NewSocks5(
-			func(username []byte, password []byte) (bool, error) {
-				if bytes.Equal(username, []byte("sulcud")) &&
-					bytes.Equal(password, []byte("password")) {
-					return true, nil
-				}
-				return false, nil
-			},
+			basicAuthFunc,
 			nil,
 			nil,
 		),
 		nil,
 		nil,
 	)
-	if pipeInitializationError != nil {
-		t.Fatal(pipeInitializationError)
-	}
 	go bindPipe.Serve()
 }
 
 func TestUsernamePasswordHTTPRequest(t *testing.T) {
-	dialer, err := proxy.SOCKS5(networkType, proxyAddress, &proxy.Auth{
-		User:     username,
-		Password: password,
-	}, proxy.Direct)
-	if err != nil {
-		t.Fatal("can't connect to the proxy:", err)
-	}
-	httpTransport := &http.Transport{}
-	httpClient := &http.Client{Transport: httpTransport}
-	httpTransport.Dial = dialer.Dial
-	req, err := http.NewRequest("GET", testUrl, nil)
-	if err != nil {
-		t.Fatal("can't create request:", err)
-	}
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		t.Fatal("can't GET page:", err)
-	}
-	defer resp.Body.Close()
-	_, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatal("error reading body:", err)
+	if getRequest(testUrl, "sulcud", "password") != Success {
+		t.Fatal(testUrl)
 	}
 }
 
 func TestUsernamePasswordWithNoAuthHTTPRequest(t *testing.T) {
-	dialer, err := proxy.SOCKS5(networkType, proxyAddress, nil, proxy.Direct)
-	if err != nil {
-		t.Fatal("can't connect to the proxy:", err)
+	if getRequest(testUrl, "", "") != FailedRequest {
+		t.Fatal("Auth bypassed")
 	}
-	httpTransport := &http.Transport{}
-	httpClient := &http.Client{Transport: httpTransport}
-	httpTransport.Dial = dialer.Dial
-	req, err := http.NewRequest("GET", testUrl, nil)
-	if err != nil {
-		t.Fatal("can't create request:", err)
-	}
-	_, err = httpClient.Do(req)
-	if err != nil {
-		return
-	}
-	t.Fatal("Authentication bypassed")
 }
 
 func TestCloseUserPasswordAuthPipe(t *testing.T) {
@@ -174,55 +158,24 @@ func TestCloseUserPasswordAuthPipe(t *testing.T) {
 
 //// Test inbound rules
 func TestInboundRulesSocks5Init(t *testing.T) {
-	var pipeInitializationError error
-	bindPipe, pipeInitializationError = Pipes.NewBindPipe(
+	bindPipe = Pipes.NewBindPipe(
 		networkType,
 		proxyAddress,
 		SOCKS5.NewSocks5(
-			func(username []byte, password []byte) (bool, error) {
-				if bytes.Equal(username, []byte("sulcud")) &&
-					bytes.Equal(password, []byte("password")) {
-					return true, nil
-				}
-				return false, nil
-			},
+			basicAuthFunc,
 			nil,
 			nil,
 		),
 		nil,
-		func(host string) bool {
-			if host == "127.0.0.1" {
-				return false
-			}
-			return true
-		},
+		basicInboundRule,
 	)
-	if pipeInitializationError != nil {
-		t.Fatal(pipeInitializationError)
-	}
 	go bindPipe.Serve()
 }
 
 func TestInvalidInboundHTTPRequest(t *testing.T) {
-	dialer, err := proxy.SOCKS5(networkType, proxyAddress, &proxy.Auth{
-		User:     username,
-		Password: password,
-	}, proxy.Direct)
-	if err != nil {
-		t.Fatal("can't connect to the proxy:", err)
+	if getRequest(testUrl, "sulcud", "password") != FailedRequest {
+		t.Fatal("Bypassed inbound")
 	}
-	httpTransport := &http.Transport{}
-	httpClient := &http.Client{Transport: httpTransport}
-	httpTransport.Dial = dialer.Dial
-	req, err := http.NewRequest("GET", testUrl, nil)
-	if err != nil {
-		t.Fatal("can't create request:", err)
-	}
-	_, err = httpClient.Do(req)
-	if err != nil {
-		return
-	}
-	log.Fatal("Bypassed inbound rules")
 }
 
 func TestCloseInboundRulesPipe(t *testing.T) {
@@ -235,80 +188,29 @@ func TestCloseInboundRulesPipe(t *testing.T) {
 //// Test outbound rules
 
 func TestOutboundRulesSocks5Init(t *testing.T) {
-	var pipeInitializationError error
-	bindPipe, pipeInitializationError = Pipes.NewBindPipe(
+	bindPipe = Pipes.NewBindPipe(
 		networkType,
 		proxyAddress,
 		SOCKS5.NewSocks5(
-			func(username []byte, password []byte) (bool, error) {
-				if bytes.Equal(username, []byte("sulcud")) &&
-					bytes.Equal(password, []byte("password")) {
-					return true, nil
-				}
-				return false, nil
-			},
+			basicAuthFunc,
 			nil,
-			func(host string) bool {
-				if host == "google.com" {
-					return false
-				}
-				return true
-			},
+			basicOutboundRule,
 		),
 		nil,
 		nil,
 	)
-	if pipeInitializationError != nil {
-		t.Fatal(pipeInitializationError)
-	}
 	go bindPipe.Serve()
 }
 
 func TestInvalidOutboundHTTPRequest(t *testing.T) {
-	dialer, err := proxy.SOCKS5(networkType, proxyAddress, &proxy.Auth{
-		User:     username,
-		Password: password,
-	}, proxy.Direct)
-	if err != nil {
-		t.Fatal("can't connect to the proxy:", err)
+	if getRequest("google.com", "sulcud", "password") == Success {
+		t.Fatal("Bypassed outbound")
 	}
-	httpTransport := &http.Transport{}
-	httpClient := &http.Client{Transport: httpTransport}
-	httpTransport.Dial = dialer.Dial
-	req, err := http.NewRequest("GET", "https://google.com", nil)
-	if err != nil {
-		t.Fatal("can't create request:", err)
-	}
-	_, err = httpClient.Do(req)
-	if err != nil {
-		return
-	}
-	log.Fatal("Bypassed outbound rules")
 }
 
 func TestOutboundSuccessHTTPRequest(t *testing.T) {
-	dialer, err := proxy.SOCKS5(networkType, proxyAddress, &proxy.Auth{
-		User:     username,
-		Password: password,
-	}, proxy.Direct)
-	if err != nil {
-		t.Fatal("can't connect to the proxy:", err)
-	}
-	httpTransport := &http.Transport{}
-	httpClient := &http.Client{Transport: httpTransport}
-	httpTransport.Dial = dialer.Dial
-	req, err := http.NewRequest("GET", testUrl, nil)
-	if err != nil {
-		t.Fatal("can't create request:", err)
-	}
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		t.Fatal("can't GET page:", err)
-	}
-	defer resp.Body.Close()
-	_, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatal("error reading body:", err)
+	if getRequest(testUrl, "sulcud", "password") != Success {
+		t.Fatal(testUrl)
 	}
 }
 
@@ -324,51 +226,27 @@ func TestCloseOutboundRulesPipe(t *testing.T) {
 //// Test No auth
 
 func TestNoAuthMasterSlaveInitialization(t *testing.T) {
-	var pipeInitializationError error
-	masterPipe, pipeInitializationError = Master.NewMaster(
-		"127.0.0.1",
-		"9051",
-		"9050",
+	masterPipe = Master.NewMaster(
+		"tcp",
+		"127.0.0.1:9051",
+		"127.0.0.1:9050",
 		nil,
 		nil,
 		SOCKS5.NewSocks5(nil, nil, nil),
 	)
-	if pipeInitializationError != nil {
-		t.Fatal(pipeInitializationError)
-	}
 	go masterPipe.Serve()
-	slavePipe, pipeInitializationError = Slave.NewSlave(
+	slavePipe = Slave.NewSlave(
 		"tcp",
 		"127.0.0.1:9051",
 		"127.0.0.1:9050",
 		nil,
 	)
-	if pipeInitializationError != nil {
-		t.Fatal(pipeInitializationError)
-	}
 	go slavePipe.Serve()
 }
 
 func TestNoAuthMasterSlaveHTTPRequest(t *testing.T) {
-	dialer, err := proxy.SOCKS5(networkType, proxyAddress, nil, proxy.Direct)
-	if err != nil {
-		t.Fatal("can't connect to the proxy:", err)
-	}
-	httpTransport := &http.Transport{}
-	httpClient := &http.Client{Transport: httpTransport}
-	httpTransport.Dial = dialer.Dial
-	req, err := http.NewRequest("GET", testUrl, nil)
-	if err != nil {
-		t.Fatal("can't create request:", err)
-	}
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		t.Fatal("can't GET page:", err)
-	}
-	defer resp.Body.Close()
-	_, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatal("error reading body:", err)
+	if getRequest(testUrl, "", "") != Success {
+		t.Fatal(testUrl)
 	}
 }
 
@@ -389,9 +267,135 @@ func TestCloseNoAuthMasterSlavePipe(t *testing.T) {
 
 //// Test Auth
 
+func TestUsernamePasswordMasterSlaveInitialization(t *testing.T) {
+	masterPipe = Master.NewMaster(
+		"tcp",
+		"127.0.0.1:9051",
+		"127.0.0.1:9050",
+		nil,
+		nil,
+		SOCKS5.NewSocks5(basicAuthFunc, nil, nil),
+	)
+	go masterPipe.Serve()
+	slavePipe = Slave.NewSlave(
+		"tcp",
+		"127.0.0.1:9051",
+		"127.0.0.1:9050",
+		nil,
+	)
+	go slavePipe.Serve()
+}
+
+func TestUsernamePasswordMasterSlaveHTTPRequest(t *testing.T) {
+	if getRequest(testUrl, "sulcud", "password") != Success {
+		t.Fatal(testUrl)
+	}
+}
+
+func TestCloseUsernamePasswordAuthMasterSlavePipe(t *testing.T) {
+	closingError := masterPipe.ProxyListener.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+	closingError = masterPipe.MasterConnection.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+	closingError = slavePipe.MasterConnection.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+}
+
 //// Test inbound rules
 
+func TestInboundMasterSlaveInitialization(t *testing.T) {
+	masterPipe = Master.NewMaster(
+		"tcp",
+		"127.0.0.1:9051",
+		"127.0.0.1:9050",
+		nil,
+		basicInboundRule,
+		SOCKS5.NewSocks5(basicAuthFunc, nil, nil),
+	)
+	go masterPipe.Serve()
+	slavePipe = Slave.NewSlave(
+		"tcp",
+		"127.0.0.1:9051",
+		"127.0.0.1:9050",
+		nil,
+	)
+	go slavePipe.Serve()
+}
+
+func TestInboundMasterSlaveHTTPRequest(t *testing.T) {
+	if getRequest(testUrl, "sulcud", "password") != FailedRequest {
+		t.Fatal("Bypassed inbound rule")
+	}
+}
+
+func TestCloseInboundMasterSlavePipe(t *testing.T) {
+	closingError := masterPipe.ProxyListener.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+	closingError = masterPipe.MasterConnection.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+	closingError = slavePipe.MasterConnection.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+}
+
 //// Test outbound rules
+
+func TestOutboundMasterSlaveInitialization(t *testing.T) {
+	masterPipe = Master.NewMaster(
+		"tcp",
+		"127.0.0.1:9051",
+		"127.0.0.1:9050",
+		nil,
+		nil,
+		SOCKS5.NewSocks5(basicAuthFunc, nil, basicOutboundRule),
+	)
+	go masterPipe.Serve()
+	slavePipe = Slave.NewSlave(
+		"tcp",
+		"127.0.0.1:9051",
+		"127.0.0.1:9050",
+		nil,
+	)
+	go slavePipe.Serve()
+}
+
+func TestInvalidOutboundMasterSlaveHTTPRequest(t *testing.T) {
+	if getRequest("https://google.com", "sulcud", "password") != FailedRequest {
+		t.Fatal("Bypassed outbound rule")
+	}
+}
+
+func TestOutboundMasterSlaveHTTPRequest(t *testing.T) {
+	if getRequest(testUrl, "sulcud", "password") != Success {
+		t.Fatal(testUrl)
+	}
+}
+
+func TestCloseOutboundMasterSlavePipe(t *testing.T) {
+	closingError := masterPipe.ProxyListener.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+	closingError = masterPipe.MasterConnection.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+	closingError = slavePipe.MasterConnection.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+}
 
 // Finally, close the HTTP server
 

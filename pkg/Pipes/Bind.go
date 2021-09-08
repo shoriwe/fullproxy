@@ -49,9 +49,10 @@ func (bind *Bind) Serve() error {
 	if listenError != nil {
 		return listenError
 	}
-	bind.ProxyProtocol.SetDial(net.Dial)
-	Tools.LogData(bind.LoggingMethod, "Successfully listening at: "+bind.BindAddress)
 	bind.Server = listener
+	defer bind.Server.Close()
+	Tools.LogData(bind.LoggingMethod, "Successfully listening at: "+bind.BindAddress)
+	bind.ProxyProtocol.SetDial(net.Dial)
 	for {
 		clientConnection, connectionError := bind.Server.Accept()
 		if connectionError != nil {

@@ -37,7 +37,7 @@ func (master *Master) SetLoggingMethod(loggingMethod Types.LoggingMethod) error 
 
 func (master *Master) serve(client net.Conn) error {
 	Tools.LogData(master.LoggingMethod, "Received connection from: ", client.RemoteAddr().String())
-	if !Tools.FilterInbound(master.InboundFilter, net.ParseIP(client.RemoteAddr().String()).String()) {
+	if !Tools.FilterInbound(master.InboundFilter, Tools.ParseIP(client.RemoteAddr().String()).String()) {
 		return errors.New("Connection denied!")
 	}
 	defer client.Close()
