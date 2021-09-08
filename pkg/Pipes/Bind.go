@@ -59,6 +59,7 @@ func NewBindPipe(networkType, bindAddress string, protocol Types.ProxyProtocol, 
 	if listenError != nil {
 		return nil, listenError
 	}
+	protocol.SetDial(net.Dial)
 	Tools.LogData(method, "Successfully listening at: "+bindAddress)
 	return &Bind{
 		Server:        listener,

@@ -10,6 +10,7 @@ type Socks5 struct {
 	AuthenticationMethod Types.AuthenticationMethod
 	LoggingMethod        Types.LoggingMethod
 	OutboundFilter       Types.IOFilter
+	Dial                 Types.DialFunc
 }
 
 func (socks5 *Socks5) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
@@ -25,6 +26,10 @@ func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod Types.Authent
 func (socks5 *Socks5) SetOutboundFilter(filter Types.IOFilter) error {
 	socks5.OutboundFilter = filter
 	return nil
+}
+
+func (socks5 *Socks5) SetDial(dialFunc Types.DialFunc) {
+	socks5.Dial = dialFunc
 }
 
 func (socks5 *Socks5) Handle(clientConnection net.Conn) error {

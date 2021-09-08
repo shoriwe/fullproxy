@@ -6,6 +6,7 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/Proxies/SOCKS5"
 	"golang.org/x/net/proxy"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"testing"
@@ -24,15 +25,15 @@ var (
 	bindPipe     *Pipes.Bind
 )
 
-func TestInitHTTPServer(t *testing.T) {
+func init() {
 	var listenError error
 	httpListener, listenError = net.Listen(networkType, "127.0.0.1:8080")
 	if listenError != nil {
-		t.Fatal(listenError)
+		log.Fatal(listenError)
 	}
 	http.HandleFunc("/big.txt",
 		func(writer http.ResponseWriter, request *http.Request) {
-			_, _ = writer.Write(bytes.Repeat([]byte{'A'}, 0xFFFFFFF))
+			_, _ = writer.Write(bytes.Repeat([]byte{'A'}, 0xFFFF))
 		},
 	)
 
@@ -46,8 +47,8 @@ func TestNoAuthInitialization(t *testing.T) {
 	bindPipe, pipeInitializationError = Pipes.NewBindPipe(
 		networkType,
 		proxyAddress,
-		SOCKS5.NewSocks5(nil, t.Log, nil),
-		t.Log,
+		SOCKS5.NewSocks5(nil, log.Print, nil),
+		log.Print,
 		nil,
 	)
 	if pipeInitializationError != nil {
@@ -103,10 +104,10 @@ func TestUserPasswordAuthSocks5Init(t *testing.T) {
 				}
 				return false, nil
 			},
-			t.Log,
+			log.Print,
 			nil,
 		),
-		t.Log,
+		log.Print,
 		nil,
 	)
 	if pipeInitializationError != nil {
@@ -168,8 +169,151 @@ func TestCloseUserPasswordAuthPipe(t *testing.T) {
 }
 
 //// Test inbound rules
+func TestInboundRulesSocks5Init(t *testing.T) {
+	var pipeInitializationError error
+	bindPipe, pipeInitializationError = Pipes.NewBindPipe(
+		networkType,
+		proxyAddress,
+		SOCKS5.NewSocks5(
+			func(username []byte, password []byte) (bool, error) {
+				if bytes.Equal(username, []byte("sulcud")) &&
+					bytes.Equal(password, []byte("password")) {
+					return true, nil
+				}
+				return false, nil
+			},
+			log.Print,
+			nil,
+		),
+		log.Print,
+		func(host string) bool {
+			if host == "127.0.0.1" {
+				return false
+			}
+			return true
+		},
+	)
+	if pipeInitializationError != nil {
+		t.Fatal(pipeInitializationError)
+	}
+	go bindPipe.Serve()
+}
+
+func TestInvalidInboundHTTPRequest(t *testing.T) {
+	dialer, err := proxy.SOCKS5(networkType, proxyAddress, &proxy.Auth{
+		User:     username,
+		Password: password,
+	}, proxy.Direct)
+	if err != nil {
+		t.Fatal("can't connect to the proxy:", err)
+	}
+	httpTransport := &http.Transport{}
+	httpClient := &http.Client{Transport: httpTransport}
+	httpTransport.Dial = dialer.Dial
+	req, err := http.NewRequest("GET", testUrl, nil)
+	if err != nil {
+		t.Fatal("can't create request:", err)
+	}
+	_, err = httpClient.Do(req)
+	if err != nil {
+		return
+	}
+	log.Fatal("Bypassed inbound rules")
+}
+
+func TestCloseInboundRulesPipe(t *testing.T) {
+	closingError := bindPipe.Server.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+}
 
 //// Test outbound rules
+
+func TestOutboundRulesSocks5Init(t *testing.T) {
+	var pipeInitializationError error
+	bindPipe, pipeInitializationError = Pipes.NewBindPipe(
+		networkType,
+		proxyAddress,
+		SOCKS5.NewSocks5(
+			func(username []byte, password []byte) (bool, error) {
+				if bytes.Equal(username, []byte("sulcud")) &&
+					bytes.Equal(password, []byte("password")) {
+					return true, nil
+				}
+				return false, nil
+			},
+			log.Print,
+			func(host string) bool {
+				if host == "google.com" {
+					return false
+				}
+				return true
+			},
+		),
+		log.Print,
+		nil,
+	)
+	if pipeInitializationError != nil {
+		t.Fatal(pipeInitializationError)
+	}
+	go bindPipe.Serve()
+}
+
+func TestInvalidOutboundHTTPRequest(t *testing.T) {
+	dialer, err := proxy.SOCKS5(networkType, proxyAddress, &proxy.Auth{
+		User:     username,
+		Password: password,
+	}, proxy.Direct)
+	if err != nil {
+		t.Fatal("can't connect to the proxy:", err)
+	}
+	httpTransport := &http.Transport{}
+	httpClient := &http.Client{Transport: httpTransport}
+	httpTransport.Dial = dialer.Dial
+	req, err := http.NewRequest("GET", "https://google.com", nil)
+	if err != nil {
+		t.Fatal("can't create request:", err)
+	}
+	_, err = httpClient.Do(req)
+	if err != nil {
+		return
+	}
+	log.Fatal("Bypassed outbound rules")
+}
+
+func TestOutboundSuccessHTTPRequest(t *testing.T) {
+	dialer, err := proxy.SOCKS5(networkType, proxyAddress, &proxy.Auth{
+		User:     username,
+		Password: password,
+	}, proxy.Direct)
+	if err != nil {
+		t.Fatal("can't connect to the proxy:", err)
+	}
+	httpTransport := &http.Transport{}
+	httpClient := &http.Client{Transport: httpTransport}
+	httpTransport.Dial = dialer.Dial
+	req, err := http.NewRequest("GET", testUrl, nil)
+	if err != nil {
+		t.Fatal("can't create request:", err)
+	}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		t.Fatal("can't GET page:", err)
+	}
+	defer resp.Body.Close()
+	_, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal("error reading body:", err)
+	}
+}
+
+func TestCloseOutboundRulesPipe(t *testing.T) {
+	closingError := bindPipe.Server.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+}
 
 // Test Master Slave
 
@@ -183,6 +327,6 @@ func TestCloseUserPasswordAuthPipe(t *testing.T) {
 
 // Finally, close the HTTP server
 
-func TestFinishHTTPServer(t *testing.T) {
+func TestClose(t *testing.T) {
 	_ = httpListener.Close()
 }

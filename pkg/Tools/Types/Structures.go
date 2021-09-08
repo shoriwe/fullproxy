@@ -9,6 +9,7 @@ type ProxyProtocol interface {
 	SetAuthenticationMethod(AuthenticationMethod) error
 	Handle(net.Conn) error
 	SetOutboundFilter(IOFilter) error
+	SetDial(dialFunc DialFunc)
 }
 
 type Pipe interface {

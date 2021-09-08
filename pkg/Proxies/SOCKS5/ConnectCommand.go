@@ -69,7 +69,7 @@ func (socks5 *Socks5) Connect(clientConnection net.Conn) error {
 	// Try to connect to the target
 
 	var targetConnection net.Conn
-	targetConnection, connectionError = net.Dial("tcp", target)
+	targetConnection, connectionError = socks5.Dial("tcp", target)
 	if connectionError != nil {
 		// Respond the error to the client
 		return connectionError
