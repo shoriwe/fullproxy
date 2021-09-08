@@ -3,6 +3,8 @@ package test
 import (
 	"bytes"
 	"github.com/shoriwe/FullProxy/pkg/Pipes"
+	"github.com/shoriwe/FullProxy/pkg/Pipes/Reverse/Master"
+	"github.com/shoriwe/FullProxy/pkg/Pipes/Reverse/Slave"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/SOCKS5"
 	"golang.org/x/net/proxy"
 	"io/ioutil"
@@ -23,6 +25,8 @@ const (
 var (
 	httpListener net.Listener
 	bindPipe     *Pipes.Bind
+	masterPipe   *Master.Master
+	slavePipe    *Slave.Slave
 )
 
 func init() {
@@ -318,6 +322,74 @@ func TestCloseOutboundRulesPipe(t *testing.T) {
 // Test Master Slave
 
 //// Test No auth
+
+func TestNoAuthMasterSlaveInitialization(t *testing.T) {
+	var pipeInitializationError error
+	masterPipe, pipeInitializationError = Master.NewMaster(
+		"127.0.0.1",
+		"9051",
+		"9050",
+		log.Print,
+		nil,
+		SOCKS5.NewSocks5(nil, log.Print, nil),
+	)
+	if pipeInitializationError != nil {
+		t.Fatal(pipeInitializationError)
+	}
+	go masterPipe.Serve()
+	slavePipe, pipeInitializationError = Slave.NewSlave(
+		"tcp",
+		"127.0.0.1:9051",
+		"127.0.0.1:9050",
+		log.Print,
+	)
+	if pipeInitializationError != nil {
+		t.Fatal(pipeInitializationError)
+	}
+	go slavePipe.Serve()
+}
+
+func TestNoAuthMasterSlaveHTTPRequest(t *testing.T) {
+	dialer, err := proxy.SOCKS5(networkType, proxyAddress, nil, proxy.Direct)
+	if err != nil {
+		t.Fatal("can't connect to the proxy:", err)
+	}
+	httpTransport := &http.Transport{}
+	httpClient := &http.Client{Transport: httpTransport}
+	httpTransport.Dial = dialer.Dial
+	req, err := http.NewRequest("GET", testUrl, nil)
+	if err != nil {
+		t.Fatal("can't create request:", err)
+	}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		t.Fatal("can't GET page:", err)
+	}
+	defer resp.Body.Close()
+	_, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal("error reading body:", err)
+	}
+}
+
+func TestCloseNoAuthMasterSlavePipe(t *testing.T) {
+	closingError := masterPipe.ProxyListener.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+	closingError = masterPipe.C2Listener.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+	closingError = masterPipe.MasterConnection.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+	closingError = slavePipe.MasterConnection.Close()
+	if closingError != nil {
+		t.Fatal(closingError)
+	}
+}
 
 //// Test Auth
 
