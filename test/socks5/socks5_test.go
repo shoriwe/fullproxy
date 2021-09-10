@@ -1,4 +1,4 @@
-package test
+package socks5
 
 import (
 	"bytes"
@@ -238,7 +238,6 @@ func TestNoAuthMasterSlaveInitialization(t *testing.T) {
 	slavePipe = Slave.NewSlave(
 		"tcp",
 		"127.0.0.1:9051",
-		"127.0.0.1:9050",
 		nil,
 	)
 	go slavePipe.Serve()
@@ -280,7 +279,6 @@ func TestUsernamePasswordMasterSlaveInitialization(t *testing.T) {
 	slavePipe = Slave.NewSlave(
 		"tcp",
 		"127.0.0.1:9051",
-		"127.0.0.1:9050",
 		nil,
 	)
 	go slavePipe.Serve()
@@ -322,7 +320,6 @@ func TestInboundMasterSlaveInitialization(t *testing.T) {
 	slavePipe = Slave.NewSlave(
 		"tcp",
 		"127.0.0.1:9051",
-		"127.0.0.1:9050",
 		nil,
 	)
 	go slavePipe.Serve()
@@ -364,7 +361,6 @@ func TestOutboundMasterSlaveInitialization(t *testing.T) {
 	slavePipe = Slave.NewSlave(
 		"tcp",
 		"127.0.0.1:9051",
-		"127.0.0.1:9050",
 		nil,
 	)
 	go slavePipe.Serve()

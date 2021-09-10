@@ -39,7 +39,7 @@ func (bind *Bind) serve(clientConnection net.Conn) {
 	Tools.LogData(bind.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
 	handleError := bind.ProxyProtocol.Handle(clientConnection)
 	if handleError != nil {
-		Tools.LogData(bind.LoggingMethod, handleError.Error)
+		Tools.LogData(bind.LoggingMethod, handleError.Error())
 	}
 	return
 }

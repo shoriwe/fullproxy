@@ -9,6 +9,7 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/Pipes"
 	"github.com/shoriwe/FullProxy/pkg/Pipes/Reverse/Master"
 	"github.com/shoriwe/FullProxy/pkg/Pipes/Reverse/Slave"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/PortForward"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/SOCKS5"
 	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"io"
@@ -123,7 +124,7 @@ func configAuthMethod(command, usersFile string) Types.AuthenticationMethod {
 
 func configSocks5() (Types.IOFilter, Types.ProxyProtocol, error) {
 	if len(os.Args) < 5 {
-		return nil, SOCKS5.NewSocks5(nil, log.Print, nil), nil
+		return nil, SOCKS5.NewSocks5(nil, log.Println, nil), nil
 	}
 	flagSet := flag.NewFlagSet("socks5", flag.ExitOnError)
 	authCommand := flagSet.String("auth-cmd", "", "shell command to pass the hex encoded username and password, exit code 0 means login success")
@@ -140,13 +141,36 @@ func configSocks5() (Types.IOFilter, Types.ProxyProtocol, error) {
 		panic(parsingError)
 	}
 
-	return configInboundFilter(*inboundWhiteList, *inboundBlackList), SOCKS5.NewSocks5(configAuthMethod(*authCommand, *usersFiles), log.Print, configOutboundFilter(*outboundWhiteList, *outboundBlackList)), nil
+	return configInboundFilter(*inboundWhiteList, *inboundBlackList), SOCKS5.NewSocks5(configAuthMethod(*authCommand, *usersFiles), log.Println, configOutboundFilter(*outboundWhiteList, *outboundBlackList)), nil
+}
+
+func configPortForward() (Types.IOFilter, Types.ProxyProtocol, error) {
+	if len(os.Args) < 5 {
+		return nil, SOCKS5.NewSocks5(nil, log.Println, nil), nil
+	}
+	flagSet := flag.NewFlagSet("port-forward", flag.ExitOnError)
+
+	networkType := flagSet.String("network-type", "tcp", "tcp or udp")
+	targetAddress := flagSet.String("target-address", "127.0.0.1:80", "Address to connect")
+
+	inboundBlackList := flagSet.String("inbound-blacklist", "", "plain text file list with all the HOST that are forbidden to connect to the proxy")
+	inboundWhiteList := flagSet.String("inbound-whitelist", "", "plain text file list with all the HOST that are permitted to connect to the proxy")
+
+	parsingError := flagSet.Parse(os.Args[5:])
+
+	if parsingError != nil {
+		panic(parsingError)
+	}
+
+	return configInboundFilter(*inboundWhiteList, *inboundBlackList), PortForward.NewForward(*networkType, *targetAddress, log.Println), nil
 }
 
 func configProtocol(protocol string) (Types.IOFilter, Types.ProxyProtocol, error) {
 	switch protocol {
 	case "socks5":
 		return configSocks5()
+	case "port-forward":
+		return configPortForward()
 	}
 	return nil, nil, errors.New("Unknown protocol: " + protocol)
 }
@@ -181,11 +205,11 @@ func main() {
 	)
 	switch mode {
 	case "bind":
-		pipe = Pipes.NewBindPipe(networkType, address, proxyProtocol, log.Print, inboundFilter)
+		pipe = Pipes.NewBindPipe(networkType, address, proxyProtocol, log.Println, inboundFilter)
 	case "master":
-		pipe = Master.NewMaster(networkType, c2Address, address, log.Print, inboundFilter, proxyProtocol)
+		pipe = Master.NewMaster(networkType, c2Address, address, log.Println, inboundFilter, proxyProtocol)
 	case "slave":
-		pipe = Slave.NewSlave(networkType, c2Address, address, log.Print)
+		pipe = Slave.NewSlave(networkType, c2Address, log.Println)
 	default:
 		panic("Unknown mode")
 	}

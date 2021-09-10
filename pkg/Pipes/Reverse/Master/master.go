@@ -35,24 +35,18 @@ func (master *Master) SetLoggingMethod(loggingMethod Types.LoggingMethod) error 
 	return nil
 }
 
-func (master *Master) serve(client net.Conn) error {
-	Tools.LogData(master.LoggingMethod, "Received connection from: ", client.RemoteAddr().String())
-	if !Tools.FilterInbound(master.InboundFilter, Tools.ParseIP(client.RemoteAddr().String()).String()) {
-		return errors.New("Connection denied!")
-	}
-	defer client.Close()
-	return master.Protocol.Handle(client)
-}
-
 func (master *Master) protocolDialFunc() Types.DialFunc {
 	return func(network, address string) (net.Conn, error) {
-		_, connectionError := master.MasterConnection.Write([]byte{Reverse.RequestNewMasterConnection})
+		numberOfBytesWritten, connectionError := master.MasterConnection.Write([]byte{Reverse.RequestNewMasterConnection})
 		if connectionError != nil {
 			master.finish = true
 			return nil, connectionError
+		} else if numberOfBytesWritten != 1 {
+			master.finish = true
+			return nil, errors.New("protocol error")
 		}
-		var c2Connection net.Conn
-		c2Connection, connectionError = master.C2Listener.Accept()
+		var targetConnection net.Conn
+		targetConnection, connectionError = master.C2Listener.Accept()
 		if connectionError != nil {
 			return nil, connectionError
 		}
@@ -60,37 +54,46 @@ func (master *Master) protocolDialFunc() Types.DialFunc {
 		var request []byte
 		networkLength := len(network)
 		addressLength := len(address)
-		payloadLength := 2 + networkLength + 1 + addressLength
+		payloadLength := 3 + networkLength + addressLength
 		request = append(request, Reverse.Dial)
 		request = append(request, byte(networkLength))
 		request = append(request, []byte(network)...)
 		request = append(request, byte(addressLength))
 		request = append(request, []byte(address)...)
 		var bytesWritten int
-		bytesWritten, connectionError = c2Connection.Write(request)
+		bytesWritten, connectionError = targetConnection.Write(request)
 		if connectionError != nil {
-			_ = c2Connection.Close()
+			_ = targetConnection.Close()
 			return nil, connectionError
 		} else if bytesWritten != payloadLength {
-			_ = c2Connection.Close()
+			_ = targetConnection.Close()
 			return nil, errors.New("new connection request error")
 		}
 		response := make([]byte, 1)
 		var bytesReceived int
-		bytesReceived, connectionError = c2Connection.Read(response)
+		bytesReceived, connectionError = targetConnection.Read(response)
 		if connectionError != nil {
-			_ = c2Connection.Close()
+			_ = targetConnection.Close()
 			return nil, connectionError
 		} else if bytesReceived != 1 {
-			_ = c2Connection.Close()
+			_ = targetConnection.Close()
 			return nil, errors.New("new connection request error")
 		}
 		switch response[0] {
 		case Reverse.NewConnectionSucceeded:
-			return c2Connection, nil
+			return targetConnection, nil
 		}
 		return nil, errors.New("new connection request error")
 	}
+}
+
+func (master *Master) serve(client net.Conn) error {
+	defer client.Close()
+	Tools.LogData(master.LoggingMethod, "Received connection from: ", client.RemoteAddr().String())
+	if !Tools.FilterInbound(master.InboundFilter, Tools.ParseIP(client.RemoteAddr().String()).String()) {
+		return errors.New("Connection denied!")
+	}
+	return master.Protocol.Handle(client)
 }
 
 func (master *Master) Serve() error {

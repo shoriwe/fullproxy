@@ -2,27 +2,27 @@ package Slave
 
 import (
 	"errors"
+	"github.com/shoriwe/FullProxy/pkg/Pipes"
 	"github.com/shoriwe/FullProxy/pkg/Pipes/Reverse"
 	"github.com/shoriwe/FullProxy/pkg/Tools"
 	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
-	"io"
 	"net"
+	"time"
 )
 
 type Slave struct {
-	MasterConnection   net.Conn
-	NetworkType        string
-	MasterC2Address    string
-	MasterProxyAddress string
-	LoggingMethod      Types.LoggingMethod
+	MasterConnection net.Conn
+	NetworkType      string
+	MasterC2Address  string
+	LoggingMethod    Types.LoggingMethod
 }
 
 func (slave *Slave) SetInboundFilter(_ Types.IOFilter) error {
 	panic("inbound rules not supported")
 }
 
-func NewSlave(networkType string, masterC2Address string, masterProxyAddress string, loggingMethod Types.LoggingMethod) *Slave {
-	return &Slave{NetworkType: networkType, MasterC2Address: masterC2Address, MasterProxyAddress: masterProxyAddress, LoggingMethod: loggingMethod}
+func NewSlave(networkType string, masterC2Address string, loggingMethod Types.LoggingMethod) *Slave {
+	return &Slave{NetworkType: networkType, MasterC2Address: masterC2Address, LoggingMethod: loggingMethod}
 }
 
 func (slave *Slave) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
@@ -34,46 +34,55 @@ func (slave *Slave) dial(clientConnection net.Conn) error {
 	networkTypeLength := make([]byte, 1)
 	bytesReceived, connectionError := clientConnection.Read(networkTypeLength)
 	if connectionError != nil {
+		_, _ = clientConnection.Write([]byte{Reverse.NewConnectionFailed})
 		return connectionError
 	} else if bytesReceived != 1 {
+		_, _ = clientConnection.Write([]byte{Reverse.NewConnectionFailed})
 		return errors.New("expecting 1 byte from master")
 	}
 	rawNetworkType := make([]byte, int(networkTypeLength[0]))
 	bytesReceived, connectionError = clientConnection.Read(rawNetworkType)
 	if connectionError != nil {
+		_, _ = clientConnection.Write([]byte{Reverse.NewConnectionFailed})
 		return connectionError
 	} else if bytesReceived != int(networkTypeLength[0]) {
+		_, _ = clientConnection.Write([]byte{Reverse.NewConnectionFailed})
 		return errors.New("expecting more bytes from master")
 	}
 	addressLength := make([]byte, 1)
 	bytesReceived, connectionError = clientConnection.Read(addressLength)
 	if connectionError != nil {
+		_, _ = clientConnection.Write([]byte{Reverse.NewConnectionFailed})
 		return connectionError
 	} else if bytesReceived != 1 {
+		_, _ = clientConnection.Write([]byte{Reverse.NewConnectionFailed})
 		return errors.New("expecting 1 byte from master")
 	}
 	rawAddress := make([]byte, int(addressLength[0]))
 	bytesReceived, connectionError = clientConnection.Read(rawAddress)
 	if connectionError != nil {
+		_, _ = clientConnection.Write([]byte{Reverse.NewConnectionFailed})
 		return connectionError
 	} else if bytesReceived != int(addressLength[0]) {
+		_, _ = clientConnection.Write([]byte{Reverse.NewConnectionFailed})
 		return errors.New("expecting more bytes from master")
 	}
 	networkType := string(rawNetworkType)
 	address := string(rawAddress)
 	Tools.LogData(slave.LoggingMethod, "Connecting to: ", address)
 	var targetConnection net.Conn
-	targetConnection, connectionError = net.Dial(networkType, address)
+	targetConnection, connectionError = net.DialTimeout(networkType, address, 5*time.Second)
 	if connectionError != nil {
+		_, _ = clientConnection.Write([]byte{Reverse.NewConnectionFailed})
 		return connectionError
 	}
+	defer targetConnection.Close()
 	_, connectionError = clientConnection.Write([]byte{Reverse.NewConnectionSucceeded})
 	if connectionError != nil {
+		_, _ = clientConnection.Write([]byte{Reverse.NewConnectionFailed})
 		return connectionError
 	}
-	go io.Copy(targetConnection, clientConnection)
-	_, connectionError = io.Copy(clientConnection, targetConnection)
-	return connectionError
+	return Pipes.ForwardTraffic(clientConnection, targetConnection)
 }
 
 func (slave *Slave) bind(clientConnection net.Conn) error {
@@ -91,15 +100,9 @@ func (slave *Slave) command(command byte, clientConnection net.Conn) error {
 	return errors.New("unknown command")
 }
 
-func (slave *Slave) serve(request []byte) error {
+func (slave *Slave) serve() error {
 	Tools.LogData(slave.LoggingMethod, "Received client connection from master")
-	switch request[0] {
-	case Reverse.RequestNewMasterConnection:
-		break
-	default:
-		return nil
-	}
-	clientConnection, connectionError := net.Dial(slave.NetworkType, slave.MasterC2Address)
+	clientConnection, connectionError := net.DialTimeout(slave.NetworkType, slave.MasterC2Address, 5*time.Second)
 	if connectionError != nil {
 		return connectionError
 	}
@@ -125,13 +128,12 @@ func (slave *Slave) Serve() error {
 	slave.MasterConnection = masterConnection
 	var bytesReceived int
 	for {
-		request := make([]byte, 1)
-		bytesReceived, connectionError = slave.MasterConnection.Read(request)
+		bytesReceived, connectionError = slave.MasterConnection.Read(make([]byte, 10))
 		if connectionError != nil {
 			return connectionError
-		} else if bytesReceived != 1 {
-			continue
 		}
-		go slave.serve(request)
+		for index := 0; index < bytesReceived; index++ {
+			go slave.serve()
+		}
 	}
 }
