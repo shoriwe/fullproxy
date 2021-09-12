@@ -71,12 +71,11 @@ func (slave *Slave) dial(clientConnection net.Conn) error {
 	address := string(rawAddress)
 	Tools.LogData(slave.LoggingMethod, "Connecting to: ", address)
 	var targetConnection net.Conn
-	targetConnection, connectionError = net.DialTimeout(networkType, address, 5*time.Second)
+	targetConnection, connectionError = net.DialTimeout(networkType, address, time.Minute)
 	if connectionError != nil {
 		_, _ = clientConnection.Write([]byte{Reverse.NewConnectionFailed})
 		return connectionError
 	}
-	defer targetConnection.Close()
 	_, connectionError = clientConnection.Write([]byte{Reverse.NewConnectionSucceeded})
 	if connectionError != nil {
 		_, _ = clientConnection.Write([]byte{Reverse.NewConnectionFailed})
@@ -102,11 +101,10 @@ func (slave *Slave) command(command byte, clientConnection net.Conn) error {
 
 func (slave *Slave) serve() error {
 	Tools.LogData(slave.LoggingMethod, "Received client connection from master")
-	clientConnection, connectionError := net.DialTimeout(slave.NetworkType, slave.MasterC2Address, 5*time.Second)
+	clientConnection, connectionError := net.DialTimeout(slave.NetworkType, slave.MasterC2Address, time.Minute)
 	if connectionError != nil {
 		return connectionError
 	}
-	defer clientConnection.Close()
 	command := make([]byte, 1)
 	var bytesReceived int
 	bytesReceived, connectionError = clientConnection.Read(command)

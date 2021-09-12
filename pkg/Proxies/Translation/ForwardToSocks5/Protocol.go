@@ -47,9 +47,8 @@ func (forwardToSocks5 *ForwardToSocks5) SetTimeout(timeout time.Duration) error 
 	return nil
 }
 
-func (forwardToSocks5 *ForwardToSocks5) Handle(
-	clientConnection net.Conn) error {
-	if !Tools.FilterInbound(forwardToSocks5.InboundFilter, Tools.ParseIP(clientConnection.RemoteAddr().String())) {
+func (forwardToSocks5 *ForwardToSocks5) Handle(clientConnection net.Conn) error {
+	if !Tools.FilterInbound(forwardToSocks5.InboundFilter, Tools.ParseIP(clientConnection.RemoteAddr().String()).String()) {
 		errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
 		Tools.LogData(forwardToSocks5.LoggingMethod, errorMessage)
 		_ = clientConnection.Close()

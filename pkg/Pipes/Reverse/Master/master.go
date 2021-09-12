@@ -88,7 +88,6 @@ func (master *Master) protocolDialFunc() Types.DialFunc {
 }
 
 func (master *Master) serve(client net.Conn) error {
-	defer client.Close()
 	Tools.LogData(master.LoggingMethod, "Received connection from: ", client.RemoteAddr().String())
 	if !Tools.FilterInbound(master.InboundFilter, Tools.ParseIP(client.RemoteAddr().String()).String()) {
 		return errors.New("Connection denied!")

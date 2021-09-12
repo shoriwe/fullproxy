@@ -56,7 +56,7 @@ path/to/fullproxy MODE NETWORK_TYPE ADDRESS PROTOCOL [OPTIONS]
 	- MODE:         bind|master|slave
 	- NETWORK_TYPE: tcp|udp
 	- ADDRESS:      IPv4|IPv6 or Domain followed by ":" and the PORT; For Example -> "127.0.0.1:80"
-	- PROTOCOL:     socks5|http|r-forward|l-forward|translate-socks5
+	- PROTOCOL:     socks5|http|port-forward|translate-socks5
 Environment Variables:
 	- C2Address     Host and port of the C2 port of the master server
 ```

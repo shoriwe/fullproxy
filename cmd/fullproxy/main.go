@@ -9,6 +9,7 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/Pipes"
 	"github.com/shoriwe/FullProxy/pkg/Pipes/Reverse/Master"
 	"github.com/shoriwe/FullProxy/pkg/Pipes/Reverse/Slave"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/HTTP"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/PortForward"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/SOCKS5"
 	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
@@ -165,12 +166,40 @@ func configPortForward() (Types.IOFilter, Types.ProxyProtocol, error) {
 	return configInboundFilter(*inboundWhiteList, *inboundBlackList), PortForward.NewForward(*networkType, *targetAddress, log.Println), nil
 }
 
+func configHTTP() (Types.IOFilter, Types.ProxyProtocol, error) {
+	if len(os.Args) < 5 {
+		return nil, SOCKS5.NewSocks5(nil, log.Println, nil), nil
+	}
+	flagSet := flag.NewFlagSet("http", flag.ExitOnError)
+	authCommand := flagSet.String("auth-cmd", "", "shell command to pass the hex encoded username and password, exit code 0 means login success")
+	usersFiles := flagSet.String("users-file", "", "json file with username as keys and sha3-513 of the password as values")
+
+	inboundBlackList := flagSet.String("inbound-blacklist", "", "plain text file list with all the HOST that are forbidden to connect to the proxy")
+	inboundWhiteList := flagSet.String("inbound-whitelist", "", "plain text file list with all the HOST that are permitted to connect to the proxy")
+	outboundBlackList := flagSet.String("outbound-blacklist", "", "plain text file list with all the forbidden proxy targets")
+	outboundWhiteList := flagSet.String("outbound-whitelist", "", "plain text file list with all the permitted proxy targets")
+
+	parsingError := flagSet.Parse(os.Args[5:])
+
+	if parsingError != nil {
+		panic(parsingError)
+	}
+
+	return configInboundFilter(*inboundWhiteList, *inboundBlackList), HTTP.NewHTTP(
+		configAuthMethod(*authCommand, *usersFiles),
+		log.Println,
+		configOutboundFilter(*outboundWhiteList, *outboundBlackList),
+	), nil
+}
+
 func configProtocol(protocol string) (Types.IOFilter, Types.ProxyProtocol, error) {
 	switch protocol {
 	case "socks5":
 		return configSocks5()
 	case "port-forward":
 		return configPortForward()
+	case "http":
+		return configHTTP()
 	}
 	return nil, nil, errors.New("Unknown protocol: " + protocol)
 }
@@ -183,7 +212,7 @@ func main() {
 				"\t- MODE:         bind|master|slave\n"+
 				"\t- NETWORK_TYPE: tcp|udp\n"+
 				"\t- ADDRESS:      IPv4|IPv6 or Domain followed by \":\" and the PORT; For Example -> \"127.0.0.1:80\"\n"+
-				"\t- PROTOCOL:     socks5|http|r-forward|l-forward|translate-socks5\n"+
+				"\t- PROTOCOL:     socks5|http|port-forward|translate-socks5\n"+
 				"Environment Variables:\n"+
 				"\t- C2Address     Host and port of the C2 port of the master server\n",
 		)
