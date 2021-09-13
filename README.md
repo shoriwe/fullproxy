@@ -6,13 +6,13 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/shoriwe/FullProxy)](https://goreportcard.com/report/github.com/shoriwe/FullProxy)
 [![Release](https://img.shields.io/github/release/shoriwe/FullProxy.svg?style=flat-square)](https://github.com/shoriwe/FullProxy/releases/latest)
 
-Bind and reverse connection (with encryption) based, SOCKS5, HTTP and PortForward proxy.
+Bind and reverse connection based, SOCKS5, HTTP and PortForward proxy.
 
 # Description
 
 ![FullProxyLogo](https://raw.githubusercontent.com/shoriwe/FullProxy/master/logo/full-proxy-logo.PNG)
 
-`FullProxy` is a `Bind` and `Reverse Connection` (with encryption) based `HTTP`, `SOCKS5` and `PortForward` portable
+`FullProxy` is a `Bind` and `Reverse Connection` based `HTTP`, `SOCKS5` and `PortForward` portable
 proxy
 
 # Index
