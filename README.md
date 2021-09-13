@@ -11,6 +11,7 @@ Bind and reverse connection (with encryption) based, SOCKS5, HTTP and PortForwar
 # Description
 
 ![FullProxyLogo](https://raw.githubusercontent.com/shoriwe/FullProxy/master/logo/full-proxy-logo.PNG)
+
 `FullProxy` is a `Bind` and `Reverse Connection` (with encryption) based `HTTP`, `SOCKS5` and `PortForward` portable
 proxy
 
