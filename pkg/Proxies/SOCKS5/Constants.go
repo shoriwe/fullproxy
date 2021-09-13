@@ -1,29 +1,28 @@
 package SOCKS5
 
+import "errors"
+
 const (
-	BasicNegotiation byte = 1
-	Version          byte = 5
-	NoAuthRequired   byte = 0
-	InvalidMethod    byte = 1
-	UsernamePassword byte = 2
-	// SOCKS commands
-	Connect      byte = 1
-	Bind         byte = 2
-	UDPAssociate byte = 3
-	// SOCKS valid host types
-	IPv4       byte = 1
-	DomainName byte = 3
-	IPv6       byte = 4
-	// SOCKS5 responses
-	ConnectionRefused byte = 5
-	Succeeded         byte = 0
+	BasicNegotiation byte = 0x01
+	SocksV4          byte = 0x04
+	SocksV5          byte = 0x05
+	NoAuthRequired   byte = 0x00
+	UsernamePassword byte = 0x02
+	Connect          byte = 0x01
+	Bind             byte = 0x02
+	UDPAssociate     byte = 0x03
+	IPv4             byte = 0x01
+	DomainName       byte = 0x03
+	IPv6             byte = 0x04
 )
+
+var protocolError = errors.New("Protocol error?!")
 
 var (
 	// SOCKS requests connection responses
-	UsernamePasswordSupported         = []byte{Version, UsernamePassword}
-	NoAuthRequiredSupported           = []byte{Version, NoAuthRequired}
-	NoSupportedMethods                = []byte{Version, 255}
-	UsernamePasswordSucceededResponse = []byte{1, Succeeded}
-	AuthenticationFailed              = []byte{1, 1}
+	UsernamePasswordSupported = []byte{SocksV5, UsernamePassword}
+	NoAuthRequiredSupported   = []byte{SocksV5, NoAuthRequired}
+	NoSupportedMethods        = []byte{SocksV5, 0xFF}
+	AuthenticationSucceded    = []byte{BasicNegotiation, 0x00}
+	AuthenticationFailed      = []byte{SocksV5, 0xFF}
 )

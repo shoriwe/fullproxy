@@ -1,55 +1,16 @@
 package SOCKS5
 
 import (
-	"bufio"
 	"errors"
-	"github.com/shoriwe/FullProxy/pkg/Sockets"
-	"github.com/shoriwe/FullProxy/pkg/Templates"
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
-	"math/big"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"net"
-	"time"
 )
 
 type Socks5 struct {
 	AuthenticationMethod Types.AuthenticationMethod
-	WantedAuthMethod     byte
 	LoggingMethod        Types.LoggingMethod
-	Tries                int
-	Timeout              time.Duration
-	InboundFilter        Types.IOFilter
 	OutboundFilter       Types.IOFilter
-}
-
-func ReceiveTargetRequest(clientConnectionReader *bufio.Reader) (byte, byte, []byte, []byte) {
-	numberOfBytesReceived, targetRequest, ConnectionError := Sockets.Receive(clientConnectionReader, 1024)
-	if ConnectionError != nil {
-		return 0, 0, nil, nil
-	}
-	if targetRequest[0] != Version {
-		return 0, 0, nil, nil
-	}
-	if !(targetRequest[1] == Connect || targetRequest[1] == Bind || targetRequest[1] == UDPAssociate) {
-		return 0, 0, nil, nil
-	}
-	if !(targetRequest[3] == IPv4 || targetRequest[3] == IPv6 || targetRequest[3] == DomainName) {
-		return 0, 0, nil, nil
-	}
-	return targetRequest[1], targetRequest[3], targetRequest[4 : numberOfBytesReceived-2], targetRequest[numberOfBytesReceived-2 : numberOfBytesReceived]
-}
-
-func GetTargetHostPort(targetRequestedCommand *byte, targetHostType *byte, rawTargetHost []byte, rawTargetPort []byte) (byte, string, string) {
-	if *targetRequestedCommand != 0 && *targetHostType != 0 {
-		switch *targetHostType {
-		case IPv4:
-			return *targetRequestedCommand, net.IPv4(rawTargetHost[0], rawTargetHost[1], rawTargetHost[2], rawTargetHost[3]).String(), new(big.Int).SetBytes(rawTargetPort).String()
-		case IPv6:
-			return *targetRequestedCommand, Sockets.GetIPv6(rawTargetHost), new(big.Int).SetBytes(rawTargetPort).String()
-		case DomainName:
-			return *targetRequestedCommand, string(rawTargetHost[1:]), new(big.Int).SetBytes(rawTargetPort).String()
-		}
-	}
-	return ConnectionRefused, "", ""
+	Dial                 Types.DialFunc
 }
 
 func (socks5 *Socks5) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
@@ -62,66 +23,63 @@ func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod Types.Authent
 	return nil
 }
 
-func (socks5 *Socks5) SetTries(tries int) error {
-	socks5.Tries = tries
-	return nil
-}
-
-func (socks5 *Socks5) SetTimeout(timeout time.Duration) error {
-	socks5.Timeout = timeout
-	return nil
-}
-
-func (socks5 *Socks5) SetInboundFilter(filter Types.IOFilter) error {
-	socks5.InboundFilter = filter
-	return nil
-}
-
 func (socks5 *Socks5) SetOutboundFilter(filter Types.IOFilter) error {
 	socks5.OutboundFilter = filter
 	return nil
 }
 
-func (socks5 *Socks5) Handle(
-	clientConnection net.Conn,
-	clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer) error {
-	if !Templates.FilterInbound(socks5.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
-		errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
-		_ = clientConnection.Close()
-		Templates.LogData(socks5.LoggingMethod, errorMessage)
-		return errors.New(errorMessage)
-	}
-	Templates.LogData(socks5.LoggingMethod, "Connection Received from: ", clientConnection.RemoteAddr().String())
-	var targetRequestedCommand byte
+func (socks5 *Socks5) SetDial(dialFunc Types.DialFunc) {
+	socks5.Dial = dialFunc
+}
+
+func (socks5 *Socks5) Handle(clientConnection net.Conn) error {
+	defer clientConnection.Close()
+	// if !Templates.FilterInbound(socks5.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
+	// 	errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
+	// 	_ = clientConnection.Close()
+	// 	Templates.LogData(socks5.LoggingMethod, errorMessage)
+	// 	return errors.New(errorMessage)
+	// }
+	// Templates.LogData(socks5.LoggingMethod, "Connection Received from: ", clientConnection.RemoteAddr().String())
 	// Receive connection
-	authenticationSuccessful := socks5.AuthenticateClient(clientConnection, clientConnectionReader, clientConnectionWriter)
+	authenticationSuccessful, connectionError := socks5.AuthenticateClient(clientConnection)
+	if connectionError != nil {
+		return connectionError
+	}
 	if !authenticationSuccessful {
 		errorMessage := "Authentication Failed with: " + clientConnection.RemoteAddr().String()
 		_ = clientConnection.Close()
-		Templates.LogData(socks5.LoggingMethod, errorMessage)
+		// Templates.LogData(socks5.LoggingMethod, errorMessage)
 		return errors.New(errorMessage)
 	}
-	Templates.LogData(socks5.LoggingMethod, "Login succeeded from: ", clientConnection.RemoteAddr().String())
-	var targetHost string
-	var targetPort string
-	rawTargetRequestedCommand, targetHostType, rawTargetHost, rawTargetPort := ReceiveTargetRequest(
-		clientConnectionReader)
-	targetRequestedCommand, targetHost, targetPort = GetTargetHostPort(
-		&rawTargetRequestedCommand, &targetHostType,
-		rawTargetHost, rawTargetPort)
-	if targetRequestedCommand == ConnectionRefused {
-		errorMessage := "Target connection refused: " + targetHost + ":" + targetPort
-		_ = clientConnection.Close()
-		Templates.LogData(socks5.LoggingMethod, errorMessage)
-		return errors.New(errorMessage)
+
+	version := make([]byte, 1)
+	var numberOfBytesReceived int
+	numberOfBytesReceived, connectionError = clientConnection.Read(version)
+	if connectionError != nil {
+		return connectionError
+	} else if numberOfBytesReceived != 1 {
+		return protocolError
 	}
-	if !Templates.FilterOutbound(socks5.OutboundFilter, Templates.ParseIP(targetHost)) {
-		errorMessage := "Denied connection requested by: " + clientConnection.RemoteAddr().String() + " To: " + targetHost
-		_ = clientConnection.Close()
-		Templates.LogData(socks5.LoggingMethod, errorMessage)
-		return errors.New(errorMessage)
+	command := make([]byte, 1)
+	numberOfBytesReceived, connectionError = clientConnection.Read(command)
+	if connectionError != nil {
+		return connectionError
+	} else if numberOfBytesReceived != 1 {
+		return protocolError
 	}
-	return socks5.ExecuteCommand(clientConnection, clientConnectionReader, clientConnectionWriter,
-		&targetRequestedCommand, &targetHostType, &targetHost, &targetPort)
+	switch command[0] {
+	case Connect:
+		return socks5.Connect(clientConnection)
+	case Bind:
+		return socks5.Bind(clientConnection)
+	case UDPAssociate:
+		return socks5.UDPAssociate(clientConnection)
+	default:
+		return protocolError
+	}
+}
+
+func NewSocks5(authenticationMethod Types.AuthenticationMethod, loggingMethod Types.LoggingMethod, outboundFilter Types.IOFilter) *Socks5 {
+	return &Socks5{AuthenticationMethod: authenticationMethod, LoggingMethod: loggingMethod, OutboundFilter: outboundFilter}
 }

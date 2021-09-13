@@ -1,140 +1,126 @@
 package HTTP
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/base64"
-	"errors"
-	"github.com/shoriwe/FullProxy/pkg/Proxies"
-	"github.com/shoriwe/FullProxy/pkg/Templates"
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"github.com/shoriwe/FullProxy/pkg/Tools"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"gopkg.in/elazarl/goproxy.v1"
 	"net"
 	"net/http"
-	"net/http/httptest"
+	"strconv"
 	"strings"
-	"time"
 )
 
-type CustomResponseWriter struct {
-	httptest.ResponseRecorder
-	http.Hijacker
-	ClientConnection net.Conn
-	ClientReadWriter *bufio.ReadWriter
+type customListener struct {
+	clientConnections chan net.Conn
 }
 
-func (customResponseWriter *CustomResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return customResponseWriter.ClientConnection, customResponseWriter.ClientReadWriter, nil
+func (c customListener) Accept() (net.Conn, error) {
+	return <-c.clientConnections, nil
 }
 
-func CreateCustomResponseWriter(
-	clientConnection net.Conn,
-	clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer) *CustomResponseWriter {
-	slaveResponseWriter := new(CustomResponseWriter)
-	slaveResponseWriter.Body = new(bytes.Buffer)
-	slaveResponseWriter.Code = 200
-	slaveResponseWriter.ClientConnection = clientConnection
-	slaveResponseWriter.ClientReadWriter = bufio.NewReadWriter(
-		clientConnectionReader,
-		clientConnectionWriter)
-	return slaveResponseWriter
+func (c customListener) Close() error {
+	close(c.clientConnections)
+	return nil
+}
+
+func (c customListener) Addr() net.Addr {
+	return nil
+}
+
+func newCustomListener() *customListener {
+	return &customListener{make(chan net.Conn, strconv.IntSize)}
 }
 
 type HTTP struct {
 	AuthenticationMethod Types.AuthenticationMethod
-	ProxyController      *goproxy.ProxyHttpServer
+	proxyHttpServer      *goproxy.ProxyHttpServer
 	LoggingMethod        Types.LoggingMethod
-	InboundFilter        Types.IOFilter
+	listener             *customListener
 	OutboundFilter       Types.IOFilter
 }
 
-func (httpProtocol *HTTP) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
-	httpProtocol.LoggingMethod = loggingMethod
-	return nil
+func (protocol *HTTP) SetDial(dialFunc Types.DialFunc) {
+	protocol.proxyHttpServer.Tr.Dial = dialFunc
+	protocol.proxyHttpServer.ConnectDial = dialFunc
 }
 
-func (httpProtocol *HTTP) SetInboundFilter(filter Types.IOFilter) error {
-	if httpProtocol.ProxyController == nil {
-		return errors.New("No HTTP proxy controller was set")
+func NewHTTP(
+	authenticationMethod Types.AuthenticationMethod,
+	loggingMethod Types.LoggingMethod,
+	outboundFilter Types.IOFilter,
+) *HTTP {
+	proxyHttpServer := goproxy.NewProxyHttpServer()
+	listener := newCustomListener()
+	go http.Serve(listener, proxyHttpServer)
+	result := &HTTP{
+		AuthenticationMethod: authenticationMethod,
+		proxyHttpServer:      proxyHttpServer,
+		LoggingMethod:        loggingMethod,
+		listener:             listener,
+		OutboundFilter:       outboundFilter,
 	}
-	httpProtocol.InboundFilter = filter
-	httpProtocol.ProxyController.OnRequest().DoFunc(func(
-		request *http.Request,
-		proxyCtx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		if !Templates.FilterInbound(httpProtocol.InboundFilter, Templates.ParseIP(request.RemoteAddr)) {
-			Templates.LogData(httpProtocol.LoggingMethod, "Connection denied to: ", request.RemoteAddr)
-			return request, goproxy.NewResponse(request, goproxy.ContentTypeText, http.StatusProxyAuthRequired, "Don't waste your time!")
-		}
-		Templates.LogData(httpProtocol.LoggingMethod, "Connection Received from: ", request.RemoteAddr)
-		return request, nil
-	})
-	return nil
-}
+	proxyHttpServer.OnRequest().HandleConnect(goproxy.AlwaysMitm)
+	proxyHttpServer.OnRequest().DoFunc(
+		func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+			onErrorResponse := goproxy.NewResponse(req,
+				goproxy.ContentTypeText, http.StatusForbidden,
+				"Don't waste your time!")
+			if result.AuthenticationMethod != nil {
 
-func (httpProtocol *HTTP) SetOutboundFilter(filter Types.IOFilter) error {
-	panic("Not implemented yet")
-	/*
-		if httpProtocol.ProxyController == nil {
-			return errors.New("No HTTP proxy controller was set")
-		}
-	*/
-	return nil
-}
+				entry := req.Header.Get("Proxy-Authorization")
+				splitEntry := strings.Split(entry, " ")
+				if len(splitEntry) != 2 {
+					return req, onErrorResponse
+				}
 
-func (httpProtocol *HTTP) SetAuthenticationMethod(authenticationMethod Types.AuthenticationMethod) error {
-	if httpProtocol.ProxyController == nil {
-		return errors.New("No HTTP proxy controller was set")
-	}
-	httpProtocol.AuthenticationMethod = authenticationMethod
-	httpProtocol.ProxyController.OnRequest().DoFunc(func(
-		request *http.Request,
-		proxyCtx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		authentication := strings.Split(request.Header.Get("Proxy-Authorization"), " ")
-		if len(authentication) == 2 {
-			if authentication[0] == "Basic" {
-				rawCredentials, decodingError := base64.StdEncoding.DecodeString(authentication[1])
-				if decodingError == nil {
-					credentials := bytes.Split(rawCredentials, []byte(":"))
-					if len(credentials) == 2 {
-						if Proxies.Authenticate(httpProtocol.AuthenticationMethod, credentials[0], credentials[1]) {
-							Templates.LogData(httpProtocol.LoggingMethod, "Login successful with: ", request.RemoteAddr)
-							return request, nil
-						}
-					}
+				if splitEntry[0] != "Basic" {
+					return req, onErrorResponse
+				}
+
+				rawUsernamePassword, decodingError := base64.StdEncoding.DecodeString(splitEntry[1])
+				if decodingError != nil {
+					return req, onErrorResponse
+				}
+
+				splitRawUsernamePassword := bytes.Split(rawUsernamePassword, []byte{':'})
+				if len(splitRawUsernamePassword) != 2 {
+					return req, onErrorResponse
+				}
+
+				authentication, authenticationError := result.AuthenticationMethod(splitRawUsernamePassword[0], splitRawUsernamePassword[1])
+				if !authentication || authenticationError != nil {
+					return req, onErrorResponse
 				}
 			}
-		}
-		Templates.LogData(httpProtocol.LoggingMethod, "Login failed with invalid credentials from: ", request.RemoteAddr)
-		return request, goproxy.NewResponse(request, goproxy.ContentTypeText, http.StatusProxyAuthRequired, "Don't waste your time!")
-	})
+
+			if !Tools.FilterOutbound(result.OutboundFilter, req.Host) {
+				return req, onErrorResponse
+			}
+
+			return req, nil
+		},
+	)
+	return result
+}
+
+func (protocol *HTTP) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
+	protocol.LoggingMethod = loggingMethod
 	return nil
 }
 
-func (httpProtocol *HTTP) SetTries(_ int) error {
-	return errors.New("Custom tries is not supported by HTTP proxy")
+func (protocol *HTTP) SetOutboundFilter(filter Types.IOFilter) error {
+	protocol.OutboundFilter = filter
+	return nil
 }
 
-func (httpProtocol *HTTP) SetTimeout(_ time.Duration) error {
-	return errors.New("Custom timeout is not supported by HTTP proxy")
+func (protocol *HTTP) SetAuthenticationMethod(authenticationMethod Types.AuthenticationMethod) error {
+	protocol.AuthenticationMethod = authenticationMethod
+	return nil
 }
 
-func (httpProtocol *HTTP) Handle(
-	clientConnection net.Conn,
-	clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer) error {
-
-	request, parsingError := http.ReadRequest(clientConnectionReader)
-	if parsingError != nil {
-		Templates.LogData(httpProtocol.LoggingMethod, parsingError)
-		return parsingError
-	}
-	request.RemoteAddr = clientConnection.RemoteAddr().String()
-	responseWriter := CreateCustomResponseWriter(clientConnection, clientConnectionReader, clientConnectionWriter)
-	httpProtocol.ProxyController.ServeHTTP(responseWriter, request)
-	if responseWriter.Result().ContentLength > 0 {
-		_ = responseWriter.Result().Write(clientConnectionWriter)
-		_ = clientConnectionWriter.Flush()
-	}
+func (protocol *HTTP) Handle(clientConnection net.Conn) error {
+	protocol.listener.clientConnections <- clientConnection
 	return nil
 }

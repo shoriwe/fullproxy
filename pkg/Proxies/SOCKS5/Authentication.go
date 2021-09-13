@@ -1,69 +1,121 @@
 package SOCKS5
 
 import (
-	"bufio"
-	"github.com/shoriwe/FullProxy/pkg/Sockets"
-	"github.com/shoriwe/FullProxy/pkg/Templates"
+	"github.com/shoriwe/FullProxy/pkg/Tools"
 	"net"
 )
 
-func (socks5 *Socks5) UsernamePasswordAuthentication(clientConnectionReader *bufio.Reader) (bool, byte) {
-	numberOfReceivedBytes, credentials, connectionError := Sockets.Receive(clientConnectionReader, 1024)
+func (socks5 *Socks5) UsernamePasswordAuthentication(clientConnection net.Conn) (bool, error) {
+	_, connectionError := clientConnection.Write(UsernamePasswordSupported)
 	if connectionError != nil {
-		return false, 0
+		return false, connectionError
 	}
-	if numberOfReceivedBytes < 4 {
-		return false, 0
+
+	var numberOfBytesReceived int
+	negotiationVersion := make([]byte, 1)
+	numberOfBytesReceived, connectionError = clientConnection.Read(negotiationVersion)
+	if connectionError != nil {
+		return false, connectionError
+	} else if numberOfBytesReceived != 1 {
+		return false, nil
 	}
-	if credentials[0] != BasicNegotiation {
-		return false, 0
+	switch negotiationVersion[0] {
+	case BasicNegotiation:
+		break
+	default:
+		return false, nil
 	}
-	receivedUsernameLength := int(credentials[1])
-	if receivedUsernameLength+3 >= numberOfReceivedBytes {
-		return false, 0
+	userLength := make([]byte, 1)
+	numberOfBytesReceived, connectionError = clientConnection.Read(userLength)
+	if connectionError != nil {
+		return false, connectionError
+	} else if numberOfBytesReceived != 1 {
+		return false, nil
 	}
-	receivedUsername := credentials[2 : 2+receivedUsernameLength]
-	rawReceivedUsernamePassword := credentials[2+receivedUsernameLength+1 : numberOfReceivedBytes]
-	if socks5.AuthenticationMethod(receivedUsername, rawReceivedUsernamePassword) {
-		return true, UsernamePassword
+	username := make([]byte, userLength[0])
+	numberOfBytesReceived, connectionError = clientConnection.Read(username)
+	if connectionError != nil {
+		return false, connectionError
+	} else if numberOfBytesReceived != int(userLength[0]) {
+		return false, nil
 	}
-	return false, 0
+	passwordLength := make([]byte, 1)
+	numberOfBytesReceived, connectionError = clientConnection.Read(passwordLength)
+	if connectionError != nil {
+		return false, connectionError
+	} else if numberOfBytesReceived != 1 {
+		return false, nil
+	}
+	password := make([]byte, passwordLength[0])
+	numberOfBytesReceived, connectionError = clientConnection.Read(password)
+	if connectionError != nil {
+		return false, connectionError
+	} else if numberOfBytesReceived != int(passwordLength[0]) {
+		return false, nil
+	}
+	loginSuccess, loginError := socks5.AuthenticationMethod(username, password)
+	if loginError != nil || !loginSuccess {
+		_, connectionError = clientConnection.Write(AuthenticationFailed)
+		if connectionError != nil {
+			return false, connectionError
+		}
+		return false, loginError
+	}
+	_, connectionError = clientConnection.Write(AuthenticationSucceded)
+	if connectionError != nil {
+		return false, connectionError
+	}
+	Tools.LogData(socks5.LoggingMethod, "Logging succeeded for: "+clientConnection.RemoteAddr().String())
+	return true, nil
 }
 
-func (socks5 *Socks5) AuthenticateClient(clientConnection net.Conn, clientConnectionReader *bufio.Reader, clientConnectionWriter *bufio.Writer) bool {
+func (socks5 *Socks5) AuthenticateClient(clientConnection net.Conn) (bool, error) {
 
-	var foundMethod = InvalidMethod
-	numberOfReceivedBytes, clientImplementedMethods, _ := Sockets.Receive(clientConnectionReader, 1024)
-	if clientImplementedMethods == nil {
-		_, _ = Sockets.Send(clientConnectionWriter, &NoSupportedMethods)
-		return false
-	} else if numberOfReceivedBytes >= 3 {
-		if clientImplementedMethods[0] == Version && int(clientImplementedMethods[1]) == numberOfReceivedBytes-2 {
-			for index := 2; index < numberOfReceivedBytes; index++ {
-				if clientImplementedMethods[index] == socks5.WantedAuthMethod {
-					foundMethod = socks5.WantedAuthMethod
-					break
-				}
-			}
-		}
+	version := make([]byte, 1)
+	bytesReceived, connectionError := clientConnection.Read(version)
+	if connectionError != nil {
+		return false, connectionError
+	} else if bytesReceived != 1 {
+		return false, nil
 	}
 
-	switch foundMethod {
-	case UsernamePassword:
-		_, connectionError := Sockets.Send(clientConnectionWriter, &UsernamePasswordSupported)
-		if connectionError == nil {
-			if success, authenticationProtocol := socks5.UsernamePasswordAuthentication(clientConnectionReader); success && authenticationProtocol == UsernamePassword {
-				_, connectionError = Sockets.Send(clientConnectionWriter, &UsernamePasswordSucceededResponse)
-				return connectionError == nil
-			}
-			_, _ = Sockets.Send(clientConnectionWriter, &AuthenticationFailed)
-		}
-	case NoAuthRequired:
-		_, connectionError := Sockets.Send(clientConnectionWriter, &NoAuthRequiredSupported)
-		return connectionError == nil
+	switch version[0] {
+	case SocksV5, SocksV4:
+		break
 	default:
-		Templates.LogData(socks5.LoggingMethod, "Client doesn't support authentication methods: ", clientConnection.RemoteAddr().String())
-		_, _ = Sockets.Send(clientConnectionWriter, &NoSupportedMethods)
+		return false, nil
 	}
-	return false
+
+	numberOfMethods := make([]byte, 1)
+	bytesReceived, connectionError = clientConnection.Read(numberOfMethods)
+	if connectionError != nil {
+		return false, connectionError
+	} else if bytesReceived != 1 {
+		return false, nil
+	}
+	clientSupportedMethods := make([]byte, numberOfMethods[0])
+	bytesReceived, connectionError = clientConnection.Read(clientSupportedMethods)
+	if connectionError != nil {
+		return false, connectionError
+	} else if bytesReceived != int(numberOfMethods[0]) {
+		return false, nil
+	}
+
+	if socks5.AuthenticationMethod == nil {
+		for _, supportedMethod := range clientSupportedMethods {
+			if supportedMethod == NoAuthRequired {
+				_, connectionError = clientConnection.Write(NoAuthRequiredSupported)
+				return true, connectionError
+			}
+		}
+	} else {
+		for _, supportedMethod := range clientSupportedMethods {
+			if supportedMethod == UsernamePassword {
+				return socks5.UsernamePasswordAuthentication(clientConnection)
+			}
+		}
+	}
+	Tools.LogData(socks5.LoggingMethod, "Client doesn't support authentication methods: ", clientConnection.RemoteAddr().String())
+	_, connectionError = clientConnection.Write(NoSupportedMethods)
+	return false, connectionError
 }

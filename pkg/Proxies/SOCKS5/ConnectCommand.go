@@ -1,54 +1,99 @@
 package SOCKS5
 
 import (
-	"bufio"
 	"encoding/binary"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/RawProxy"
-	"github.com/shoriwe/FullProxy/pkg/Sockets"
-	"github.com/shoriwe/FullProxy/pkg/Templates"
+	"github.com/shoriwe/FullProxy/pkg/Pipes"
+	"github.com/shoriwe/FullProxy/pkg/Tools"
 	"net"
+	"strconv"
+	"strings"
 )
 
-func (socks5 *Socks5) PrepareConnect(
-	clientConnection net.Conn, clientConnectionReader *bufio.Reader,
-	clientConnectionWriter *bufio.Writer,
-	targetHost *string,
-	targetPort *string,
-	targetHostType *byte) error {
+func (socks5 *Socks5) Connect(clientConnection net.Conn) error {
+	reserved := make([]byte, 1)
+	numberOfBytesReceived, connectionError := clientConnection.Read(reserved)
+	if connectionError != nil {
+		return connectionError
+	} else if numberOfBytesReceived != 1 {
+		return protocolError
+	}
+	addressType := make([]byte, 1)
+	numberOfBytesReceived, connectionError = clientConnection.Read(addressType)
+	if connectionError != nil {
+		return connectionError
+	} else if numberOfBytesReceived != 1 {
+		return protocolError
+	}
 
-	targetConnection, connectionError := Sockets.Connect(targetHost, targetPort) // new(big.Int).SetBytes(rawTargetPort).String())
+	var targetHostLength int
+	switch addressType[0] {
+	case IPv4:
+		targetHostLength = 4
+	case DomainName:
+		domainLength := make([]byte, 1)
+		numberOfBytesReceived, connectionError = clientConnection.Read(domainLength)
+		if connectionError != nil {
+			return connectionError
+		} else if numberOfBytesReceived != 1 {
+			return protocolError
+		}
+		targetHostLength = int(domainLength[0])
+	case IPv6:
+		targetHostLength = 16
+	default:
+		return protocolError
+	}
+	rawTargetHost := make([]byte, targetHostLength)
+	numberOfBytesReceived, connectionError = clientConnection.Read(rawTargetHost)
 	if connectionError != nil {
-		Templates.LogData(socks5.LoggingMethod, connectionError)
-		failResponse := []byte{Version, ConnectionRefused, 0, *targetHostType, 0, 0}
-		_, _ = Sockets.Send(clientConnectionWriter, &failResponse)
-		_ = clientConnection.Close()
+		return connectionError
+	} else if numberOfBytesReceived != targetHostLength {
+		return protocolError
+	}
+
+	rawTargetPort := make([]byte, 2)
+	numberOfBytesReceived, connectionError = clientConnection.Read(rawTargetPort)
+	if connectionError != nil {
+		return connectionError
+	} else if numberOfBytesReceived != 2 {
+		return protocolError
+	}
+
+	// Cleanup the address
+
+	host, target := clean(addressType[0], rawTargetHost, rawTargetPort)
+	if !Tools.FilterOutbound(socks5.OutboundFilter, host) {
+		Tools.LogData(socks5.LoggingMethod, "Forbidden connection to: "+host)
+		return nil
+	}
+	// Try to connect to the target
+
+	var targetConnection net.Conn
+	targetConnection, connectionError = socks5.Dial("tcp", target)
+	if connectionError != nil {
+		// Respond the error to the client
 		return connectionError
 	}
-	localAddress := targetConnection.LocalAddr().(*net.TCPAddr)
-	localPort := make([]byte, 2)
-	binary.BigEndian.PutUint16(localPort, uint16(localAddress.Port))
-	response := []byte{Version, Succeeded, 0, *targetHostType}
-	response = append(response[:], localAddress.IP[:]...)
-	response = append(response[:], localPort[:]...)
-	_, connectionError = Sockets.Send(clientConnectionWriter, &response)
+
+	// Respond to client
+
+	local := strings.Split(targetConnection.LocalAddr().String(), ":")
+	var localAddressBytes []byte
+	for _, rawNumber := range strings.Split(local[0], ".") {
+		number, _ := strconv.Atoi(rawNumber)
+		localAddressBytes = append(localAddressBytes, uint8(number))
+	}
+	response := []byte{SocksV5, 0x00, 0, IPv4}
+	response = append(response, localAddressBytes...)
+	portAsInt, _ := strconv.Atoi(local[1])
+	port := make([]byte, 2)
+	binary.BigEndian.PutUint16(port, uint16(portAsInt))
+
+	response = append(response, port...)
+	_, connectionError = clientConnection.Write(response)
 	if connectionError != nil {
-		_ = clientConnection.Close()
-		_ = targetConnection.Close()
-		Templates.LogData(socks5.LoggingMethod, connectionError)
 		return connectionError
 	}
-	Templates.LogData(socks5.LoggingMethod, "Client: ", clientConnection.RemoteAddr().String(), "  -> Target: ", targetConnection.RemoteAddr().String())
-	targetConnectionReader, targetConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(targetConnection)
-	rawProxy := RawProxy.RawProxy{
-		TargetConnection:       targetConnection,
-		TargetConnectionReader: targetConnectionReader,
-		TargetConnectionWriter: targetConnectionWriter,
-	}
-	_ = rawProxy.SetTimeout(socks5.Timeout)
-	_ = rawProxy.SetTries(socks5.Tries)
-	_ = rawProxy.SetLoggingMethod(socks5.LoggingMethod)
-	return rawProxy.Handle(
-		clientConnection,
-		clientConnectionReader,
-		clientConnectionWriter)
+	// Forward traffic
+	return Pipes.ForwardTraffic(clientConnection, targetConnection)
 }

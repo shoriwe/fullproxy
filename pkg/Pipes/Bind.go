@@ -2,14 +2,14 @@ package Pipes
 
 import (
 	"errors"
-	"github.com/shoriwe/FullProxy/pkg/Sockets"
-	"github.com/shoriwe/FullProxy/pkg/Templates"
-	"github.com/shoriwe/FullProxy/pkg/Templates/Types"
+	"github.com/shoriwe/FullProxy/pkg/Tools"
+	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"net"
-	"time"
 )
 
 type Bind struct {
+	NetworkType   string
+	BindAddress   string
 	Server        net.Listener
 	ProxyProtocol Types.ProxyProtocol
 	LoggingMethod Types.LoggingMethod
@@ -25,32 +25,50 @@ func (bind *Bind) SetOutboundFilter(_ Types.IOFilter) error {
 	return errors.New("This kind of PIPE doesn't support OutboundFilters")
 }
 
-func (bind *Bind) SetTries(tries int) error {
-	return bind.ProxyProtocol.SetTries(tries)
-}
-
-func (bind *Bind) SetTimeout(timeout time.Duration) error {
-	return bind.ProxyProtocol.SetTimeout(timeout)
-}
-
 func (bind *Bind) SetLoggingMethod(loggingMethod Types.LoggingMethod) error {
 	bind.LoggingMethod = loggingMethod
 	return nil
 }
 
+func (bind *Bind) serve(clientConnection net.Conn) {
+	if !Tools.FilterInbound(bind.InboundFilter, Tools.ParseIP(clientConnection.RemoteAddr().String()).String()) {
+		_ = clientConnection.Close()
+		Tools.LogData(bind.LoggingMethod, "Connection denied to: "+clientConnection.RemoteAddr().String())
+		return
+	}
+	Tools.LogData(bind.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
+	handleError := bind.ProxyProtocol.Handle(clientConnection)
+	if handleError != nil {
+		Tools.LogData(bind.LoggingMethod, handleError.Error())
+	}
+	return
+}
+
 func (bind *Bind) Serve() error {
+	listener, listenError := net.Listen(bind.NetworkType, bind.BindAddress)
+	if listenError != nil {
+		return listenError
+	}
+	bind.Server = listener
+	defer bind.Server.Close()
+	Tools.LogData(bind.LoggingMethod, "Successfully listening at: "+bind.BindAddress)
+	bind.ProxyProtocol.SetDial(net.Dial)
 	for {
 		clientConnection, connectionError := bind.Server.Accept()
 		if connectionError != nil {
-			Templates.LogData(bind.LoggingMethod, connectionError)
-			return connectionError
-		}
-		if !Templates.FilterInbound(bind.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
-			Templates.LogData(bind.LoggingMethod, "Connection denied to: "+clientConnection.RemoteAddr().String())
+			Tools.LogData(bind.LoggingMethod, connectionError)
 			continue
 		}
-		Templates.LogData(bind.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
-		clientConnectionReader, clientConnectionWriter := Sockets.CreateSocketConnectionReaderWriter(clientConnection)
-		go bind.ProxyProtocol.Handle(clientConnection, clientConnectionReader, clientConnectionWriter)
+		go bind.serve(clientConnection)
+	}
+}
+
+func NewBindPipe(networkType, bindAddress string, protocol Types.ProxyProtocol, method Types.LoggingMethod, inboundFilter Types.IOFilter) *Bind {
+	return &Bind{
+		NetworkType:   networkType,
+		BindAddress:   bindAddress,
+		ProxyProtocol: protocol,
+		LoggingMethod: method,
+		InboundFilter: inboundFilter,
 	}
 }
