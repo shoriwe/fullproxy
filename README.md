@@ -204,8 +204,16 @@ You can find pre-compiled binaries for windows and linux [Here](https://github.c
 
 ## Build from source code
 
+### fullproxy
+
 ```shell
 go install github.com/shoriwe/FullProxy/cmd/fullproxy@latest
+```
+
+### fullproxy-users
+
+```shell
+go install github.com/shoriwe/FullProxy/cmd/fullproxy-users@latest
 ```
 
 ### Note
