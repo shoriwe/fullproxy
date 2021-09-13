@@ -6,12 +6,11 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/shoriwe/FullProxy)](https://goreportcard.com/report/github.com/shoriwe/FullProxy)
 [![Release](https://img.shields.io/github/release/shoriwe/FullProxy.svg?style=flat-square)](https://github.com/shoriwe/FullProxy/releases/latest)
 
-\
-Bind and reverse connection (with encryption) based, SOCKS5, HTTP and PortForward proxy. \
+Bind and reverse connection (with encryption) based, SOCKS5, HTTP and PortForward proxy.
 
 # Description
 
-![FullProxyLogo](https://raw.githubusercontent.com/shoriwe/FullProxy/master/logo/full-proxy-logo.PNG) \
+![FullProxyLogo](https://raw.githubusercontent.com/shoriwe/FullProxy/master/logo/full-proxy-logo.PNG) 
 `FullProxy` is a `Bind` and `Reverse Connection` (with encryption) based `HTTP`, `SOCKS5` and `PortForward` portable
 proxy
 
@@ -26,19 +25,14 @@ proxy
         * [HTTP](#http)
         * [Forward](#port-forward)
         * [Master and Slave](#master-and-slave)
-        * [Translate](#translate)
-            * [Forward To SOCKS5](#port-forward-to-socks5)
     * [Implemented tools](#implemented-tools)
 * [Concepts](#concepts)
     * [Master/Slave](#masterslave)
         * [How it works](#how-it-works)
         * [Applications](#applications)
-    * [Translation](#translation)
 * [Installation](#installation)
     * [Pre-compiled binaries](#pre-compiled-binaries)
     * [Build from source code](#build-from-source-code)
-        * [Makefile](#makefile)
-        * [Manual build](#manual-build)
         * [Note](#note)
 
 # Usage
@@ -87,15 +81,28 @@ Usage of socks5:
 
 ### HTTP
 
-HTTP proxy could be implemented thanks to [GoProxy](https://github.com/elazarl/goproxy)
+HTTP proxy could be implemented thanks to [goproxy](https://github.com/elazarl/goproxy)
 
 ```shell
-user@linux:~$ fullproxy local-forward -help
+user@linux:~$ fullproxy http -help
 ```
 
 Outputs:
 
 ```shell
+Usage of http:
+  -auth-cmd string
+        shell command to pass the hex encoded username and password, exit code 0 means login success
+  -inbound-blacklist string
+        plain text file list with all the HOST that are forbidden to connect to the proxy
+  -inbound-whitelist string
+        plain text file list with all the HOST that are permitted to connect to the proxy
+  -outbound-blacklist string
+        plain text file list with all the forbidden proxy targets
+  -outbound-whitelist string
+        plain text file list with all the permitted proxy targets
+  -users-file string
+        json file with username as keys and sha3-513 of the password as values
 ```
 
 ### Port Forward
@@ -136,20 +143,39 @@ Connect to the master and proxy the networks from the slave side.
 user@linux:~$ export C2Address="127.0.0.1:9051" && fullproxy slave tcp 127.0.0.1:9050 socks5
 ```
 
-### Translate
+## Implemented tools
 
-#### Port Forward To SOCKS5
+### fullproxy-users
+
+This tool will create a valid `JSON` file to use with the flag ` -users-file`
 
 ```shell
-user@linux:~$ fullproxy translate port_forward-socks5 -help
+user@linux:~$ fullproxy-users
 ```
 
 Outputs:
 
 ```shell
+fullproxy-users COMMAND DATABASE_FILE USERNAME
+Available commands:
+        - new
+        - delete
+        - set
 ```
 
-## Implemented tools
+#### Commands:
+
+##### new
+
+Creates a new file with a new user.
+
+##### delete
+
+Deletes an existing user in the file.
+
+##### set
+
+Creates or updates a user in the file.
 
 # Concepts
 
@@ -169,12 +195,6 @@ of the clients and will forward the traffic to the proxy that is reverse connect
 
 This could be specially useful when you need to proxy a network that a machine have access to, but you can't bind inside
 that machine.
-
-## Translation
-
-This protocol is simple, it receives proxying request in a specific proxying protocol to them forward them to another
-proxy with another protocol; this means that if you only speaks SOCKS5, you will be able to talk to an HTTP proxy using
-this "translator"
 
 # Installation
 

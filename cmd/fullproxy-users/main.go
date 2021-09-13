@@ -10,7 +10,11 @@ import (
 
 func main() {
 	if len(os.Args) != 4 {
-		_, _ = fmt.Fprintf(os.Stderr, "%s COMMAND DATABASE_FILE USERNAME", os.Args[0])
+		_, _ = fmt.Fprintf(os.Stderr, "%s COMMAND DATABASE_FILE USERNAME\n", os.Args[0])
+		_, _ = fmt.Fprintln(os.Stderr, "Available commands:\n"+
+			"\t- new\n"+
+			"\t- delete\n"+
+			"\t- set")
 		os.Exit(0)
 	}
 	stdinReader := bufio.NewReader(os.Stdin)
