@@ -1,16 +1,18 @@
 import bftool
 import requests
 
+proxy = "socks5://127.0.0.1:9050"
+
 
 def stress_it(_):
 	try:
-		requests.get(
+		_ = requests.get(
 			"http://127.0.0.1:8080/big.txt",
 			# "https://google.com",
 			timeout=5,
 			proxies={
-				"http": "socks5://127.0.0.1:9050",
-				"https": "socks5://127.0.0.1:9050"
+				"http": proxy,
+				"https": proxy
 			}
 		).content
 	except requests.exceptions.ConnectTimeout as e:

@@ -8,6 +8,7 @@ import (
 	"gopkg.in/elazarl/goproxy.v1"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -29,7 +30,7 @@ func (c customListener) Addr() net.Addr {
 }
 
 func newCustomListener() *customListener {
-	return &customListener{make(chan net.Conn)}
+	return &customListener{make(chan net.Conn, strconv.IntSize)}
 }
 
 type HTTP struct {

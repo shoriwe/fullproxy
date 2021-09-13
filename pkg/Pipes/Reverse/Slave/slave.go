@@ -18,7 +18,7 @@ type Slave struct {
 }
 
 func (slave *Slave) SetInboundFilter(_ Types.IOFilter) error {
-	panic("inbound rules not supported")
+	return nil
 }
 
 func NewSlave(networkType string, masterC2Address string, loggingMethod Types.LoggingMethod) *Slave {

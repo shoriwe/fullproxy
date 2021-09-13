@@ -12,6 +12,7 @@ import (
 	"github.com/shoriwe/FullProxy/pkg/Proxies/HTTP"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/PortForward"
 	"github.com/shoriwe/FullProxy/pkg/Proxies/SOCKS5"
+	"github.com/shoriwe/FullProxy/pkg/Proxies/Translation/ForwardToSocks5"
 	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
 	"io"
 	"log"
@@ -192,6 +193,34 @@ func configHTTP() (Types.IOFilter, Types.ProxyProtocol, error) {
 	), nil
 }
 
+func configTranslateSocks5() (Types.IOFilter, Types.ProxyProtocol, error) {
+	if len(os.Args) < 5 {
+		return nil, SOCKS5.NewSocks5(nil, log.Println, nil), nil
+	}
+	flagSet := flag.NewFlagSet("translate-sock5", flag.ExitOnError)
+
+	networkType := flagSet.String("network-type", "tcp", "tcp or udp")
+	targetAddress := flagSet.String("target-address", "127.0.0.1:80", "Address to connect")
+
+	socks5ProxyAddress := flagSet.String("socks5", "127.0.0.1:9050", "Address of the socks5 url")
+	socks5Username := flagSet.String("username", "", "Username for the socks5 server")
+	socks5Password := flagSet.String("password", "", "Password for the socks5 server")
+
+	inboundBlackList := flagSet.String("inbound-blacklist", "", "plain text file list with all the HOST that are forbidden to connect to the proxy")
+	inboundWhiteList := flagSet.String("inbound-whitelist", "", "plain text file list with all the HOST that are permitted to connect to the proxy")
+
+	parsingError := flagSet.Parse(os.Args[5:])
+
+	if parsingError != nil {
+		panic(parsingError)
+	}
+	translate, generationError := ForwardToSocks5.NewForwardToSocks5(*networkType, *socks5ProxyAddress, *socks5Username, *socks5Password, *targetAddress, log.Println)
+	if generationError != nil {
+		return nil, nil, generationError
+	}
+	return configInboundFilter(*inboundWhiteList, *inboundBlackList), translate, nil
+}
+
 func configProtocol(protocol string) (Types.IOFilter, Types.ProxyProtocol, error) {
 	switch protocol {
 	case "socks5":
@@ -200,6 +229,8 @@ func configProtocol(protocol string) (Types.IOFilter, Types.ProxyProtocol, error
 		return configPortForward()
 	case "http":
 		return configHTTP()
+	case "translate-socks5":
+		return configTranslateSocks5()
 	}
 	return nil, nil, errors.New("Unknown protocol: " + protocol)
 }
