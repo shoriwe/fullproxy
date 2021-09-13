@@ -10,7 +10,7 @@ Bind and reverse connection based, SOCKS5, HTTP and PortForward proxy.
 
 # Description
 
-![FullProxyLogo](logo/white_logo_color_background.jpg)
+<img src="logo/white_logo_color_background.jpg" alt="FullProxyLogo" style="zoom:25%;" />
 
 `FullProxy` is a `Bind` and `Reverse Connection` based `HTTP`, `SOCKS5` and `PortForward` portable proxy
 
