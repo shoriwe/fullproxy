@@ -207,13 +207,13 @@ You can find pre-compiled binaries for windows and linux [Here](https://github.c
 ### fullproxy
 
 ```shell
-go install github.com/shoriwe/FullProxy/cmd/fullproxy@latest
+go install github.com/shoriwe/FullProxy/v2/cmd/fullproxy@latest
 ```
 
 ### fullproxy-users
 
 ```shell
-go install github.com/shoriwe/FullProxy/cmd/fullproxy-users@latest
+go install github.com/shoriwe/FullProxy/v2/cmd/fullproxy-users@latest
 ```
 
 ### Note
