@@ -86,7 +86,7 @@ func TestCloseBindPipe(t *testing.T) {
 	}
 }
 
-// Test Master/slave
+// Test master/slave
 
 func TestMasterSlaveInitialization(t *testing.T) {
 	masterPipe = Master.NewMaster(
@@ -130,7 +130,7 @@ func TestCloseMasterSlavePipe(t *testing.T) {
 	}
 }
 
-// Finally, close the HTTP server
+// Finally, close the http server
 
 func TestClose(t *testing.T) {
 	_ = httpListener.Close()

@@ -221,7 +221,7 @@ func TestCloseOutboundRulesPipe(t *testing.T) {
 	}
 }
 
-// Test Master Slave
+// Test master slave
 
 //// Test No auth
 
@@ -393,7 +393,7 @@ func TestCloseOutboundMasterSlavePipe(t *testing.T) {
 	}
 }
 
-// Finally, close the HTTP server
+// Finally, close the http server
 
 func TestClose(t *testing.T) {
 	_ = httpListener.Close()

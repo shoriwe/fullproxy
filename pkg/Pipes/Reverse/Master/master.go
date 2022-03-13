@@ -117,7 +117,7 @@ func (master *Master) Serve() error {
 	if connectionError != nil {
 		return connectionError
 	}
-	Tools.LogData(master.LoggingMethod, "Slave Address: "+slaveConnection.RemoteAddr().String())
+	Tools.LogData(master.LoggingMethod, "slave Address: "+slaveConnection.RemoteAddr().String())
 	master.MasterConnection = slaveConnection
 	master.Protocol.SetDial(master.protocolDialFunc())
 	var clientConnection net.Conn
