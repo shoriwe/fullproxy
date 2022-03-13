@@ -5,7 +5,6 @@ import (
 	"github.com/shoriwe/FullProxy/v3/internal/global"
 	"github.com/shoriwe/FullProxy/v3/internal/pipes"
 	"net"
-	"strconv"
 )
 
 func (socks5 *Socks5) Connect(sessionChunk []byte, clientConnection net.Conn) error {
@@ -48,18 +47,32 @@ func (socks5 *Socks5) Connect(sessionChunk []byte, clientConnection net.Conn) er
 	// Respond to client
 
 	var (
-		h, p, _             = net.SplitHostPort(targetConnection.LocalAddr().String())
-		numericLocalPort, _ = strconv.Atoi(p)
-		bndAddress          = net.ParseIP(h)
-		localType           byte
-		localPort           [2]byte
+		bndAddress net.IP
+		localType  byte = 0x00 // FIXME
+		localPort  [2]byte
 	)
-	binary.BigEndian.PutUint16(localPort[:], uint16(numericLocalPort))
-	if bndAddress.To4() == nil {
-		bndAddress = []byte(bndAddress)[len([]byte(bndAddress))-net.IPv6len:]
-		localType = IPv6
+	if targetAsTCP, ok := targetConnection.LocalAddr().(*net.TCPAddr); ok {
+		bndAddress = targetAsTCP.IP
+		binary.BigEndian.PutUint16(localPort[:], uint16(targetAsTCP.Port))
+	} else if targetAsUDP, ok := targetConnection.LocalAddr().(*net.TCPAddr); ok {
+		bndAddress = targetAsUDP.IP
+		binary.BigEndian.PutUint16(localPort[:], uint16(targetAsUDP.Port))
 	} else {
-		bndAddress = []byte(bndAddress)[len([]byte(bndAddress))-net.IPv4len:]
+		bndAddress = net.IPv4(127, 0, 0, 1)
+		binary.BigEndian.PutUint16(localPort[:], 8080)
+	}
+
+	if bndAddress.To4() != nil {
+		bndAddress = bndAddress.To4()
+		localType = IPv4
+	} else if bndAddress.To16() != nil {
+		bndAddress = bndAddress.To4()
+		localType = IPv6
+	}
+	if bndAddress == nil { // FIXME: This hack need to be removed
+		bndAddress = net.IPv4(127, 0, 0, 1)
+		binary.BigEndian.PutUint16(localPort[:], 8080)
+		bndAddress = bndAddress.To4()
 		localType = IPv4
 	}
 

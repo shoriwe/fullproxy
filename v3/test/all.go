@@ -14,13 +14,14 @@ import (
 )
 
 const (
-	testUrl      = "http://127.0.0.1:8080/big.txt"
-	testUrlIPv6  = "http://[::1]:8080/big.txt"
-	networkType  = "tcp"
-	httpAddress  = "127.0.0.1:8080"
-	proxyAddress = "127.0.0.1:9050"
-	c2Address    = "127.0.0.1:9051"
-	Success      = iota
+	testUrl         = "http://127.0.0.1:8080/big.txt"
+	testUrlIPv6     = "http://[::1]:8080/big.txt"
+	networkType     = "tcp"
+	httpIPv6Address = "[::1]:8080"
+	httpAddress     = "127.0.0.1:8080"
+	proxyAddress    = "127.0.0.1:9050"
+	c2Address       = "127.0.0.1:9051"
+	Success         = iota
 	FailedProxySetup
 	FailedRequest
 )
@@ -103,7 +104,7 @@ func StartIPv4HTTPServer(t *testing.T) net.Listener {
 }
 
 func StartIPv6HTTPServer(t *testing.T) net.Listener {
-	httpListener, listenError := net.Listen(networkType, "[::1]:8080")
+	httpListener, listenError := net.Listen(networkType, httpIPv6Address)
 	if listenError != nil {
 		t.Fatal(listenError)
 	}
