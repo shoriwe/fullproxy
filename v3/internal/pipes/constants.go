@@ -1,8 +1,13 @@
 package pipes
 
 import (
+	"errors"
 	"io"
 	"net"
+)
+
+var (
+	SlaveConnectionRequestError = errors.New("new connection request error")
 )
 
 const (

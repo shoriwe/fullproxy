@@ -121,7 +121,7 @@ func configAuthMethod(command, usersFile string) global.AuthenticationMethod {
 	return nil
 }
 
-func configSocks5() (global.IOFilter, global.ProxyProtocol, error) {
+func configSocks5() (global.IOFilter, global.Protocol, error) {
 	if len(os.Args) < 5 {
 		return nil, socks5.NewSocks5(nil, log.Println, nil), nil
 	}
@@ -143,7 +143,7 @@ func configSocks5() (global.IOFilter, global.ProxyProtocol, error) {
 	return configInboundFilter(*inboundWhiteList, *inboundBlackList), socks5.NewSocks5(configAuthMethod(*authCommand, *usersFiles), log.Println, configOutboundFilter(*outboundWhiteList, *outboundBlackList)), nil
 }
 
-func configPortForward() (global.IOFilter, global.ProxyProtocol, error) {
+func configPortForward() (global.IOFilter, global.Protocol, error) {
 	if len(os.Args) < 5 {
 		return nil, socks5.NewSocks5(nil, log.Println, nil), nil
 	}
@@ -164,7 +164,7 @@ func configPortForward() (global.IOFilter, global.ProxyProtocol, error) {
 	return configInboundFilter(*inboundWhiteList, *inboundBlackList), port_forward.NewForward(*networkType, *targetAddress, log.Println), nil
 }
 
-func configHTTP() (global.IOFilter, global.ProxyProtocol, error) {
+func configHTTP() (global.IOFilter, global.Protocol, error) {
 	if len(os.Args) < 5 {
 		return nil, socks5.NewSocks5(nil, log.Println, nil), nil
 	}
@@ -190,7 +190,7 @@ func configHTTP() (global.IOFilter, global.ProxyProtocol, error) {
 	), nil
 }
 
-func configTranslateSocks5() (global.IOFilter, global.ProxyProtocol, error) {
+func configTranslateSocks5() (global.IOFilter, global.Protocol, error) {
 	if len(os.Args) < 5 {
 		return nil, socks5.NewSocks5(nil, log.Println, nil), nil
 	}
@@ -218,7 +218,7 @@ func configTranslateSocks5() (global.IOFilter, global.ProxyProtocol, error) {
 	return configInboundFilter(*inboundWhiteList, *inboundBlackList), translate, nil
 }
 
-func configProtocol(protocol string) (global.IOFilter, global.ProxyProtocol, error) {
+func configProtocol(protocol string) (global.IOFilter, global.Protocol, error) {
 	switch protocol {
 	case "socks5":
 		return configSocks5()

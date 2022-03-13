@@ -4,7 +4,7 @@ import (
 	"net"
 )
 
-type ProxyProtocol interface {
+type Protocol interface {
 	SetLoggingMethod(LoggingMethod) error
 	SetAuthenticationMethod(AuthenticationMethod) error
 	Handle(net.Conn) error

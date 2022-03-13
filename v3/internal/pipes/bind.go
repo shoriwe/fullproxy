@@ -10,7 +10,7 @@ type Bind struct {
 	NetworkType   string
 	BindAddress   string
 	Server        net.Listener
-	ProxyProtocol global.ProxyProtocol
+	ProxyProtocol global.Protocol
 	LoggingMethod global.LoggingMethod
 	InboundFilter global.IOFilter
 }
@@ -62,7 +62,7 @@ func (bind *Bind) Serve() error {
 	}
 }
 
-func NewBindPipe(networkType, bindAddress string, protocol global.ProxyProtocol, method global.LoggingMethod, inboundFilter global.IOFilter) *Bind {
+func NewBindPipe(networkType, bindAddress string, protocol global.Protocol, method global.LoggingMethod, inboundFilter global.IOFilter) *Bind {
 	return &Bind{
 		NetworkType:   networkType,
 		BindAddress:   bindAddress,

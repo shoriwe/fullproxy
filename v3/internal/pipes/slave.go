@@ -1,6 +1,7 @@
 package pipes
 
 import (
+	"crypto/tls"
 	"errors"
 	"github.com/shoriwe/FullProxy/v3/internal/global"
 	"net"
@@ -12,14 +13,21 @@ type Slave struct {
 	NetworkType      string
 	MasterC2Address  string
 	LoggingMethod    global.LoggingMethod
+	IgnoreTrust      bool
+	tlsConfig        *tls.Config
 }
 
 func (slave *Slave) SetInboundFilter(_ global.IOFilter) error {
 	return nil
 }
 
-func NewSlave(networkType string, masterC2Address string, loggingMethod global.LoggingMethod) *Slave {
-	return &Slave{NetworkType: networkType, MasterC2Address: masterC2Address, LoggingMethod: loggingMethod}
+func NewSlave(networkType string, masterC2Address string, loggingMethod global.LoggingMethod, ignoreTrust bool) *Slave {
+	return &Slave{
+		NetworkType:     networkType,
+		MasterC2Address: masterC2Address,
+		LoggingMethod:   loggingMethod,
+		IgnoreTrust:     ignoreTrust,
+	}
 }
 
 func (slave *Slave) SetLoggingMethod(loggingMethod global.LoggingMethod) error {
@@ -98,7 +106,7 @@ func (slave *Slave) command(command byte, clientConnection net.Conn) error {
 
 func (slave *Slave) serve() error {
 	global.LogData(slave.LoggingMethod, "Received client connection from master")
-	clientConnection, connectionError := net.DialTimeout(slave.NetworkType, slave.MasterC2Address, time.Minute)
+	clientConnection, connectionError := tls.Dial(slave.NetworkType, slave.MasterC2Address, slave.tlsConfig)
 	if connectionError != nil {
 		return connectionError
 	}
@@ -114,8 +122,11 @@ func (slave *Slave) serve() error {
 }
 
 func (slave *Slave) Serve() error {
+	slave.tlsConfig = &tls.Config{
+		InsecureSkipVerify: slave.IgnoreTrust,
+	}
 	global.LogData(slave.LoggingMethod, "Connecting to master at: "+slave.MasterC2Address)
-	masterConnection, connectionError := net.Dial(slave.NetworkType, slave.MasterC2Address)
+	masterConnection, connectionError := tls.Dial(slave.NetworkType, slave.MasterC2Address, slave.tlsConfig)
 	if connectionError != nil {
 		return connectionError
 	}

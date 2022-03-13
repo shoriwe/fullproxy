@@ -1,26 +1,90 @@
 package pipes
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"errors"
 	"github.com/shoriwe/FullProxy/v3/internal/global"
+	"math/big"
 	"net"
+	"time"
 )
 
-type Master struct {
-	finish           bool
-	NetworkType      string
-	C2Address        string
-	ProxyAddress     string
-	MasterConnection net.Conn
-	C2Listener       net.Listener
-	ProxyListener    net.Listener
-	LoggingMethod    global.LoggingMethod
-	InboundFilter    global.IOFilter
-	Protocol         global.ProxyProtocol
+func selfSignedCertificate() (*tls.Config, error) {
+	var (
+		priv *rsa.PrivateKey
+		cert []byte
+		err  error
+	)
+	now := time.Now()
+	template := &x509.Certificate{
+		SerialNumber: big.NewInt(now.Unix()),
+		Subject: pkix.Name{
+			CommonName:         "localhost",
+			Country:            []string{"MARS"},
+			Organization:       []string{"localhost"},
+			OrganizationalUnit: []string{"quickserve"},
+		},
+		NotBefore:             now,
+		NotAfter:              now.AddDate(0, 0, 1), // Valid for one day
+		SubjectKeyId:          []byte{113, 117, 105, 99, 107, 115, 101, 114, 118, 101},
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		KeyUsage: x509.KeyUsageKeyEncipherment |
+			x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+	}
+
+	priv, err = rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, err
+	}
+
+	cert, err = x509.CreateCertificate(rand.Reader, template, template,
+		priv.Public(), priv)
+	if err != nil {
+		return nil, err
+	}
+
+	var outCert tls.Certificate
+	outCert.Certificate = append(outCert.Certificate, cert)
+	outCert.PrivateKey = priv
+	return &tls.Config{Certificates: []tls.Certificate{outCert}}, nil
+
 }
 
-func NewMaster(networkType string, c2Address string, proxyAddress string, loggingMethod global.LoggingMethod, inboundFilter global.IOFilter, protocol global.ProxyProtocol) *Master {
-	return &Master{NetworkType: networkType, C2Address: c2Address, ProxyAddress: proxyAddress, LoggingMethod: loggingMethod, InboundFilter: inboundFilter, Protocol: protocol}
+// Master
+/*
+C2Address is the address where the slave is going to connect to.
+ProxyAddress is the address where the clients are going to connect to.
+*/
+type Master struct {
+	finish          bool
+	NetworkType     string
+	C2Address       string
+	ProxyAddress    string
+	SlaveConnection net.Conn
+	C2Listener      net.Listener
+	ProxyListener   net.Listener
+	LoggingMethod   global.LoggingMethod
+	InboundFilter   global.IOFilter
+	Protocol        global.Protocol
+	TLSConfig       *tls.Config
+}
+
+func NewMaster(networkType string, c2Address string, proxyAddress string, loggingMethod global.LoggingMethod, inboundFilter global.IOFilter, protocol global.Protocol, tlsConfig *tls.Config) *Master {
+	return &Master{
+		NetworkType:   networkType,
+		C2Address:     c2Address,
+		ProxyAddress:  proxyAddress,
+		LoggingMethod: loggingMethod,
+		InboundFilter: inboundFilter,
+		Protocol:      protocol,
+		TLSConfig:     tlsConfig,
+	}
 }
 
 func (master *Master) SetInboundFilter(filter global.IOFilter) error {
@@ -35,7 +99,7 @@ func (master *Master) SetLoggingMethod(loggingMethod global.LoggingMethod) error
 
 func (master *Master) protocolDialFunc() global.DialFunc {
 	return func(network, address string) (net.Conn, error) {
-		numberOfBytesWritten, connectionError := master.MasterConnection.Write([]byte{RequestNewMasterConnectionCommand})
+		numberOfBytesWritten, connectionError := master.SlaveConnection.Write([]byte{RequestNewMasterConnectionCommand})
 		if connectionError != nil {
 			master.finish = true
 			return nil, connectionError
@@ -65,7 +129,7 @@ func (master *Master) protocolDialFunc() global.DialFunc {
 			return nil, connectionError
 		} else if bytesWritten != payloadLength {
 			_ = targetConnection.Close()
-			return nil, errors.New("new connection request error")
+			return nil, SlaveConnectionRequestError
 		}
 		response := make([]byte, 1)
 		var bytesReceived int
@@ -75,13 +139,13 @@ func (master *Master) protocolDialFunc() global.DialFunc {
 			return nil, connectionError
 		} else if bytesReceived != 1 {
 			_ = targetConnection.Close()
-			return nil, errors.New("new connection request error")
+			return nil, SlaveConnectionRequestError
 		}
 		switch response[0] {
 		case NewConnectionSucceeded:
 			return targetConnection, nil
 		}
-		return nil, errors.New("new connection request error")
+		return nil, SlaveConnectionRequestError
 	}
 }
 
@@ -96,7 +160,14 @@ func (master *Master) serve(client net.Conn) error {
 func (master *Master) Serve() error {
 	master.finish = false
 	global.LogData(master.LoggingMethod, "Listening at: "+master.C2Address)
-	c2Listener, listenError := net.Listen(master.NetworkType, master.C2Address)
+	if master.TLSConfig == nil {
+		selfSignedTLSConfig, selfSignedError := selfSignedCertificate()
+		if selfSignedError != nil {
+			return selfSignedError
+		}
+		master.TLSConfig = selfSignedTLSConfig
+	}
+	c2Listener, listenError := tls.Listen(master.NetworkType, master.C2Address, master.TLSConfig)
 	if listenError != nil {
 		return listenError
 	}
@@ -116,7 +187,7 @@ func (master *Master) Serve() error {
 		return connectionError
 	}
 	global.LogData(master.LoggingMethod, "slave Address: "+slaveConnection.RemoteAddr().String())
-	master.MasterConnection = slaveConnection
+	master.SlaveConnection = slaveConnection
 	master.Protocol.SetDial(master.protocolDialFunc())
 	var clientConnection net.Conn
 	for !master.finish {
