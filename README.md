@@ -12,7 +12,7 @@ Bind and reverse connection based, SOCKS5, HTTP and PortForward proxy.
 
 <img src="logo/white_logo_color_background.jpg" alt="FullProxyLogo" style="zoom:25%;" />
 
-`FullProxy` is a `Bind` and `Reverse Connection` based `HTTP`, `SOCKS5` and `PortForward` portable proxy
+`FullProxy` is a `Bind` and `Reverse Connection` (with TLS) `HTTP`, `SOCKS5` and `PortForward` portable proxy.
 
 # Index
 
@@ -127,20 +127,48 @@ Usage of port-forward:
 
 ### Master and Slave
 
-#### Preparing the master
-
 Serve a socks5 proxy using master and slave.
+
+Notice that if you don't specify a certificate (with environment variable `C2Certificate=/path/to/cert`) and a private key (with environment variable `C2PrivateKey=/path/to/priv.key`) in the master command, the tool will automatically generate one for you.
+
+If you are using a self-signed certificate, or you did not specify one, you should also use the environment variable `C2SlaveIgnoreTrust=1` to continue on untrusted cert.
+
+#### Setup without certificate
+
+##### Preparing the master
 
 ```shell
 user@linux:~$ export C2Address="127.0.0.1:9051" && fullproxy master tcp 127.0.0.1:9050 socks5 [OPTIONS]
 ```
 
-#### Preparing the slave
+##### Preparing the slave
+
+Connect to the master and proxy the networks from the slave side.
+
+```shell
+user@linux:~$ export C2Address="127.0.0.1:9051" && export C2SlaveIgnoreTrust="1" && fullproxy slave tcp 127.0.0.1:9050 socks5
+```
+
+#### Setup with certificate
+
+##### Preparing the master
+
+```shell
+user@linux:~$ export C2PrivateKey=/path/to/priv.key && export C2Certificate=/path/to/cert && export C2Address="127.0.0.1:9051" && fullproxy master tcp 127.0.0.1:9050 socks5 [OPTIONS]
+```
+
+##### Preparing the slave
 
 Connect to the master and proxy the networks from the slave side.
 
 ```shell
 user@linux:~$ export C2Address="127.0.0.1:9051" && fullproxy slave tcp 127.0.0.1:9050 socks5
+```
+
+Notice that if your certificate is still invalid for the client you should try:
+
+```shell
+user@linux:~$ export C2Address="127.0.0.1:9051" && export C2SlaveIgnoreTrust="1" && fullproxy slave tcp 127.0.0.1:9050 socks5
 ```
 
 ## Implemented tools
@@ -200,20 +228,20 @@ that machine.
 
 ## Pre-compiled binaries
 
-You can find pre-compiled binaries for windows and linux [Here](https://github.com/shoriwe/FullProxy/releases)
+You can find pre-compiled binaries for windows and Linux [Here](https://github.com/shoriwe/FullProxy/releases)
 
 ## Build from source code
 
 ### fullproxy
 
 ```shell
-go install github.com/shoriwe/FullProxy/v2/cmd/fullproxy@latest
+go install github.com/shoriwe/FullProxy/v3/cmd/fullproxy@latest
 ```
 
 ### fullproxy-users
 
 ```shell
-go install github.com/shoriwe/FullProxy/v2/cmd/fullproxy-users@latest
+go install github.com/shoriwe/FullProxy/v3/cmd/fullproxy-users@latest
 ```
 
 ### Note

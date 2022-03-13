@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func selfSignedCertificate() (*tls.Config, error) {
+func SelfSignCertificate() ([]tls.Certificate, error) {
 	var (
 		priv *rsa.PrivateKey
 		cert []byte
@@ -52,7 +52,7 @@ func selfSignedCertificate() (*tls.Config, error) {
 	var outCert tls.Certificate
 	outCert.Certificate = append(outCert.Certificate, cert)
 	outCert.PrivateKey = priv
-	return &tls.Config{Certificates: []tls.Certificate{outCert}}, nil
+	return []tls.Certificate{outCert}, nil
 
 }
 
@@ -75,7 +75,7 @@ type Master struct {
 	TLSConfig       *tls.Config
 }
 
-func NewMaster(networkType string, c2Address string, proxyAddress string, loggingMethod global.LoggingMethod, inboundFilter global.IOFilter, protocol global.Protocol, tlsConfig *tls.Config) *Master {
+func NewMaster(networkType string, c2Address string, proxyAddress string, loggingMethod global.LoggingMethod, inboundFilter global.IOFilter, protocol global.Protocol, certificates []tls.Certificate) *Master {
 	return &Master{
 		NetworkType:   networkType,
 		C2Address:     c2Address,
@@ -83,7 +83,7 @@ func NewMaster(networkType string, c2Address string, proxyAddress string, loggin
 		LoggingMethod: loggingMethod,
 		InboundFilter: inboundFilter,
 		Protocol:      protocol,
-		TLSConfig:     tlsConfig,
+		TLSConfig:     &tls.Config{Certificates: certificates},
 	}
 }
 
@@ -158,15 +158,15 @@ func (master *Master) serve(client net.Conn) error {
 }
 
 func (master *Master) Serve() error {
-	master.finish = false
-	global.LogData(master.LoggingMethod, "Listening at: "+master.C2Address)
-	if master.TLSConfig == nil {
-		selfSignedTLSConfig, selfSignedError := selfSignedCertificate()
+	if master.TLSConfig.Certificates == nil {
+		var selfSignedError error
+		master.TLSConfig.Certificates, selfSignedError = SelfSignCertificate()
 		if selfSignedError != nil {
 			return selfSignedError
 		}
-		master.TLSConfig = selfSignedTLSConfig
 	}
+	master.finish = false
+	global.LogData(master.LoggingMethod, "Listening at: "+master.C2Address)
 	c2Listener, listenError := tls.Listen(master.NetworkType, master.C2Address, master.TLSConfig)
 	if listenError != nil {
 		return listenError

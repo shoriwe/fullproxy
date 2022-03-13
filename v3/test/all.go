@@ -59,6 +59,10 @@ func NewBindPipe(protocol global.Protocol, inboundFilter global.IOFilter) net.Li
 }
 
 func NewMasterSlave(inboundFilter global.IOFilter, protocol global.Protocol) (net.Listener, net.Listener) {
+	cert, signError := pipes.SelfSignCertificate()
+	if signError != nil {
+		panic(signError)
+	}
 	masterPipe := pipes.NewMaster(
 		networkType,
 		c2Address,
@@ -66,7 +70,7 @@ func NewMasterSlave(inboundFilter global.IOFilter, protocol global.Protocol) (ne
 		nil,
 		inboundFilter,
 		protocol,
-		nil,
+		cert,
 	)
 	go masterPipe.Serve()
 	time.Sleep(1 * time.Second)

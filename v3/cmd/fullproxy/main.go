@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/hex"
 	"errors"
 	"flag"
@@ -20,12 +21,40 @@ import (
 )
 
 var (
-	c2Address = "127.0.0.1:9051"
+	certificate []tls.Certificate
+	c2Address   = "127.0.0.1:9051"
+	privKey     = ""
+	cert        = ""
+	trust       = false
 )
 
 func init() {
 	if os.Getenv("C2Address") != "" {
 		c2Address = os.Getenv("C2Address")
+	}
+	if os.Getenv("C2PrivateKey") != "" {
+		privKey = os.Getenv("C2PrivateKey")
+	}
+	if os.Getenv("C2Certificate") != "" {
+		cert = os.Getenv("C2Certificate")
+	}
+	if os.Getenv("C2SlaveIgnoreTrust") != "" {
+		trust = false
+	}
+	if privKey == cert && cert == "" {
+		var err error
+		certificate, err = pipes.SelfSignCertificate()
+		if err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+	} else {
+		c, err := tls.LoadX509KeyPair(cert, privKey)
+		if err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		certificate = []tls.Certificate{c}
 	}
 }
 
@@ -264,9 +293,9 @@ func main() {
 	case "bind":
 		pipe = pipes.NewBindPipe(networkType, address, proxyProtocol, log.Println, inboundFilter)
 	case "master":
-		pipe = pipes.NewMaster(networkType, c2Address, address, log.Println, inboundFilter, proxyProtocol)
+		pipe = pipes.NewMaster(networkType, c2Address, address, log.Println, inboundFilter, proxyProtocol, certificate)
 	case "slave":
-		pipe = pipes.NewSlave(networkType, c2Address, log.Println)
+		pipe = pipes.NewSlave(networkType, c2Address, log.Println, trust)
 	default:
 		panic("Unknown mode")
 	}
