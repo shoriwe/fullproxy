@@ -15,6 +15,7 @@ import (
 
 const (
 	testUrl      = "http://127.0.0.1:8080/big.txt"
+	testUrlIPv6  = "http://[::1]:8080/big.txt"
 	networkType  = "tcp"
 	httpAddress  = "127.0.0.1:8080"
 	proxyAddress = "127.0.0.1:9050"
@@ -85,8 +86,24 @@ func NewMasterSlave(inboundFilter global.IOFilter, protocol global.Protocol) (ne
 	return masterPipe.ProxyListener, masterPipe.C2Listener
 }
 
-func StartHTTPServer(t *testing.T) net.Listener {
+func StartIPv4HTTPServer(t *testing.T) net.Listener {
 	httpListener, listenError := net.Listen(networkType, httpAddress)
+	if listenError != nil {
+		t.Fatal(listenError)
+	}
+	server := http.NewServeMux()
+	server.HandleFunc("/big.txt",
+		func(writer http.ResponseWriter, request *http.Request) {
+			_, _ = writer.Write(bytes.Repeat([]byte{'A'}, 0xFFFF))
+		},
+	)
+	go http.Serve(httpListener, server)
+	time.Sleep(1 * time.Second)
+	return httpListener
+}
+
+func StartIPv6HTTPServer(t *testing.T) net.Listener {
+	httpListener, listenError := net.Listen(networkType, "[::1]:8080")
 	if listenError != nil {
 		t.Fatal(listenError)
 	}

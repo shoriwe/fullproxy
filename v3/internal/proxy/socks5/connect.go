@@ -6,90 +6,68 @@ import (
 	"github.com/shoriwe/FullProxy/v3/internal/pipes"
 	"net"
 	"strconv"
-	"strings"
 )
 
-func (socks5 *Socks5) Connect(clientConnection net.Conn) error {
-	reserved := make([]byte, 1)
-	numberOfBytesReceived, connectionError := clientConnection.Read(reserved)
-	if connectionError != nil {
-		return connectionError
-	} else if numberOfBytesReceived != 1 {
-		return protocolError
-	}
-	addressType := make([]byte, 1)
-	numberOfBytesReceived, connectionError = clientConnection.Read(addressType)
-	if connectionError != nil {
-		return connectionError
-	} else if numberOfBytesReceived != 1 {
-		return protocolError
-	}
-
-	var targetHostLength int
-	switch addressType[0] {
+func (socks5 *Socks5) Connect(sessionChunk []byte, clientConnection net.Conn) error {
+	var (
+		targetHostLength, hostStartIndex int
+	)
+	switch sessionChunk[3] {
 	case IPv4:
 		targetHostLength = 4
+		hostStartIndex = 4
 	case DomainName:
-		domainLength := make([]byte, 1)
-		numberOfBytesReceived, connectionError = clientConnection.Read(domainLength)
-		if connectionError != nil {
-			return connectionError
-		} else if numberOfBytesReceived != 1 {
-			return protocolError
-		}
-		targetHostLength = int(domainLength[0])
+		targetHostLength = int(sessionChunk[4])
+		hostStartIndex = 5
 	case IPv6:
 		targetHostLength = 16
+		hostStartIndex = 4
 	default:
 		return protocolError
 	}
-	rawTargetHost := make([]byte, targetHostLength)
-	numberOfBytesReceived, connectionError = clientConnection.Read(rawTargetHost)
-	if connectionError != nil {
-		return connectionError
-	} else if numberOfBytesReceived != targetHostLength {
-		return protocolError
-	}
+	rawTargetHost := sessionChunk[hostStartIndex : hostStartIndex+targetHostLength]
 
-	rawTargetPort := make([]byte, 2)
-	numberOfBytesReceived, connectionError = clientConnection.Read(rawTargetPort)
-	if connectionError != nil {
-		return connectionError
-	} else if numberOfBytesReceived != 2 {
-		return protocolError
-	}
+	rawTargetPort := sessionChunk[hostStartIndex+targetHostLength : hostStartIndex+targetHostLength+2]
 
 	// Cleanup the address
 
-	host, target := clean(addressType[0], rawTargetHost, rawTargetPort)
+	host, target := clean(sessionChunk[3], rawTargetHost, rawTargetPort)
 	if !global.FilterOutbound(socks5.OutboundFilter, host) {
 		global.LogData(socks5.LoggingMethod, "Forbidden connection to: "+host)
 		return nil
 	}
+
 	// Try to connect to the target
 
-	var targetConnection net.Conn
-	targetConnection, connectionError = socks5.Dial("tcp", target)
+	targetConnection, connectionError := socks5.Dial("tcp", target)
 	if connectionError != nil {
-		// Respond the error to the client
+		// TODO: Respond the error to the client
 		return connectionError
 	}
 
 	// Respond to client
 
-	local := strings.Split(targetConnection.LocalAddr().String(), ":")
-	var localAddressBytes []byte
-	for _, rawNumber := range strings.Split(local[0], ".") {
-		number, _ := strconv.Atoi(rawNumber)
-		localAddressBytes = append(localAddressBytes, uint8(number))
+	var (
+		h, p, _             = net.SplitHostPort(targetConnection.LocalAddr().String())
+		numericLocalPort, _ = strconv.Atoi(p)
+		bndAddress          = net.ParseIP(h)
+		localType           byte
+		localPort           [2]byte
+	)
+	binary.BigEndian.PutUint16(localPort[:], uint16(numericLocalPort))
+	if bndAddress.To4() == nil {
+		bndAddress = []byte(bndAddress)[len([]byte(bndAddress))-net.IPv6len:]
+		localType = IPv6
+	} else {
+		bndAddress = []byte(bndAddress)[len([]byte(bndAddress))-net.IPv4len:]
+		localType = IPv4
 	}
-	response := []byte{SocksV5, 0x00, 0, IPv4}
-	response = append(response, localAddressBytes...)
-	portAsInt, _ := strconv.Atoi(local[1])
-	port := make([]byte, 2)
-	binary.BigEndian.PutUint16(port, uint16(portAsInt))
 
-	response = append(response, port...)
+	response := make([]byte, 0, 350)
+	response = append(response, SocksV5, ConnectionSucceed, 0x00, localType)
+	response = append(response, bndAddress...)
+	response = append(response, localPort[:]...)
+
 	_, connectionError = clientConnection.Write(response)
 	if connectionError != nil {
 		return connectionError

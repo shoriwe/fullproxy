@@ -8,7 +8,7 @@ import (
 //// Test No auth
 
 func TestSocks5NoAuthHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	p := NewBindPipe(socks5.NewSocks5(nil, nil, nil), nil)
 	defer p.Close()
@@ -17,10 +17,23 @@ func TestSocks5NoAuthHTTPRequest(t *testing.T) {
 	}
 }
 
+//// IPv6
+
+func TestSocks5IPv6HTTPRequest(t *testing.T) {
+	h := StartIPv6HTTPServer(t)
+	defer h.Close()
+	p := NewBindPipe(socks5.NewSocks5(nil, nil, nil), nil)
+	defer p.Close()
+	result := GetRequestSocks5(testUrlIPv6, "", "")
+	if result != Success {
+		t.Fatal(testUrlIPv6, result)
+	}
+}
+
 //// Test Auth
 
 func TestSocks5UsernamePasswordHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc, nil, nil), nil)
 	defer p.Close()
@@ -35,7 +48,7 @@ func TestSocks5UsernamePasswordHTTPRequest(t *testing.T) {
 //// Test inbound rules
 
 func TestSocks5InvalidInboundHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc, nil, nil),
 		basicInboundRule,
@@ -49,7 +62,7 @@ func TestSocks5InvalidInboundHTTPRequest(t *testing.T) {
 //// Test outbound rules
 
 func TestSocks5OutboundHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc, nil, basicOutboundRule),
 		nil,
@@ -68,7 +81,7 @@ func TestSocks5OutboundHTTPRequest(t *testing.T) {
 //// Test No auth
 
 func TestSocks5NoAuthMasterSlaveHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
 		nil,
@@ -83,10 +96,25 @@ func TestSocks5NoAuthMasterSlaveHTTPRequest(t *testing.T) {
 	}
 }
 
+func TestSocks5NoAuthIPv6MasterSlaveHTTPRequest(t *testing.T) {
+	h := StartIPv6HTTPServer(t)
+	defer h.Close()
+	a, b := NewMasterSlave(
+		nil,
+		socks5.NewSocks5(nil, nil, nil))
+	defer func() {
+		a.Close()
+		b.Close()
+	}()
+	if GetRequestSocks5(testUrlIPv6, "", "") != Success {
+		t.Fatal(testUrl)
+	}
+}
+
 //// Test Auth
 
 func TestSocks5UsernamePasswordMasterSlaveHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
 		nil,
@@ -104,7 +132,7 @@ func TestSocks5UsernamePasswordMasterSlaveHTTPRequest(t *testing.T) {
 //// Test inbound rules
 
 func TestSocks5InboundMasterSlaveHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
 		basicInboundRule,
@@ -122,7 +150,7 @@ func TestSocks5InboundMasterSlaveHTTPRequest(t *testing.T) {
 //// Test outbound rules
 
 func TestSocks5OutboundMasterSlaveHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
 		nil,

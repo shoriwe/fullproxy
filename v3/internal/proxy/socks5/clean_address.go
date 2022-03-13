@@ -13,7 +13,7 @@ func clean(hostType uint8, rawHost []byte, rawPort []byte) (string, string) {
 	case DomainName:
 		host = string(rawHost)
 	case IPv6:
-		host = fmt.Sprintf("[%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d]",
+		host = fmt.Sprintf("[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x]",
 			rawHost[0], rawHost[1], rawHost[2], rawHost[3],
 			rawHost[4], rawHost[5], rawHost[6], rawHost[7],
 			rawHost[8], rawHost[9], rawHost[10], rawHost[11],

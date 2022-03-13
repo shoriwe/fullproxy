@@ -8,7 +8,7 @@ import (
 //// Test No auth
 
 func TestHTTPNoAuthHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	p := NewBindPipe(http2.NewHTTP(nil, nil, nil), nil)
 	defer p.Close()
@@ -20,7 +20,7 @@ func TestHTTPNoAuthHTTPRequest(t *testing.T) {
 //// Test Auth
 
 func TestHTTPUsernamePasswordHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	p := NewBindPipe(http2.NewHTTP(basicAuthFunc, nil, nil), nil)
 	defer p.Close()
@@ -35,7 +35,7 @@ func TestHTTPUsernamePasswordHTTPRequest(t *testing.T) {
 //// Test inbound rules
 
 func TestHTTPInvalidInboundHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	p := NewBindPipe(http2.NewHTTP(basicAuthFunc, nil, nil), basicInboundRule)
 	defer p.Close()
@@ -47,7 +47,7 @@ func TestHTTPInvalidInboundHTTPRequest(t *testing.T) {
 //// Test outbound rules
 
 func TestHTTPOutboundHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	p := NewBindPipe(http2.NewHTTP(basicAuthFunc, nil, basicOutboundRule), nil)
 	defer p.Close()
@@ -64,7 +64,7 @@ func TestHTTPOutboundHTTPRequest(t *testing.T) {
 //// Test No auth
 
 func TestHTTPNoAuthMasterSlaveHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
 		nil,
@@ -82,7 +82,7 @@ func TestHTTPNoAuthMasterSlaveHTTPRequest(t *testing.T) {
 //// Test Auth
 
 func TestHTTPUsernamePasswordMasterSlaveHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
 		nil,
@@ -100,7 +100,7 @@ func TestHTTPUsernamePasswordMasterSlaveHTTPRequest(t *testing.T) {
 //// Test inbound rules
 
 func TestHTTPInboundMasterSlaveHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
 		basicInboundRule,
@@ -117,7 +117,7 @@ func TestHTTPInboundMasterSlaveHTTPRequest(t *testing.T) {
 //// Test outbound rules
 
 func TestHTTPInvalidOutboundMasterSlaveHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	a, b := NewMasterSlave(
 		nil,
 		http2.NewHTTP(basicAuthFunc, nil, basicOutboundRule))
@@ -132,7 +132,7 @@ func TestHTTPInvalidOutboundMasterSlaveHTTPRequest(t *testing.T) {
 }
 
 func TestHTTPOutboundMasterSlaveHTTPRequest(t *testing.T) {
-	h := StartHTTPServer(t)
+	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
 		nil,

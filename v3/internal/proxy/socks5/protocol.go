@@ -33,16 +33,9 @@ func (socks5 *Socks5) SetDial(dialFunc global.DialFunc) {
 }
 
 func (socks5 *Socks5) Handle(clientConnection net.Conn) error {
+	sessionChunk := make([]byte, 0xFFFF)
 	defer clientConnection.Close()
-	// if !Templates.FilterInbound(socks5.InboundFilter, Templates.ParseIP(clientConnection.RemoteAddr().String())) {
-	// 	errorMessage := "Connection denied to: " + clientConnection.RemoteAddr().String()
-	// 	_ = clientConnection.Close()
-	// 	Templates.LogData(socks5.LoggingMethod, errorMessage)
-	// 	return errors.New(errorMessage)
-	// }
-	// Templates.LogData(socks5.LoggingMethod, "Connection Received from: ", clientConnection.RemoteAddr().String())
-	// Receive connection
-	authenticationSuccessful, connectionError := socks5.AuthenticateClient(clientConnection)
+	authenticationSuccessful, connectionError := socks5.AuthenticateClient(sessionChunk, clientConnection)
 	if connectionError != nil {
 		return connectionError
 	}
@@ -52,34 +45,30 @@ func (socks5 *Socks5) Handle(clientConnection net.Conn) error {
 		// Templates.LogData(socks5.LoggingMethod, errorMessage)
 		return errors.New(errorMessage)
 	}
-
-	version := make([]byte, 1)
-	var numberOfBytesReceived int
-	numberOfBytesReceived, connectionError = clientConnection.Read(version)
+	_, connectionError = clientConnection.Read(sessionChunk)
 	if connectionError != nil {
 		return connectionError
-	} else if numberOfBytesReceived != 1 {
-		return protocolError
 	}
-	command := make([]byte, 1)
-	numberOfBytesReceived, connectionError = clientConnection.Read(command)
-	if connectionError != nil {
-		return connectionError
-	} else if numberOfBytesReceived != 1 {
-		return protocolError
+	version := sessionChunk[0]
+	if version != SocksV5 {
+		return SocksVersionNotSupported
 	}
-	switch command[0] {
+	switch sessionChunk[1] {
 	case Connect:
-		return socks5.Connect(clientConnection)
+		return socks5.Connect(sessionChunk, clientConnection)
 	case Bind:
-		return socks5.Bind(clientConnection)
+		return socks5.Bind(sessionChunk, clientConnection)
 	case UDPAssociate:
-		return socks5.UDPAssociate(clientConnection)
+		return socks5.UDPAssociate(sessionChunk, clientConnection)
 	default:
 		return protocolError
 	}
 }
 
 func NewSocks5(authenticationMethod global.AuthenticationMethod, loggingMethod global.LoggingMethod, outboundFilter global.IOFilter) *Socks5 {
-	return &Socks5{AuthenticationMethod: authenticationMethod, LoggingMethod: loggingMethod, OutboundFilter: outboundFilter}
+	return &Socks5{
+		AuthenticationMethod: authenticationMethod,
+		LoggingMethod:        loggingMethod,
+		OutboundFilter:       outboundFilter,
+	}
 }

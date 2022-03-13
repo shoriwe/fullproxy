@@ -6,7 +6,7 @@ import (
 	"net"
 )
 
-func (socks5 *Socks5) Bind(clientConnection net.Conn) error {
+func (socks5 *Socks5) Bind(sessionChunk []byte, clientConnection net.Conn) error {
 	_ = clientConnection.Close()
 	global.LogData(socks5.LoggingMethod, "Bind method not implemented yet")
 	return errors.New("Bind method not implemented yet")
