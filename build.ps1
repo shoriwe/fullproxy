@@ -7,6 +7,8 @@ $env:GONOSUMDB="*";
 
 $old = pwd;
 
+Remove-Item -LiteralPath "$old/build" -Force -Recurse
+
 cd $root;
 
 New-Item -Name build -ItemType directory -Force -Path $old;
