@@ -55,7 +55,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "IPv6?",
             "filepath": ""
           }
@@ -70,7 +70,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Domain?",
             "filepath": ""
           }
@@ -115,7 +115,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "TLS Master/Slave",
             "filepath": ""
           }
@@ -145,7 +145,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Code cleanup",
             "filepath": ""
           }

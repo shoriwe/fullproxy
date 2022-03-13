@@ -32,15 +32,16 @@ func (socks5 *Socks5) Connect(sessionChunk []byte, clientConnection net.Conn) er
 
 	host, target := clean(sessionChunk[3], rawTargetHost, rawTargetPort)
 	if !global.FilterOutbound(socks5.OutboundFilter, host) {
+		_, connectionError := clientConnection.Write([]byte{SocksV5, ConnectionNotAllowedByRuleSet, 0x00, IPv4, 127, 0, 0, 1, 90, 90})
 		global.LogData(socks5.LoggingMethod, "Forbidden connection to: "+host)
-		return nil
+		return connectionError
 	}
 
 	// Try to connect to the target
 
 	targetConnection, connectionError := socks5.Dial("tcp", target)
 	if connectionError != nil {
-		// TODO: Respond the error to the client
+		_, _ = clientConnection.Write([]byte{SocksV5, GeneralSocksServerFailure, 0x00, IPv4, 127, 0, 0, 1, 90, 90})
 		return connectionError
 	}
 
