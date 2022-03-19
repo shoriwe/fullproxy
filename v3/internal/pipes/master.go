@@ -113,10 +113,10 @@ func (master *Master) protocolDialFunc() global.DialFunc {
 			return nil, connectionError
 		}
 		// Request connection to target
-		var request []byte
 		networkLength := len(network)
 		addressLength := len(address)
 		payloadLength := 3 + networkLength + addressLength
+		request := make([]byte, 0, payloadLength)
 		request = append(request, DialCommand)
 		request = append(request, byte(networkLength))
 		request = append(request, []byte(network)...)
