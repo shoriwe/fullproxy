@@ -5,8 +5,7 @@ import (
 	"fmt"
 )
 
-func clean(hostType uint8, rawHost []byte, rawPort []byte) (string, string) {
-	var host string
+func clean(hostType uint8, rawHost []byte, rawPort []byte) (port int, host, hostPort string) {
 	switch hostType {
 	case IPv4:
 		host = fmt.Sprintf("%d.%d.%d.%d", rawHost[0], rawHost[1], rawHost[2], rawHost[3])
@@ -20,6 +19,6 @@ func clean(hostType uint8, rawHost []byte, rawPort []byte) (string, string) {
 			rawHost[12], rawHost[13], rawHost[14], rawHost[15],
 		)
 	}
-	port := binary.BigEndian.Uint16(rawPort)
-	return host, fmt.Sprintf("%s:%d", host, port)
+	port = int(binary.BigEndian.Uint16(rawPort))
+	return port, host, fmt.Sprintf("%s:%d", host, port)
 }

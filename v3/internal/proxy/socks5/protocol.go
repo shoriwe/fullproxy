@@ -11,6 +11,8 @@ type Socks5 struct {
 	LoggingMethod        global.LoggingMethod
 	OutboundFilter       global.IOFilter
 	Dial                 global.DialFunc
+	UDPRelay             *net.UDPConn
+	relaySessions        map[string]*net.UDPConn
 }
 
 func (socks5 *Socks5) SetLoggingMethod(loggingMethod global.LoggingMethod) error {
@@ -53,22 +55,50 @@ func (socks5 *Socks5) Handle(clientConnection net.Conn) error {
 	if version != SocksV5 {
 		return SocksVersionNotSupported
 	}
-	switch sessionChunk[1] {
-	case Connect:
-		return socks5.Connect(sessionChunk, clientConnection)
-	case Bind:
-		return socks5.Bind(sessionChunk, clientConnection)
-	case UDPAssociate:
-		return socks5.UDPAssociate(sessionChunk, clientConnection)
+	var (
+		targetHostLength, hostStartIndex int
+	)
+	switch sessionChunk[3] {
+	case IPv4:
+		targetHostLength = 4
+		hostStartIndex = 4
+	case DomainName:
+		targetHostLength = int(sessionChunk[4])
+		hostStartIndex = 5
+	case IPv6:
+		targetHostLength = 16
+		hostStartIndex = 4
 	default:
 		return protocolError
 	}
+	rawTargetHost := sessionChunk[hostStartIndex : hostStartIndex+targetHostLength]
+
+	rawTargetPort := sessionChunk[hostStartIndex+targetHostLength : hostStartIndex+targetHostLength+2]
+
+	// Cleanup the address
+	port, host, hostPort := clean(sessionChunk[3], rawTargetHost, rawTargetPort)
+	switch sessionChunk[1] {
+	case Connect:
+		return socks5.Connect(clientConnection, port, host, hostPort)
+	case UDPAssociate:
+		return socks5.UDPAssociate(sessionChunk, clientConnection, port, host, hostPort)
+	case Bind:
+		return socks5.Bind(sessionChunk, clientConnection, port, host, hostPort)
+	default:
+		panic("Implement me")
+	}
 }
 
-func NewSocks5(authenticationMethod global.AuthenticationMethod, loggingMethod global.LoggingMethod, outboundFilter global.IOFilter) *Socks5 {
+func NewSocks5(
+	authenticationMethod global.AuthenticationMethod,
+	loggingMethod global.LoggingMethod,
+	outboundFilter global.IOFilter,
+	udpRelay *net.UDPConn,
+) *Socks5 {
 	return &Socks5{
 		AuthenticationMethod: authenticationMethod,
 		LoggingMethod:        loggingMethod,
 		OutboundFilter:       outboundFilter,
+		UDPRelay:             udpRelay,
 	}
 }

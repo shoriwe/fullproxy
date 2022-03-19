@@ -19,6 +19,7 @@ const (
 	ConnectionSucceed             byte = 0x00
 	GeneralSocksServerFailure     byte = 0x01
 	ConnectionNotAllowedByRuleSet byte = 0x02
+	DefaultRelayPort                   = 10000
 )
 
 var (
