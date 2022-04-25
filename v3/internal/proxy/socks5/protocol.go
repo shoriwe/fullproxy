@@ -1,9 +1,15 @@
 package socks5
 
 import (
+	"encoding/binary"
 	"errors"
+	"fmt"
 	"github.com/shoriwe/FullProxy/v3/internal/global"
 	"net"
+)
+
+const (
+	DefaultContextChunkSize = 0xFFFF
 )
 
 type Socks5 struct {
@@ -13,6 +19,46 @@ type Socks5 struct {
 	Dial                 global.DialFunc
 	UDPRelay             *net.UDPConn
 	relaySessions        map[string]*net.UDPConn
+}
+
+type Context struct {
+	Chunk          [DefaultContextChunkSize]byte
+	BNDAddressType int
+	BNDHost        string
+	BNDAddress     string
+	BNDPort        int
+}
+
+func (c *Context) ParseAddress() error {
+	var (
+		rawHost, rawPort []byte
+	)
+	switch c.Chunk[3] {
+	case IPv4:
+		rawHost = c.Chunk[4 : 4+4]
+		rawPort = c.Chunk[4+4 : 4+4+2]
+		c.BNDHost = fmt.Sprintf("%d.%d.%d.%d", rawHost[0], rawHost[1], rawHost[2], rawHost[3])
+	case DomainName:
+		rawHost = c.Chunk[5 : 5+c.Chunk[4]]
+		rawPort = c.Chunk[5+c.Chunk[4] : 5+c.Chunk[4]+2]
+		c.BNDHost = string(rawHost)
+	case IPv6:
+		rawHost = c.Chunk[4 : 4+16]
+		rawPort = c.Chunk[4+16 : 4+16+2]
+		c.BNDHost = fmt.Sprintf("[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x]",
+			rawHost[0], rawHost[1], rawHost[2], rawHost[3],
+			rawHost[4], rawHost[5], rawHost[6], rawHost[7],
+			rawHost[8], rawHost[9], rawHost[10], rawHost[11],
+			rawHost[12], rawHost[13], rawHost[14], rawHost[15],
+		)
+	default:
+		// TODO: Return an error related to unknown address type
+		panic("Implement me")
+	}
+
+	c.BNDPort = int(binary.BigEndian.Uint16(rawPort))
+	c.BNDAddress = fmt.Sprintf("%s:%d", c.BNDHost, c.BNDPort)
+	return nil
 }
 
 func (socks5 *Socks5) SetLoggingMethod(loggingMethod global.LoggingMethod) error {
@@ -35,9 +81,9 @@ func (socks5 *Socks5) SetDial(dialFunc global.DialFunc) {
 }
 
 func (socks5 *Socks5) Handle(clientConnection net.Conn) error {
-	sessionChunk := make([]byte, 0xFFFF)
+	var context Context
 	defer clientConnection.Close()
-	authenticationSuccessful, connectionError := socks5.AuthenticateClient(sessionChunk, clientConnection)
+	authenticationSuccessful, connectionError := socks5.AuthenticateClient(clientConnection, &context)
 	if connectionError != nil {
 		return connectionError
 	}
@@ -47,44 +93,31 @@ func (socks5 *Socks5) Handle(clientConnection net.Conn) error {
 		// Templates.LogData(socks5.LoggingMethod, errorMessage)
 		return errors.New(errorMessage)
 	}
-	_, connectionError = clientConnection.Read(sessionChunk)
+	_, connectionError = clientConnection.Read(context.Chunk[:])
 	if connectionError != nil {
 		return connectionError
 	}
-	version := sessionChunk[0]
+	version := context.Chunk[0]
 	if version != SocksV5 {
 		return SocksVersionNotSupported
 	}
-	var (
-		targetHostLength, hostStartIndex int
-	)
-	switch sessionChunk[3] {
-	case IPv4:
-		targetHostLength = 4
-		hostStartIndex = 4
-	case DomainName:
-		targetHostLength = int(sessionChunk[4])
-		hostStartIndex = 5
-	case IPv6:
-		targetHostLength = 16
-		hostStartIndex = 4
-	default:
-		return protocolError
-	}
-	rawTargetHost := sessionChunk[hostStartIndex : hostStartIndex+targetHostLength]
-
-	rawTargetPort := sessionChunk[hostStartIndex+targetHostLength : hostStartIndex+targetHostLength+2]
 
 	// Cleanup the address
-	port, host, hostPort := clean(sessionChunk[3], rawTargetHost, rawTargetPort)
-	switch sessionChunk[1] {
+	addressParseError := context.ParseAddress()
+	if addressParseError != nil {
+		// TODO: Do something with the parsing error
+		panic("Implement me")
+	}
+	switch context.Chunk[1] {
 	case Connect:
-		return socks5.Connect(clientConnection, port, host, hostPort)
+		return socks5.Connect(clientConnection, &context)
 	case UDPAssociate:
-		return socks5.UDPAssociate(sessionChunk, clientConnection, port, host, hostPort)
+		// TODO: Return method not supported
+		panic("Implement me")
 	case Bind:
-		return socks5.Bind(sessionChunk, clientConnection, port, host, hostPort)
+		return socks5.Bind(clientConnection, &context)
 	default:
+		// TODO: Do not panic, sending an non supported command could be used as DDoS
 		panic("Implement me")
 	}
 }

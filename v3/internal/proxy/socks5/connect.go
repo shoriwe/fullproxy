@@ -7,18 +7,18 @@ import (
 	"net"
 )
 
-func (socks5 *Socks5) Connect(clientConnection net.Conn, _ int, host, hostPort string) error {
-	if !global.FilterOutbound(socks5.OutboundFilter, host) {
-		_, connectionError := clientConnection.Write([]byte{SocksV5, ConnectionNotAllowedByRuleSet, 0x00, IPv4, 127, 0, 0, 1, 90, 90})
-		global.LogData(socks5.LoggingMethod, "Forbidden connection to: "+host)
+func (socks5 *Socks5) Connect(clientConnection net.Conn, context *Context) error {
+	if !global.FilterOutbound(socks5.OutboundFilter, context.BNDHost) {
+		_, connectionError := clientConnection.Write([]byte{SocksV5, ConnectionNotAllowedByRuleSet, 0x00, IPv4, 0, 0, 0, 0, 0, 0})
+		global.LogData(socks5.LoggingMethod, "Forbidden connection to: "+context.BNDHost)
 		return connectionError
 	}
 
 	// Try to connect to the target
 
-	targetConnection, connectionError := socks5.Dial("tcp", hostPort)
+	targetConnection, connectionError := socks5.Dial("tcp", context.BNDAddress)
 	if connectionError != nil {
-		_, _ = clientConnection.Write([]byte{SocksV5, GeneralSocksServerFailure, 0x00, IPv4, 127, 0, 0, 1, 90, 90})
+		_, _ = clientConnection.Write([]byte{SocksV5, GeneralSocksServerFailure, 0x00, IPv4, 0, 0, 0, 0, 0, 0})
 		return connectionError
 	}
 

@@ -5,18 +5,18 @@ import (
 	"net"
 )
 
-func (socks5 *Socks5) UsernamePasswordAuthentication(sessionChunk []byte, clientConnection net.Conn) (bool, error) {
-	_, connectionError := clientConnection.Read(sessionChunk)
+func (socks5 *Socks5) UsernamePasswordAuthentication(clientConnection net.Conn, context *Context) (bool, error) {
+	_, connectionError := clientConnection.Read(context.Chunk[:])
 	if connectionError != nil {
 		return false, connectionError
 	}
-	if sessionChunk[0] != BasicNegotiation {
+	if context.Chunk[0] != BasicNegotiation {
 		return false, nil
 	}
-	userLength := sessionChunk[1]
-	username := sessionChunk[2 : 2+userLength]
-	passwordLength := sessionChunk[2+userLength]
-	password := sessionChunk[2+userLength+1 : 2+userLength+1+passwordLength]
+	userLength := context.Chunk[1]
+	username := context.Chunk[2 : 2+userLength]
+	passwordLength := context.Chunk[2+userLength]
+	password := context.Chunk[2+userLength+1 : 2+userLength+1+passwordLength]
 	loginSuccess, loginError := socks5.AuthenticationMethod(username, password)
 	if loginError != nil || !loginSuccess {
 		_, connectionError = clientConnection.Write([]byte{BasicNegotiation, FailedAuthentication})
@@ -33,16 +33,16 @@ func (socks5 *Socks5) UsernamePasswordAuthentication(sessionChunk []byte, client
 	return true, nil
 }
 
-func (socks5 *Socks5) AuthenticateClient(sessionChunk []byte, clientConnection net.Conn) (bool, error) {
-	_, connectionError := clientConnection.Read(sessionChunk)
+func (socks5 *Socks5) AuthenticateClient(clientConnection net.Conn, context *Context) (bool, error) {
+	_, connectionError := clientConnection.Read(context.Chunk[:])
 	if connectionError != nil {
 		return false, connectionError
 	}
-	if sessionChunk[0] != SocksV5 {
+	if context.Chunk[0] != SocksV5 {
 		return false, nil
 	}
 
-	clientSupportedMethods := sessionChunk[2 : 2+sessionChunk[1]]
+	clientSupportedMethods := context.Chunk[2 : 2+context.Chunk[1]]
 
 	if socks5.AuthenticationMethod == nil {
 		for _, supportedMethod := range clientSupportedMethods {
@@ -58,7 +58,7 @@ func (socks5 *Socks5) AuthenticateClient(sessionChunk []byte, clientConnection n
 				if connectionError != nil {
 					return false, connectionError
 				}
-				return socks5.UsernamePasswordAuthentication(sessionChunk, clientConnection)
+				return socks5.UsernamePasswordAuthentication(clientConnection, context)
 			}
 		}
 	}
