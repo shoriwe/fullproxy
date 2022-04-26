@@ -2,11 +2,11 @@ package global
 
 import "net"
 
-type AuthenticationMethod func(username []byte, password []byte) (bool, error)
+type AuthenticationMethod func(username []byte, password []byte) error
 
 type LoggingMethod func(args ...interface{})
 
-type IOFilter func(host string) bool
+type IOFilter func(host string) error
 
 type DialFunc func(network, address string) (net.Conn, error)
 

@@ -2,7 +2,6 @@ package socks5
 
 import (
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"github.com/shoriwe/FullProxy/v3/internal/global"
 	"net"
@@ -22,14 +21,29 @@ type Socks5 struct {
 }
 
 type Context struct {
-	Chunk          [DefaultContextChunkSize]byte
-	BNDAddressType int
-	BNDHost        string
-	BNDAddress     string
-	BNDPort        int
+	ClientConnection net.Conn
+	Chunk            [DefaultContextChunkSize]byte
+	Version          byte
+	Command          byte
+	DSTAddressType   byte
+	DSTHost          string
+	DSTAddress       string
+	DSTPort          int
+	DSTRawAddress    []byte
+	DSTRawPort       []byte
 }
 
-func (c *Context) ParseAddress() error {
+func (c *Context) ReadCommand() error {
+	_, connectionError := c.ClientConnection.Read(c.Chunk[:])
+	if connectionError != nil {
+		return connectionError
+	}
+	c.Version = c.Chunk[0]
+	c.Command = c.Chunk[1]
+	if c.Version != SocksV5 {
+		return SocksVersionNotSupported
+	}
+	// Cleanup the address
 	var (
 		rawHost, rawPort []byte
 	)
@@ -37,30 +51,71 @@ func (c *Context) ParseAddress() error {
 	case IPv4:
 		rawHost = c.Chunk[4 : 4+4]
 		rawPort = c.Chunk[4+4 : 4+4+2]
-		c.BNDHost = fmt.Sprintf("%d.%d.%d.%d", rawHost[0], rawHost[1], rawHost[2], rawHost[3])
+		c.DSTHost = fmt.Sprintf("%d.%d.%d.%d", rawHost[0], rawHost[1], rawHost[2], rawHost[3])
 	case DomainName:
 		rawHost = c.Chunk[5 : 5+c.Chunk[4]]
 		rawPort = c.Chunk[5+c.Chunk[4] : 5+c.Chunk[4]+2]
-		c.BNDHost = string(rawHost)
+		c.DSTHost = string(rawHost)
 	case IPv6:
 		rawHost = c.Chunk[4 : 4+16]
 		rawPort = c.Chunk[4+16 : 4+16+2]
-		c.BNDHost = fmt.Sprintf("[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x]",
+		c.DSTHost = fmt.Sprintf("[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x]",
 			rawHost[0], rawHost[1], rawHost[2], rawHost[3],
 			rawHost[4], rawHost[5], rawHost[6], rawHost[7],
 			rawHost[8], rawHost[9], rawHost[10], rawHost[11],
 			rawHost[12], rawHost[13], rawHost[14], rawHost[15],
 		)
 	default:
-		// TODO: Return an error related to unknown address type
-		panic("Implement me")
+		return UnknownAddressType
 	}
 
-	c.BNDPort = int(binary.BigEndian.Uint16(rawPort))
-	c.BNDAddress = fmt.Sprintf("%s:%d", c.BNDHost, c.BNDPort)
+	c.DSTPort = int(binary.BigEndian.Uint16(rawPort))
+	c.DSTAddress = fmt.Sprintf("%s:%d", c.DSTHost, c.DSTPort)
 	return nil
 }
 
+type Reply interface {
+	Bytes() []byte
+}
+
+type BasicReply struct {
+	Version    byte
+	StatusCode byte
+}
+
+func (b BasicReply) Bytes() []byte {
+	return []byte{b.Version, b.StatusCode}
+}
+
+type CommandReply struct {
+	Version     byte
+	StatusCode  byte
+	AddressType byte
+	Address     []byte
+	Port        []byte
+}
+
+func (c CommandReply) Bytes() []byte {
+	result := make([]byte, 0, 7+len(c.Address))
+	result = append(result, c.Version, c.StatusCode, 0x00, c.AddressType)
+	if c.AddressType == DomainName {
+		result = append(result, byte(len(c.Address)))
+	}
+	result = append(result, c.Address...)
+	result = append(result, c.Port...)
+	return result
+}
+
+func (c *Context) Reply(reply Reply) error {
+	_, connectionError := c.ClientConnection.Write(reply.Bytes())
+	return connectionError
+}
+
+func NewContext(conn net.Conn) *Context {
+	return &Context{
+		ClientConnection: conn,
+	}
+}
 func (socks5 *Socks5) SetLoggingMethod(loggingMethod global.LoggingMethod) error {
 	socks5.LoggingMethod = loggingMethod
 	return nil
@@ -81,44 +136,31 @@ func (socks5 *Socks5) SetDial(dialFunc global.DialFunc) {
 }
 
 func (socks5 *Socks5) Handle(clientConnection net.Conn) error {
-	var context Context
+	context := NewContext(clientConnection)
 	defer clientConnection.Close()
-	authenticationSuccessful, connectionError := socks5.AuthenticateClient(clientConnection, &context)
-	if connectionError != nil {
-		return connectionError
+	authenticationError := socks5.AuthenticateClient(context)
+	if authenticationError != nil {
+		return authenticationError
 	}
-	if !authenticationSuccessful {
-		errorMessage := "Authentication Failed with: " + clientConnection.RemoteAddr().String()
-		_ = clientConnection.Close()
-		// Templates.LogData(socks5.LoggingMethod, errorMessage)
-		return errors.New(errorMessage)
-	}
-	_, connectionError = clientConnection.Read(context.Chunk[:])
-	if connectionError != nil {
-		return connectionError
-	}
-	version := context.Chunk[0]
-	if version != SocksV5 {
-		return SocksVersionNotSupported
+	readCommandError := context.ReadCommand()
+	if readCommandError != nil {
+		return readCommandError
 	}
 
-	// Cleanup the address
-	addressParseError := context.ParseAddress()
-	if addressParseError != nil {
-		// TODO: Do something with the parsing error
-		panic("Implement me")
-	}
-	switch context.Chunk[1] {
+	switch context.Command {
 	case Connect:
-		return socks5.Connect(clientConnection, &context)
-	case UDPAssociate:
-		// TODO: Return method not supported
-		panic("Implement me")
+		return socks5.Connect(context)
 	case Bind:
-		return socks5.Bind(clientConnection, &context)
+		return socks5.Bind(context)
 	default:
-		// TODO: Do not panic, sending an non supported command could be used as DDoS
-		panic("Implement me")
+		_ = context.Reply(CommandReply{
+			Version:     SocksV5,
+			StatusCode:  MethodNotSupportedCode,
+			AddressType: context.DSTAddressType,
+			Address:     context.DSTRawAddress,
+			Port:        context.DSTRawPort,
+		})
+		return MethodNotSupported
 	}
 }
 

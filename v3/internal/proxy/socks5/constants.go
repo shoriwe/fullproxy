@@ -9,7 +9,6 @@ const (
 	UsernamePassword              byte = 0x02
 	Connect                       byte = 0x01
 	Bind                          byte = 0x02
-	UDPAssociate                  byte = 0x03
 	IPv4                          byte = 0x01
 	DomainName                    byte = 0x03
 	IPv6                          byte = 0x04
@@ -19,10 +18,13 @@ const (
 	ConnectionSucceed             byte = 0x00
 	GeneralSocksServerFailure     byte = 0x01
 	ConnectionNotAllowedByRuleSet byte = 0x02
-	DefaultRelayPort                   = 10000
+	MethodNotSupportedCode        byte = 0x07
 )
 
 var (
-	protocolError            = errors.New("protocol error?!")
-	SocksVersionNotSupported = errors.New("client requesting a non supported socks version")
+	UnknownAddressType              = errors.New("unknown address type")
+	UnsupportedAuthenticationMethod = errors.New("unsupported authentication method")
+	ClientNotAuthenticated          = errors.New("client not authenticated")
+	SocksVersionNotSupported        = errors.New("client requesting a non supported socks version")
+	MethodNotSupported              = errors.New("method not supported")
 )

@@ -88,13 +88,14 @@ func NewHTTP(
 					return req, onErrorResponse
 				}
 
-				authentication, authenticationError := result.AuthenticationMethod(splitRawUsernamePassword[0], splitRawUsernamePassword[1])
-				if !authentication || authenticationError != nil {
+				authenticationError := result.AuthenticationMethod(splitRawUsernamePassword[0], splitRawUsernamePassword[1])
+				if authenticationError != nil {
 					return req, onErrorResponse
 				}
 			}
 
-			if !global.FilterOutbound(result.OutboundFilter, req.Host) {
+			filterError := global.FilterOutbound(result.OutboundFilter, req.Host)
+			if filterError != nil {
 				return req, onErrorResponse
 			}
 

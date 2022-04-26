@@ -2,6 +2,7 @@ package test
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/shoriwe/FullProxy/v3/internal/global"
 	"github.com/shoriwe/FullProxy/v3/internal/pipes"
@@ -26,26 +27,26 @@ const (
 	FailedRequest
 )
 
-func basicAuthFunc(username []byte, password []byte) (bool, error) {
+func basicAuthFunc(username []byte, password []byte) error {
 	if bytes.Equal(username, []byte("sulcud")) &&
 		bytes.Equal(password, []byte("password")) {
-		return true, nil
+		return nil
 	}
-	return false, nil
+	return errors.New("auth failed")
 }
 
-func basicOutboundRule(host string) bool {
+func basicOutboundRule(host string) error {
 	if host == "google.com" {
-		return false
+		return errors.New("host denied")
 	}
-	return true
+	return nil
 }
 
-func basicInboundRule(host string) bool {
+func basicInboundRule(host string) error {
 	if host == "127.0.0.1" {
-		return false
+		return errors.New("host denied")
 	}
-	return true
+	return nil
 }
 
 func NewBindPipe(protocol global.Protocol, inboundFilter global.IOFilter) net.Listener {

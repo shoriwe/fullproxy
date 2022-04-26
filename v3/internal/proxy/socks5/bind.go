@@ -3,11 +3,10 @@ package socks5
 import (
 	"errors"
 	"github.com/shoriwe/FullProxy/v3/internal/global"
-	"net"
 )
 
-func (socks5 *Socks5) Bind(clientConnection net.Conn, context *Context) error {
-	_ = clientConnection.Close()
+func (socks5 *Socks5) Bind(context *Context) error {
+	_ = context.ClientConnection.Close()
 	global.LogData(socks5.LoggingMethod, "Bind method not implemented yet")
-	return errors.New("Bind method not implemented yet")
+	return errors.New("bind method not implemented yet")
 }

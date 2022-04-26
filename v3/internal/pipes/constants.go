@@ -34,6 +34,5 @@ func netCopy(dst, src net.Conn) error {
 func ForwardTraffic(clientConnection net.Conn, targetConnection net.Conn) error {
 	defer closer(clientConnection, targetConnection)
 	go netCopy(clientConnection, targetConnection)
-	forwardError := netCopy(targetConnection, clientConnection)
-	return forwardError
+	return netCopy(targetConnection, clientConnection)
 }

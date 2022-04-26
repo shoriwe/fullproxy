@@ -151,8 +151,9 @@ func (master *Master) protocolDialFunc() global.DialFunc {
 
 func (master *Master) serve(client net.Conn) error {
 	global.LogData(master.LoggingMethod, "Received connection from: ", client.RemoteAddr().String())
-	if !global.FilterInbound(master.InboundFilter, global.ParseIP(client.RemoteAddr().String()).String()) {
-		return errors.New("Connection denied!")
+	filterError := global.FilterInbound(master.InboundFilter, global.ParseIP(client.RemoteAddr().String()).String())
+	if filterError != nil {
+		return filterError
 	}
 	return master.Protocol.Handle(client)
 }

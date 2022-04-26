@@ -23,16 +23,16 @@ func LogData(loggingMethod LoggingMethod, arguments ...interface{}) {
 	}
 }
 
-func FilterInbound(filter IOFilter, host string) bool {
+func FilterInbound(filter IOFilter, host string) error {
 	if filter != nil {
 		return filter(host)
 	}
-	return true
+	return nil
 }
 
-func FilterOutbound(filter IOFilter, host string) bool {
+func FilterOutbound(filter IOFilter, host string) error {
 	if filter != nil {
 		return filter(host)
 	}
-	return true
+	return nil
 }

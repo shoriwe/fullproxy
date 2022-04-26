@@ -7,47 +7,59 @@ import (
 	"net"
 )
 
-func (socks5 *Socks5) Connect(clientConnection net.Conn, context *Context) error {
-	if !global.FilterOutbound(socks5.OutboundFilter, context.BNDHost) {
-		_, connectionError := clientConnection.Write([]byte{SocksV5, ConnectionNotAllowedByRuleSet, 0x00, IPv4, 0, 0, 0, 0, 0, 0})
-		global.LogData(socks5.LoggingMethod, "Forbidden connection to: "+context.BNDHost)
-		return connectionError
+func (socks5 *Socks5) Connect(context *Context) error {
+	filterError := global.FilterOutbound(socks5.OutboundFilter, context.DSTHost)
+	if filterError != nil {
+		_ = context.Reply(CommandReply{
+			Version:     SocksV5,
+			StatusCode:  ConnectionNotAllowedByRuleSet,
+			AddressType: context.DSTAddressType,
+			Address:     context.DSTRawAddress,
+			Port:        context.DSTRawPort,
+		})
+		return filterError
 	}
 
 	// Try to connect to the target
 
-	targetConnection, connectionError := socks5.Dial("tcp", context.BNDAddress)
+	targetConnection, connectionError := socks5.Dial("tcp", context.DSTAddress)
 	if connectionError != nil {
-		_, _ = clientConnection.Write([]byte{SocksV5, GeneralSocksServerFailure, 0x00, IPv4, 0, 0, 0, 0, 0, 0})
+		_ = context.Reply(CommandReply{
+			Version:     SocksV5,
+			StatusCode:  GeneralSocksServerFailure,
+			AddressType: context.DSTAddressType,
+			Address:     context.DSTRawAddress,
+			Port:        context.DSTRawPort,
+		})
 		return connectionError
 	}
 
 	// Respond to client
 
+	targetConnectionAddress := targetConnection.LocalAddr().(*net.TCPAddr)
 	var (
-		addressType byte = 0x00 // FIXME
-		localPort   [2]byte
+		bndType    byte
+		bndAddress = targetConnectionAddress.IP
+		bndPort    [2]byte
 	)
-	bndAddress := targetConnection.LocalAddr().(*net.TCPAddr).IP
-	binary.BigEndian.PutUint16(localPort[:], uint16(targetConnection.LocalAddr().(*net.TCPAddr).Port))
+	binary.BigEndian.PutUint16(bndPort[:], uint16(targetConnectionAddress.Port))
 
 	if bndAddress.To4() != nil {
 		bndAddress = bndAddress.To4()
-		addressType = IPv4
+		bndType = IPv4
 	} else if bndAddress.To16() != nil {
 		bndAddress = bndAddress.To16()
-		addressType = IPv6
+		bndType = IPv6
 	}
 
-	response := make([]byte, 0, 350)
-	response = append(response, SocksV5, ConnectionSucceed, 0x00, addressType)
-	response = append(response, bndAddress...)
-	response = append(response, localPort[:]...)
+	_ = context.Reply(CommandReply{
+		Version:     SocksV5,
+		StatusCode:  ConnectionSucceed,
+		AddressType: bndType,
+		Address:     bndAddress,
+		Port:        bndPort[:],
+	})
 
-	_, connectionError = clientConnection.Write(response)
-	if connectionError != nil {
-		return connectionError
-	}
 	// Forward traffic
-	return pipes.ForwardTraffic(clientConnection, targetConnection)
+	return pipes.ForwardTraffic(context.ClientConnection, targetConnection)
 }

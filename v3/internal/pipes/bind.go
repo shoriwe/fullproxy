@@ -30,9 +30,10 @@ func (bind *Bind) SetLoggingMethod(loggingMethod global.LoggingMethod) error {
 }
 
 func (bind *Bind) serve(clientConnection net.Conn) {
-	if !global.FilterInbound(bind.InboundFilter, global.ParseIP(clientConnection.RemoteAddr().String()).String()) {
+	filterError := global.FilterInbound(bind.InboundFilter, global.ParseIP(clientConnection.RemoteAddr().String()).String())
+	if filterError != nil {
 		_ = clientConnection.Close()
-		global.LogData(bind.LoggingMethod, "Connection denied to: "+clientConnection.RemoteAddr().String())
+		global.LogData(bind.LoggingMethod, filterError)
 		return
 	}
 	global.LogData(bind.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
