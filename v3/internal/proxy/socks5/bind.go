@@ -3,6 +3,7 @@ package socks5
 import (
 	"github.com/shoriwe/FullProxy/v3/internal/pipes"
 	"net"
+	"time"
 )
 
 func (socks5 *Socks5) Bind(context *Context) error {
@@ -28,6 +29,7 @@ func (socks5 *Socks5) Bind(context *Context) error {
 	if replyError != nil {
 		return replyError
 	}
+	_ = listener.(*net.TCPListener).SetDeadline(time.Now().Add(30 * time.Second))
 	targetConnection, acceptError := listener.Accept()
 	if acceptError != nil {
 		return acceptError
