@@ -10,7 +10,7 @@ type Bind struct {
 	NetworkType   string
 	BindAddress   string
 	Server        net.Listener
-	ProxyProtocol global.Protocol
+	Protocol      global.Protocol
 	LoggingMethod global.LoggingMethod
 	InboundFilter global.IOFilter
 }
@@ -37,7 +37,7 @@ func (bind *Bind) serve(clientConnection net.Conn) {
 		return
 	}
 	global.LogData(bind.LoggingMethod, "Client connection received from: ", clientConnection.RemoteAddr().String())
-	handleError := bind.ProxyProtocol.Handle(clientConnection)
+	handleError := bind.Protocol.Handle(clientConnection)
 	if handleError != nil {
 		global.LogData(bind.LoggingMethod, handleError.Error())
 	}
@@ -52,7 +52,9 @@ func (bind *Bind) Serve() error {
 	bind.Server = listener
 	defer bind.Server.Close()
 	global.LogData(bind.LoggingMethod, "Successfully listening at: "+bind.BindAddress)
-	bind.ProxyProtocol.SetDial(net.Dial)
+	bind.Protocol.SetDial(net.Dial)
+	bind.Protocol.SetListen(net.Listen)
+	bind.Protocol.SetListenAddress(listener.Addr())
 	for {
 		clientConnection, connectionError := bind.Server.Accept()
 		if connectionError != nil {
@@ -67,7 +69,7 @@ func NewBindPipe(networkType, bindAddress string, protocol global.Protocol, meth
 	return &Bind{
 		NetworkType:   networkType,
 		BindAddress:   bindAddress,
-		ProxyProtocol: protocol,
+		Protocol:      protocol,
 		LoggingMethod: method,
 		InboundFilter: inboundFilter,
 	}

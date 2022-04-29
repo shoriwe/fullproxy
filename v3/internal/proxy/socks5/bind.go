@@ -1,12 +1,55 @@
 package socks5
 
 import (
-	"errors"
-	"github.com/shoriwe/FullProxy/v3/internal/global"
+	"github.com/shoriwe/FullProxy/v3/internal/pipes"
+	"net"
 )
 
 func (socks5 *Socks5) Bind(context *Context) error {
-	_ = context.ClientConnection.Close()
-	global.LogData(socks5.LoggingMethod, "Bind method not implemented yet")
-	return errors.New("bind method not implemented yet")
+	listener, listenError := socks5.Listen(
+		"tcp",
+		net.JoinHostPort(
+			socks5.ListenAddress.IP.String(),
+			"0",
+		),
+	)
+	if listenError != nil {
+		return listenError
+	}
+	defer listener.Close()
+	replyError := context.Reply(
+		CommandReply{
+			Version:    SocksV5,
+			StatusCode: ConnectionSucceed,
+			Address:    context.ClientConnection.LocalAddr().(*net.TCPAddr).IP,
+			Port:       listener.Addr().(*net.TCPAddr).Port,
+		},
+	)
+	if replyError != nil {
+		return replyError
+	}
+	targetConnection, acceptError := listener.Accept()
+	if acceptError != nil {
+		return acceptError
+	}
+	defer targetConnection.Close()
+	_ = listener.Close()
+	if !targetConnection.RemoteAddr().(*net.TCPAddr).IP.Equal(context.DSTRawAddress) {
+		_ = context.Reply(CommandReply{
+			Version:    SocksV5,
+			StatusCode: ConnectionNotAllowedByRuleSet,
+			Address:    targetConnection.RemoteAddr().(*net.TCPAddr).IP,
+			Port:       targetConnection.RemoteAddr().(*net.TCPAddr).Port,
+		})
+		return ConnectionToReservedPort
+	}
+	replyError = context.Reply(
+		CommandReply{
+			Version:    SocksV5,
+			StatusCode: ConnectionSucceed,
+			Address:    targetConnection.RemoteAddr().(*net.TCPAddr).IP,
+			Port:       targetConnection.RemoteAddr().(*net.TCPAddr).Port,
+		},
+	)
+	return pipes.ForwardTraffic(context.ClientConnection, targetConnection)
 }

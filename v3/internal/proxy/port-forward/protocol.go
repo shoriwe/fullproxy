@@ -11,9 +11,17 @@ type Forward struct {
 	TargetAddress string
 	LoggingMethod global.LoggingMethod
 	DialFunc      global.DialFunc
+	ListenAddress *net.TCPAddr
 }
 
-func NewForward(targetAddress string, loggingMethod global.LoggingMethod) *Forward {
+func (localForward *Forward) SetListen(_ global.ListenFunc) {
+}
+
+func (localForward *Forward) SetListenAddress(address net.Addr) {
+	localForward.ListenAddress = address.(*net.TCPAddr)
+}
+
+func NewForward(targetAddress string, loggingMethod global.LoggingMethod) global.Protocol {
 	return &Forward{TargetAddress: targetAddress, LoggingMethod: loggingMethod}
 }
 

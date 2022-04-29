@@ -38,6 +38,14 @@ type HTTP struct {
 	LoggingMethod        global.LoggingMethod
 	listener             *customListener
 	OutboundFilter       global.IOFilter
+	ListenAddress        *net.TCPAddr
+}
+
+func (protocol *HTTP) SetListenAddress(address net.Addr) {
+	protocol.ListenAddress = address.(*net.TCPAddr)
+}
+
+func (protocol *HTTP) SetListen(_ global.ListenFunc) {
 }
 
 func (protocol *HTTP) SetDial(dialFunc global.DialFunc) {
@@ -49,7 +57,7 @@ func NewHTTP(
 	authenticationMethod global.AuthenticationMethod,
 	loggingMethod global.LoggingMethod,
 	outboundFilter global.IOFilter,
-) *HTTP {
+) global.Protocol {
 	proxyHttpServer := goproxy.NewProxyHttpServer()
 	listener := newCustomListener()
 	go http.Serve(listener, proxyHttpServer)

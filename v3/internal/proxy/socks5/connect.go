@@ -8,28 +8,26 @@ import (
 )
 
 func (socks5 *Socks5) Connect(context *Context) error {
-	filterError := global.FilterOutbound(socks5.OutboundFilter, context.DSTHost)
+	filterError := global.FilterOutbound(socks5.OutboundFilter, context.DSTAddress)
 	if filterError != nil {
 		_ = context.Reply(CommandReply{
-			Version:     SocksV5,
-			StatusCode:  ConnectionNotAllowedByRuleSet,
-			AddressType: context.DSTAddressType,
-			Address:     context.DSTRawAddress,
-			Port:        context.DSTRawPort,
+			Version:    SocksV5,
+			StatusCode: ConnectionNotAllowedByRuleSet,
+			Address:    context.DSTRawAddress,
+			Port:       context.DSTPort,
 		})
 		return filterError
 	}
 
 	// Try to connect to the target
 
-	targetConnection, connectionError := socks5.Dial("tcp", context.DSTAddress)
+	targetConnection, connectionError := socks5.Dial("tcp", context.DST)
 	if connectionError != nil {
 		_ = context.Reply(CommandReply{
-			Version:     SocksV5,
-			StatusCode:  GeneralSocksServerFailure,
-			AddressType: context.DSTAddressType,
-			Address:     context.DSTRawAddress,
-			Port:        context.DSTRawPort,
+			Version:    SocksV5,
+			StatusCode: GeneralSocksServerFailure,
+			Address:    context.DSTRawAddress,
+			Port:       context.DSTPort,
 		})
 		return connectionError
 	}
@@ -38,7 +36,6 @@ func (socks5 *Socks5) Connect(context *Context) error {
 
 	targetConnectionAddress := targetConnection.LocalAddr().(*net.TCPAddr)
 	var (
-		bndType    byte
 		bndAddress = targetConnectionAddress.IP
 		bndPort    [2]byte
 	)
@@ -46,18 +43,15 @@ func (socks5 *Socks5) Connect(context *Context) error {
 
 	if bndAddress.To4() != nil {
 		bndAddress = bndAddress.To4()
-		bndType = IPv4
 	} else if bndAddress.To16() != nil {
 		bndAddress = bndAddress.To16()
-		bndType = IPv6
 	}
 
 	_ = context.Reply(CommandReply{
-		Version:     SocksV5,
-		StatusCode:  ConnectionSucceed,
-		AddressType: bndType,
-		Address:     bndAddress,
-		Port:        bndPort[:],
+		Version:    SocksV5,
+		StatusCode: ConnectionSucceed,
+		Address:    bndAddress,
+		Port:       context.DSTPort,
 	})
 
 	// Forward traffic

@@ -190,6 +190,11 @@ func (master *Master) Serve() error {
 	global.LogData(master.LoggingMethod, "slave Address: "+slaveConnection.RemoteAddr().String())
 	master.SlaveConnection = slaveConnection
 	master.Protocol.SetDial(master.protocolDialFunc())
+	master.Protocol.SetListen(
+		func(network, address string) (net.Listener, error) {
+			return nil, errors.New("not supported for master/slave protocol")
+		})
+	master.Protocol.SetListenAddress(master.ProxyListener.Addr())
 	var clientConnection net.Conn
 	for !master.finish {
 		clientConnection, connectionError = master.ProxyListener.Accept()

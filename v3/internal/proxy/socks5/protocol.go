@@ -2,9 +2,9 @@ package socks5
 
 import (
 	"encoding/binary"
-	"fmt"
 	"github.com/shoriwe/FullProxy/v3/internal/global"
 	"net"
+	"strconv"
 )
 
 const (
@@ -16,8 +16,16 @@ type Socks5 struct {
 	LoggingMethod        global.LoggingMethod
 	OutboundFilter       global.IOFilter
 	Dial                 global.DialFunc
-	UDPRelay             *net.UDPConn
-	relaySessions        map[string]*net.UDPConn
+	Listen               global.ListenFunc
+	ListenAddress        *net.TCPAddr
+}
+
+func (socks5 *Socks5) SetListenAddress(address net.Addr) {
+	socks5.ListenAddress = address.(*net.TCPAddr)
+}
+
+func (socks5 *Socks5) SetListen(listenFunc global.ListenFunc) {
+	socks5.Listen = listenFunc
 }
 
 type Context struct {
@@ -25,11 +33,11 @@ type Context struct {
 	Chunk            [DefaultContextChunkSize]byte
 	Version          byte
 	Command          byte
+	DST              string
 	DSTAddressType   byte
-	DSTHost          string
 	DSTAddress       string
-	DSTPort          int
 	DSTRawAddress    []byte
+	DSTPort          int
 	DSTRawPort       []byte
 }
 
@@ -44,33 +52,28 @@ func (c *Context) ReadCommand() error {
 		return SocksVersionNotSupported
 	}
 	// Cleanup the address
-	var (
-		rawHost, rawPort []byte
-	)
 	switch c.Chunk[3] {
 	case IPv4:
-		rawHost = c.Chunk[4 : 4+4]
-		rawPort = c.Chunk[4+4 : 4+4+2]
-		c.DSTHost = fmt.Sprintf("%d.%d.%d.%d", rawHost[0], rawHost[1], rawHost[2], rawHost[3])
+		c.DSTRawAddress = c.Chunk[4 : 4+4]
+		c.DSTRawPort = c.Chunk[4+4 : 4+4+2]
+
+		c.DSTAddress = net.IP(c.DSTRawAddress).To4().String()
 	case DomainName:
-		rawHost = c.Chunk[5 : 5+c.Chunk[4]]
-		rawPort = c.Chunk[5+c.Chunk[4] : 5+c.Chunk[4]+2]
-		c.DSTHost = string(rawHost)
+		c.DSTRawAddress = c.Chunk[5 : 5+c.Chunk[4]]
+		c.DSTRawPort = c.Chunk[5+c.Chunk[4] : 5+c.Chunk[4]+2]
+
+		c.DSTAddress = string(c.Chunk[5 : 5+c.Chunk[4]])
 	case IPv6:
-		rawHost = c.Chunk[4 : 4+16]
-		rawPort = c.Chunk[4+16 : 4+16+2]
-		c.DSTHost = fmt.Sprintf("[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x]",
-			rawHost[0], rawHost[1], rawHost[2], rawHost[3],
-			rawHost[4], rawHost[5], rawHost[6], rawHost[7],
-			rawHost[8], rawHost[9], rawHost[10], rawHost[11],
-			rawHost[12], rawHost[13], rawHost[14], rawHost[15],
-		)
+		c.DSTRawAddress = c.Chunk[4 : 4+16]
+		c.DSTRawPort = c.Chunk[4+16 : 4+16+2]
+
+		c.DSTAddress = net.IP(c.DSTRawAddress).To16().String()
 	default:
 		return UnknownAddressType
 	}
 
-	c.DSTPort = int(binary.BigEndian.Uint16(rawPort))
-	c.DSTAddress = fmt.Sprintf("%s:%d", c.DSTHost, c.DSTPort)
+	c.DSTPort = int(binary.BigEndian.Uint16(c.DSTRawPort))
+	c.DST = net.JoinHostPort(c.DSTAddress, strconv.Itoa(c.DSTPort))
 	return nil
 }
 
@@ -88,21 +91,36 @@ func (b BasicReply) Bytes() []byte {
 }
 
 type CommandReply struct {
-	Version     byte
-	StatusCode  byte
-	AddressType byte
-	Address     []byte
-	Port        []byte
+	Version    byte
+	StatusCode byte
+	Address    net.IP
+	Port       int
 }
 
 func (c CommandReply) Bytes() []byte {
-	result := make([]byte, 0, 7+len(c.Address))
-	result = append(result, c.Version, c.StatusCode, 0x00, c.AddressType)
-	if c.AddressType == DomainName {
-		result = append(result, byte(len(c.Address)))
+	var (
+		addressType byte
+		address     []byte
+	)
+	if c.Address.To4() != nil {
+		addressType = IPv4
+		address = c.Address.To4()
+	} else if c.Address.To16() != nil {
+		addressType = IPv6
+		address = c.Address.To16()
+	} else {
+		addressType = DomainName
+		address = c.Address
 	}
-	result = append(result, c.Address...)
-	result = append(result, c.Port...)
+	result := make([]byte, 0, 7+len(address))
+	result = append(result, c.Version, c.StatusCode, 0x00, addressType)
+	if addressType == DomainName {
+		result = append(result, byte(len(address)))
+	}
+	var portChunk [2]byte
+	binary.BigEndian.PutUint16(portChunk[:], uint16(c.Port))
+	result = append(result, address...)
+	result = append(result, portChunk[0], portChunk[1])
 	return result
 }
 
@@ -154,11 +172,10 @@ func (socks5 *Socks5) Handle(clientConnection net.Conn) error {
 		return socks5.Bind(context)
 	default:
 		_ = context.Reply(CommandReply{
-			Version:     SocksV5,
-			StatusCode:  MethodNotSupportedCode,
-			AddressType: context.DSTAddressType,
-			Address:     context.DSTRawAddress,
-			Port:        context.DSTRawPort,
+			Version:    SocksV5,
+			StatusCode: MethodNotSupportedCode,
+			Address:    context.DSTRawAddress,
+			Port:       context.DSTPort,
 		})
 		return MethodNotSupported
 	}
@@ -168,12 +185,10 @@ func NewSocks5(
 	authenticationMethod global.AuthenticationMethod,
 	loggingMethod global.LoggingMethod,
 	outboundFilter global.IOFilter,
-	udpRelay *net.UDPConn,
-) *Socks5 {
+) global.Protocol {
 	return &Socks5{
 		AuthenticationMethod: authenticationMethod,
 		LoggingMethod:        loggingMethod,
 		OutboundFilter:       outboundFilter,
-		UDPRelay:             udpRelay,
 	}
 }

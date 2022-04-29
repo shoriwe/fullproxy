@@ -3,7 +3,11 @@ github.com/elazarl/goproxy v0.0.0-20210801061803-8e322dfb79c4/go.mod h1:Ro8st/El
 github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2/go.mod h1:gNh8nYJoAm43RfaxurUnxr+N1PwuFV3ZMl/efxlIlY8=
 github.com/elazarl/goproxy/ext v0.0.0-20210801061803-8e322dfb79c4 h1:jLY5dBmGEgdHm34NvYB0jQC+M4D+C0cB1C8/5aRdPcw=
 github.com/elazarl/goproxy/ext v0.0.0-20210801061803-8e322dfb79c4/go.mod h1:gNh8nYJoAm43RfaxurUnxr+N1PwuFV3ZMl/efxlIlY8=
+github.com/haochen233/socks5 v1.0.0 h1:OSC4QGjKxdb7hznD7B6v7Lg5t0liq9YR29Qk9P2metM=
+github.com/haochen233/socks5 v1.0.0/go.mod h1:EoQMEeagQ7UP/h+jeFwDV+0Av7zb45iPN6ZWrDKexD0=
 github.com/rogpeppe/go-charset v0.0.0-20180617210344-2471d30d28b4/go.mod h1:qgYeAmZ5ZIpBWTGllZSQnw97Dj+woV0toclVaRGI8pc=
+github.com/wzshiming/socks5 v0.4.1 h1:MZt9cIHSl3vsLufZDR3aZO3hbpCrylWk5XKAuUrgzbQ=
+github.com/wzshiming/socks5 v0.4.1/go.mod h1:BvCAqlzocQN5xwLjBZDBbvWlrx8sCYSSbHEOf2wZgT0=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9 h1:phUcVbl53swtrUN8kQEXFhUxPlIlWyBfKmidCu7P95o=

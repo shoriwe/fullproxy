@@ -27,4 +27,5 @@ var (
 	ClientNotAuthenticated          = errors.New("client not authenticated")
 	SocksVersionNotSupported        = errors.New("client requesting a non supported socks version")
 	MethodNotSupported              = errors.New("method not supported")
+	ConnectionToReservedPort        = errors.New("connection to reserved port")
 )

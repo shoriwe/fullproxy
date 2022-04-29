@@ -1,8 +1,13 @@
 package test
 
 import (
+	"bytes"
+	"fmt"
+	haochensocks5 "github.com/haochen233/socks5"
 	"github.com/shoriwe/FullProxy/v3/internal/proxy/socks5"
+	"net"
 	"testing"
+	"time"
 )
 
 //// Test No auth
@@ -10,7 +15,7 @@ import (
 func TestSocks5NoAuthHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(nil, nil, nil, nil), nil)
+	p := NewBindPipe(socks5.NewSocks5(nil, nil, nil), nil)
 	defer p.Close()
 	if GetRequestSocks5(testUrl, "", "") != Success {
 		t.Fatal(testUrl)
@@ -22,7 +27,7 @@ func TestSocks5NoAuthHTTPRequest(t *testing.T) {
 func TestSocks5IPv6HTTPRequest(t *testing.T) {
 	h := StartIPv6HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(nil, nil, nil, nil), nil)
+	p := NewBindPipe(socks5.NewSocks5(nil, nil, nil), nil)
 	defer p.Close()
 	result := GetRequestSocks5(testUrlIPv6, "", "")
 	if result != Success {
@@ -35,7 +40,7 @@ func TestSocks5IPv6HTTPRequest(t *testing.T) {
 func TestSocks5UsernamePasswordHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc, nil, nil, nil), nil)
+	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc, nil, nil), nil)
 	defer p.Close()
 	if GetRequestSocks5(testUrl, "sulcud", "password") != Success {
 		t.Fatal(testUrl)
@@ -50,7 +55,7 @@ func TestSocks5UsernamePasswordHTTPRequest(t *testing.T) {
 func TestSocks5InvalidInboundHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc, nil, nil, nil),
+	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc, nil, nil),
 		basicInboundRule,
 	)
 	defer p.Close()
@@ -64,7 +69,7 @@ func TestSocks5InvalidInboundHTTPRequest(t *testing.T) {
 func TestSocks5OutboundHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc, nil, basicOutboundRule, nil),
+	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc, nil, basicOutboundRule),
 		nil,
 	)
 	defer p.Close()
@@ -85,7 +90,7 @@ func TestSocks5NoAuthMasterSlaveHTTPRequest(t *testing.T) {
 	defer h.Close()
 	a, b := NewMasterSlave(
 		nil,
-		socks5.NewSocks5(nil, nil, nil, nil))
+		socks5.NewSocks5(nil, nil, nil))
 	defer func() {
 		a.Close()
 		b.Close()
@@ -101,7 +106,7 @@ func TestSocks5NoAuthIPv6MasterSlaveHTTPRequest(t *testing.T) {
 	defer h.Close()
 	a, b := NewMasterSlave(
 		nil,
-		socks5.NewSocks5(nil, nil, nil, nil))
+		socks5.NewSocks5(nil, nil, nil))
 	defer func() {
 		a.Close()
 		b.Close()
@@ -118,7 +123,7 @@ func TestSocks5UsernamePasswordMasterSlaveHTTPRequest(t *testing.T) {
 	defer h.Close()
 	a, b := NewMasterSlave(
 		nil,
-		socks5.NewSocks5(basicAuthFunc, nil, nil, nil))
+		socks5.NewSocks5(basicAuthFunc, nil, nil))
 	defer func() {
 		a.Close()
 		b.Close()
@@ -136,7 +141,7 @@ func TestSocks5InboundMasterSlaveHTTPRequest(t *testing.T) {
 	defer h.Close()
 	a, b := NewMasterSlave(
 		basicInboundRule,
-		socks5.NewSocks5(basicAuthFunc, nil, nil, nil))
+		socks5.NewSocks5(basicAuthFunc, nil, nil))
 	defer func() {
 		a.Close()
 		b.Close()
@@ -154,7 +159,7 @@ func TestSocks5OutboundMasterSlaveHTTPRequest(t *testing.T) {
 	defer h.Close()
 	a, b := NewMasterSlave(
 		nil,
-		socks5.NewSocks5(basicAuthFunc, nil, basicOutboundRule, nil))
+		socks5.NewSocks5(basicAuthFunc, nil, basicOutboundRule))
 	defer func() {
 		a.Close()
 		b.Close()
@@ -165,5 +170,58 @@ func TestSocks5OutboundMasterSlaveHTTPRequest(t *testing.T) {
 	}
 	if GetRequestSocks5(testUrl, "sulcud", "password") != Success {
 		t.Fatal(testUrl)
+	}
+}
+
+func TestSocks5NoAuthBind(t *testing.T) {
+	proxyServer := NewBindPipe(
+		socks5.NewSocks5(nil, nil, basicOutboundRule),
+		nil,
+	)
+	defer proxyServer.Close()
+	socksClient := haochensocks5.Client{
+		ProxyAddr: "127.0.0.1:9050",
+		Auth: map[haochensocks5.METHOD]haochensocks5.Authenticator{
+			haochensocks5.NO_AUTHENTICATION_REQUIRED: haochensocks5.NoAuth{},
+		},
+		DisableSocks4A: true,
+	}
+	var (
+		address *haochensocks5.Address
+		server  net.Conn
+	)
+	go func() {
+		var (
+			secondError <-chan error
+			err         error
+		)
+		address, secondError, server, err = socksClient.Bind(haochensocks5.Version5, "127.0.0.1:9999")
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = <-secondError
+		if err != nil {
+			fmt.Println(err.Error())
+			t.Fatal(secondError)
+		}
+	}()
+	time.Sleep(3 * time.Second)
+	client, connError := net.Dial("tcp", address.String())
+	if connError != nil {
+		t.Fatal(connError)
+	}
+	defer server.Close()
+	defer client.Close()
+	_, writeError := server.Write([]byte("HOLA"))
+	if writeError != nil {
+		t.Fatal(writeError)
+	}
+	var message [4]byte
+	_, readError := client.Read(message[:])
+	if readError != nil {
+		t.Fatal(readError)
+	}
+	if !bytes.Equal(message[:], []byte("HOLA")) {
+		t.Fatal(string(message[:]))
 	}
 }

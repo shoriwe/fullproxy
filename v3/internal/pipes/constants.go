@@ -15,7 +15,6 @@ const (
 	NewConnectionFailed
 	RequestNewMasterConnectionCommand
 	DialCommand
-	BindCommand
 	UnknownCommand
 )
 

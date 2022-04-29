@@ -89,16 +89,10 @@ func (slave *Slave) dial(clientConnection net.Conn) error {
 	return ForwardTraffic(clientConnection, targetConnection)
 }
 
-func (slave *Slave) bind(clientConnection net.Conn) error {
-	return nil
-}
-
 func (slave *Slave) command(command byte, clientConnection net.Conn) error {
 	switch command {
 	case DialCommand:
 		return slave.dial(clientConnection)
-	case BindCommand:
-		return slave.bind(clientConnection)
 	}
 	_, _ = clientConnection.Write([]byte{UnknownCommand})
 	return errors.New("unknown command")

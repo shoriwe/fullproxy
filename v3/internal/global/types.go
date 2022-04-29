@@ -10,6 +10,8 @@ type Protocol interface {
 	Handle(net.Conn) error
 	SetOutboundFilter(IOFilter) error
 	SetDial(dialFunc DialFunc)
+	SetListen(listenFunc ListenFunc)
+	SetListenAddress(address net.Addr)
 }
 
 type Pipe interface {
