@@ -4,21 +4,24 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	haochensocks5 "github.com/haochen233/socks5"
 	"github.com/shoriwe/fullproxy/v3/internal/pipes"
-	proxy2 "github.com/shoriwe/fullproxy/v3/internal/proxy"
-	"github.com/shoriwe/fullproxy/v3/internal/proxy/socks5"
+	socks52 "github.com/shoriwe/fullproxy/v3/internal/proxy/clients/socks5"
+	proxy2 "github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/socks5"
 	"golang.org/x/net/proxy"
 	"net"
 	"net/http"
 	"net/url"
-	"sync"
 	"testing"
 	"time"
 )
 
 var (
 	SampleMessage = []byte("HELLO")
+	SampleAddress = &net.TCPAddr{
+		IP:   net.ParseIP("127.0.0.1"),
+		Port: 9999,
+	}
 )
 
 const (
@@ -196,7 +199,7 @@ func GetRequestHTTP(targetUrl, username, password string) uint8 {
 func Socks5BindTest(
 	proxyAddress string,
 	authMethod proxy2.AuthenticationMethod,
-	auth map[haochensocks5.METHOD]haochensocks5.Authenticator,
+	username, password string,
 	t *testing.T,
 ) {
 	time.Sleep(10 * time.Second)
@@ -206,50 +209,53 @@ func Socks5BindTest(
 		basicOutboundRule,
 	)
 	defer proxyServer.Close()
-	socksClient := haochensocks5.Client{
-		ProxyAddr:      proxyAddress,
-		Auth:           auth,
-		Timeout:        time.Minute,
-		DisableSocks4A: true,
+	socksClient := socks52.Socks5{
+		Network:  "tcp",
+		Address:  proxyAddress,
+		Username: username,
+		Password: password,
 	}
 	var (
-		address         *haochensocks5.Address
-		server          net.Conn
-		connEstablished = new(sync.WaitGroup)
+		listener                     net.Listener
+		client, server               net.Conn
+		connectionError, listenError error
 	)
-	connEstablished.Add(1)
 	go func() {
-		var (
-			secondError <-chan error
-			err         error
-		)
-		address, secondError, server, err = socksClient.Bind(haochensocks5.Version5, "127.0.0.1:9999")
-		if err != nil {
-			t.Fatal(err)
+		listener, listenError = socksClient.Listen("tcp", SampleAddress.String())
+		if listenError != nil {
+			t.Fatal(listenError)
 		}
-		connEstablished.Done()
-		err = <-secondError
-		if err != nil {
-			t.Fatal(err)
+		client, connectionError = listener.Accept()
+		if connectionError != nil {
+			t.Fatal(connectionError)
+		}
+		_, writeError := client.Write(SampleMessage)
+		if writeError != nil {
+			t.Fatal(writeError)
 		}
 	}()
-	connEstablished.Wait()
-	client, connError := net.Dial("tcp", address.String())
-	if connError != nil {
-		t.Fatal(connError)
+	time.Sleep(2 * time.Second)
+	defer func(listener net.Listener) {
+		if listener != nil {
+			_ = listener.Close()
+		}
+	}(listener)
+	defer func(client net.Conn) {
+		if client != nil {
+			_ = client.Close()
+		}
+	}(client)
+	server, connectionError = net.DialTCP("tcp", SampleAddress, listener.Addr().(*net.TCPAddr))
+	if connectionError != nil {
+		t.Fatal(connectionError)
 	}
 	defer server.Close()
-	defer client.Close()
-	_, writeError := server.Write(SampleMessage)
-	if writeError != nil {
-		t.Fatal(writeError)
-	}
-	message := make([]byte, len(SampleMessage))
-	_, readError := client.Read(message[:])
+	response := make([]byte, len(SampleMessage))
+	_, readError := server.Read(response)
 	if readError != nil {
 		t.Fatal(readError)
 	}
-	if !bytes.Equal(message[:], SampleMessage) {
-		t.Fatal(string(message[:]))
+	if !bytes.Equal(response, SampleMessage) {
+		t.Fatal(string(response))
 	}
 }

@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"github.com/shoriwe/fullproxy/v3/internal/global"
 	"github.com/shoriwe/fullproxy/v3/internal/pipes"
-	"github.com/shoriwe/fullproxy/v3/internal/proxy"
-	"github.com/shoriwe/fullproxy/v3/internal/proxy/http"
-	"github.com/shoriwe/fullproxy/v3/internal/proxy/port-forward"
-	"github.com/shoriwe/fullproxy/v3/internal/proxy/socks5"
-	"github.com/shoriwe/fullproxy/v3/internal/proxy/translation/pf-to-socks5"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/http"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/port-forward"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/socks5"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/translation/pf-to-socks5"
 	"io"
 	"log"
 	"os"
@@ -110,7 +110,7 @@ func configOutboundFilter(whiteList, blackList string) proxy.IOFilter {
 	return nil
 }
 
-func configAuthMethod(command, usersFile string) proxy.AuthenticationMethod {
+func configAuthMethod(command, usersFile string) servers.AuthenticationMethod {
 	if command != "" {
 		return func(username []byte, password []byte) (bool, error) {
 			cmd := exec.Command(command, hex.EncodeToString(username), hex.EncodeToString(password))
@@ -151,7 +151,7 @@ func configAuthMethod(command, usersFile string) proxy.AuthenticationMethod {
 	return nil
 }
 
-func configSocks5() (proxy.IOFilter, proxy.Protocol, error) {
+func configSocks5() (proxy.IOFilter, servers.Protocol, error) {
 	if len(os.Args) < 5 {
 		return nil, socks5.NewSocks5(nil, log.Println, nil), nil
 	}
@@ -173,7 +173,7 @@ func configSocks5() (proxy.IOFilter, proxy.Protocol, error) {
 	return configInboundFilter(*inboundWhiteList, *inboundBlackList), socks5.NewSocks5(configAuthMethod(*authCommand, *usersFiles), log.Println, configOutboundFilter(*outboundWhiteList, *outboundBlackList)), nil
 }
 
-func configPortForward() (proxy.IOFilter, proxy.Protocol, error) {
+func configPortForward() (proxy.IOFilter, servers.Protocol, error) {
 	if len(os.Args) < 5 {
 		return nil, socks5.NewSocks5(nil, log.Println, nil), nil
 	}
@@ -194,7 +194,7 @@ func configPortForward() (proxy.IOFilter, proxy.Protocol, error) {
 	return configInboundFilter(*inboundWhiteList, *inboundBlackList), port_forward.NewForward(*networkType, *targetAddress, log.Println), nil
 }
 
-func configHTTP() (proxy.IOFilter, proxy.Protocol, error) {
+func configHTTP() (proxy.IOFilter, servers.Protocol, error) {
 	if len(os.Args) < 5 {
 		return nil, socks5.NewSocks5(nil, log.Println, nil), nil
 	}
@@ -220,7 +220,7 @@ func configHTTP() (proxy.IOFilter, proxy.Protocol, error) {
 	), nil
 }
 
-func configTranslateSocks5() (proxy.IOFilter, proxy.Protocol, error) {
+func configTranslateSocks5() (proxy.IOFilter, servers.Protocol, error) {
 	if len(os.Args) < 5 {
 		return nil, socks5.NewSocks5(nil, log.Println, nil), nil
 	}
@@ -248,7 +248,7 @@ func configTranslateSocks5() (proxy.IOFilter, proxy.Protocol, error) {
 	return configInboundFilter(*inboundWhiteList, *inboundBlackList), translate, nil
 }
 
-func configProtocol(protocol string) (proxy.IOFilter, proxy.Protocol, error) {
+func configProtocol(protocol string) (proxy.IOFilter, servers.Protocol, error) {
 	switch protocol {
 	case "socks5":
 		return configSocks5()

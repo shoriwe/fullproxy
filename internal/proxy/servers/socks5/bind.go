@@ -50,7 +50,7 @@ func (socks5 *Socks5) Bind(context *Context) error {
 	}
 	defer targetConnection.Close()
 	_ = listener.Close()
-	if !targetConnection.RemoteAddr().(*net.TCPAddr).IP.Equal(context.DSTRawAddress) {
+	if targetConnection.RemoteAddr().String() != context.DST {
 		_ = context.Reply(CommandReply{
 			Version:    SocksV5,
 			StatusCode: ConnectionNotAllowedByRuleSet,

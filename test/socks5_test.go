@@ -1,8 +1,7 @@
 package test
 
 import (
-	haochensocks5 "github.com/haochen233/socks5"
-	"github.com/shoriwe/fullproxy/v3/internal/proxy/socks5"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/socks5"
 	"testing"
 )
 
@@ -168,9 +167,7 @@ func TestSocks5NoAuthBind(t *testing.T) {
 	Socks5BindTest(
 		proxyAddress,
 		nil,
-		map[haochensocks5.METHOD]haochensocks5.Authenticator{
-			haochensocks5.NO_AUTHENTICATION_REQUIRED: haochensocks5.NoAuth{},
-		},
+		"", "",
 		t,
 	)
 }
@@ -179,9 +176,7 @@ func TestSocks5BasicAuthBind(t *testing.T) {
 	Socks5BindTest(
 		proxyAddress,
 		basicAuthFunc,
-		map[haochensocks5.METHOD]haochensocks5.Authenticator{
-			haochensocks5.USERNAME_PASSWORD: &haochensocks5.UserPasswd{Username: "sulcud", Password: "password"},
-		},
+		"sulcud", "password",
 		t,
 	)
 }

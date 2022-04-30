@@ -7,7 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"errors"
-	"github.com/shoriwe/fullproxy/v3/internal/proxy"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"math/big"
 	"net"
 	"time"
@@ -71,7 +71,7 @@ type Master struct {
 	ProxyListener                 net.Listener
 	LoggingMethod                 LoggingMethod
 	InboundFilter, OutboundFilter IOFilter
-	Protocol                      proxy.Protocol
+	Protocol                      servers.Protocol
 	TLSConfig                     *tls.Config
 }
 
@@ -107,7 +107,7 @@ func (master *Master) SetLoggingMethod(loggingMethod LoggingMethod) {
 	master.LoggingMethod = loggingMethod
 }
 
-func (master *Master) protocolDialFunc() proxy.DialFunc {
+func (master *Master) protocolDialFunc() servers.DialFunc {
 	return func(network, address string) (net.Conn, error) {
 		resolvedAddress, resolveError := net.ResolveTCPAddr("tcp", address)
 		if resolveError != nil {
@@ -240,7 +240,7 @@ func NewMaster(
 	networkType, c2Address, proxyAddress string,
 	loggingMethod LoggingMethod,
 	inboundFilter, outboundFilter IOFilter,
-	protocol proxy.Protocol,
+	protocol servers.Protocol,
 	certificates []tls.Certificate,
 ) Pipe {
 	return &Master{

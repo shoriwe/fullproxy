@@ -3,7 +3,7 @@ package http
 import (
 	"bytes"
 	"encoding/base64"
-	"github.com/shoriwe/fullproxy/v3/internal/proxy"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"gopkg.in/elazarl/goproxy.v1"
 	"net"
 	"net/http"
@@ -33,7 +33,7 @@ func newCustomListener() *customListener {
 }
 
 type HTTP struct {
-	AuthenticationMethod proxy.AuthenticationMethod
+	AuthenticationMethod servers.AuthenticationMethod
 	proxyHttpServer      *goproxy.ProxyHttpServer
 	listener             *customListener
 	ListenAddress        *net.TCPAddr
@@ -43,17 +43,17 @@ func (protocol *HTTP) SetListenAddress(address net.Addr) {
 	protocol.ListenAddress = address.(*net.TCPAddr)
 }
 
-func (protocol *HTTP) SetListen(_ proxy.ListenFunc) {
+func (protocol *HTTP) SetListen(_ servers.ListenFunc) {
 }
 
-func (protocol *HTTP) SetDial(dialFunc proxy.DialFunc) {
+func (protocol *HTTP) SetDial(dialFunc servers.DialFunc) {
 	protocol.proxyHttpServer.Tr.Dial = dialFunc
 	protocol.proxyHttpServer.ConnectDial = dialFunc
 }
 
 func NewHTTP(
-	authenticationMethod proxy.AuthenticationMethod,
-) proxy.Protocol {
+	authenticationMethod servers.AuthenticationMethod,
+) servers.Protocol {
 	proxyHttpServer := goproxy.NewProxyHttpServer()
 	listener := newCustomListener()
 	go http.Serve(listener, proxyHttpServer)
@@ -102,7 +102,7 @@ func NewHTTP(
 	return result
 }
 
-func (protocol *HTTP) SetAuthenticationMethod(authenticationMethod proxy.AuthenticationMethod) error {
+func (protocol *HTTP) SetAuthenticationMethod(authenticationMethod servers.AuthenticationMethod) error {
 	protocol.AuthenticationMethod = authenticationMethod
 	return nil
 }

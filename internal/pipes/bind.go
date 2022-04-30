@@ -1,7 +1,7 @@
 package pipes
 
 import (
-	"github.com/shoriwe/fullproxy/v3/internal/proxy"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"net"
 )
 
@@ -9,7 +9,7 @@ type Bind struct {
 	NetworkType                   string
 	BindAddress                   string
 	Server                        net.Listener
-	Protocol                      proxy.Protocol
+	Protocol                      servers.Protocol
 	LoggingMethod                 LoggingMethod
 	InboundFilter, OutboundFilter IOFilter
 }
@@ -82,7 +82,7 @@ func (bind *Bind) Serve() error {
 
 func NewBindPipe(
 	networkType, bindAddress string,
-	protocol proxy.Protocol,
+	protocol servers.Protocol,
 	method LoggingMethod,
 	inboundFilter, outboundFilter IOFilter,
 ) Pipe {

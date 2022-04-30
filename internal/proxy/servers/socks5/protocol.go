@@ -2,7 +2,7 @@ package socks5
 
 import (
 	"encoding/binary"
-	"github.com/shoriwe/fullproxy/v3/internal/proxy"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"net"
 	"strconv"
 )
@@ -12,9 +12,9 @@ const (
 )
 
 type Socks5 struct {
-	AuthenticationMethod proxy.AuthenticationMethod
-	Dial                 proxy.DialFunc
-	Listen               proxy.ListenFunc
+	AuthenticationMethod servers.AuthenticationMethod
+	Dial                 servers.DialFunc
+	Listen               servers.ListenFunc
 	ListenAddress        *net.TCPAddr
 }
 
@@ -22,7 +22,7 @@ func (socks5 *Socks5) SetListenAddress(address net.Addr) {
 	socks5.ListenAddress = address.(*net.TCPAddr)
 }
 
-func (socks5 *Socks5) SetListen(listenFunc proxy.ListenFunc) {
+func (socks5 *Socks5) SetListen(listenFunc servers.ListenFunc) {
 	socks5.Listen = listenFunc
 }
 
@@ -133,12 +133,12 @@ func NewContext(conn net.Conn) *Context {
 	}
 }
 
-func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod proxy.AuthenticationMethod) error {
+func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod servers.AuthenticationMethod) error {
 	socks5.AuthenticationMethod = authenticationMethod
 	return nil
 }
 
-func (socks5 *Socks5) SetDial(dialFunc proxy.DialFunc) {
+func (socks5 *Socks5) SetDial(dialFunc servers.DialFunc) {
 	socks5.Dial = dialFunc
 }
 
@@ -171,8 +171,8 @@ func (socks5 *Socks5) Handle(clientConnection net.Conn) error {
 }
 
 func NewSocks5(
-	authenticationMethod proxy.AuthenticationMethod,
-) proxy.Protocol {
+	authenticationMethod servers.AuthenticationMethod,
+) servers.Protocol {
 	return &Socks5{
 		AuthenticationMethod: authenticationMethod,
 	}

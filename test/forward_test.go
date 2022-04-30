@@ -1,7 +1,7 @@
 package test
 
 import (
-	"github.com/shoriwe/fullproxy/v3/internal/proxy/port-forward"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/port-forward"
 	"testing"
 )
 
