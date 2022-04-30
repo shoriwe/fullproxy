@@ -15,6 +15,14 @@ func (socks5 *Socks5) Bind(context *Context) error {
 		),
 	)
 	if listenError != nil {
+		_ = context.Reply(
+			CommandReply{
+				Version:    SocksV5,
+				StatusCode: ConnectionNotAllowedByRuleSet,
+				Address:    context.ClientConnection.LocalAddr().(*net.TCPAddr).IP,
+				Port:       0,
+			},
+		)
 		return listenError
 	}
 	defer listener.Close()
@@ -22,16 +30,22 @@ func (socks5 *Socks5) Bind(context *Context) error {
 		CommandReply{
 			Version:    SocksV5,
 			StatusCode: ConnectionSucceed,
-			Address:    context.ClientConnection.LocalAddr().(*net.TCPAddr).IP,
+			Address:    listener.Addr().(*net.TCPAddr).IP,
 			Port:       listener.Addr().(*net.TCPAddr).Port,
 		},
 	)
 	if replyError != nil {
 		return replyError
 	}
-	_ = listener.(*net.TCPListener).SetDeadline(time.Now().Add(30 * time.Second))
+	_ = listener.(*net.TCPListener).SetDeadline(time.Now().Add(time.Minute))
 	targetConnection, acceptError := listener.Accept()
 	if acceptError != nil {
+		_ = context.Reply(CommandReply{
+			Version:    SocksV5,
+			StatusCode: ConnectionNotAllowedByRuleSet,
+			Address:    listener.Addr().(*net.TCPAddr).IP,
+			Port:       listener.Addr().(*net.TCPAddr).Port,
+		})
 		return acceptError
 	}
 	defer targetConnection.Close()
@@ -45,7 +59,7 @@ func (socks5 *Socks5) Bind(context *Context) error {
 		})
 		return ConnectionToReservedPort
 	}
-	replyError = context.Reply(
+	_ = context.Reply(
 		CommandReply{
 			Version:    SocksV5,
 			StatusCode: ConnectionSucceed,

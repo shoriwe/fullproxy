@@ -169,6 +169,8 @@ func TestSocks5OutboundMasterSlaveHTTPRequest(t *testing.T) {
 	}
 }
 
+// BIND
+
 func TestSocks5NoAuthBind(t *testing.T) {
 	Socks5BindTest(
 		proxyAddress,

@@ -193,6 +193,7 @@ func Socks5BindTest(
 	auth map[haochensocks5.METHOD]haochensocks5.Authenticator,
 	t *testing.T,
 ) {
+	time.Sleep(10 * time.Second)
 	proxyServer := NewBindPipe(
 		socks5.NewSocks5(authMethod, nil, basicOutboundRule),
 		nil,
@@ -201,6 +202,7 @@ func Socks5BindTest(
 	socksClient := haochensocks5.Client{
 		ProxyAddr:      proxyAddress,
 		Auth:           auth,
+		Timeout:        time.Minute,
 		DisableSocks4A: true,
 	}
 	var (
@@ -221,7 +223,7 @@ func Socks5BindTest(
 		connEstablished.Done()
 		err = <-secondError
 		if err != nil {
-			t.Fatal(secondError)
+			t.Fatal(err)
 		}
 	}()
 	connEstablished.Wait()
