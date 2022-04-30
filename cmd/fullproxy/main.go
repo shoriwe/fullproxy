@@ -1,19 +1,17 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/shoriwe/FullProxy/internal/Tools"
-	"github.com/shoriwe/FullProxy/pkg/Pipes"
-	"github.com/shoriwe/FullProxy/pkg/Pipes/Reverse/Master"
-	"github.com/shoriwe/FullProxy/pkg/Pipes/Reverse/Slave"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/HTTP"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/PortForward"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/SOCKS5"
-	"github.com/shoriwe/FullProxy/pkg/Proxies/Translation/ForwardToSocks5"
-	"github.com/shoriwe/FullProxy/pkg/Tools/Types"
+	"github.com/shoriwe/FullProxy/v3/internal/global"
+	"github.com/shoriwe/FullProxy/v3/internal/pipes"
+	"github.com/shoriwe/FullProxy/v3/internal/proxy/http"
+	"github.com/shoriwe/FullProxy/v3/internal/proxy/port-forward"
+	"github.com/shoriwe/FullProxy/v3/internal/proxy/socks5"
+	"github.com/shoriwe/FullProxy/v3/internal/proxy/translation/pf-to-socks5"
 	"io"
 	"log"
 	"os"
@@ -23,12 +21,40 @@ import (
 )
 
 var (
-	c2Address = "127.0.0.1:9051"
+	certificate []tls.Certificate
+	c2Address   = "127.0.0.1:9051"
+	privKey     = ""
+	cert        = ""
+	trust       = false
 )
 
 func init() {
 	if os.Getenv("C2Address") != "" {
 		c2Address = os.Getenv("C2Address")
+	}
+	if os.Getenv("C2PrivateKey") != "" {
+		privKey = os.Getenv("C2PrivateKey")
+	}
+	if os.Getenv("C2Certificate") != "" {
+		cert = os.Getenv("C2Certificate")
+	}
+	if os.Getenv("C2SlaveIgnoreTrust") != "" {
+		trust = false
+	}
+	if privKey == cert && cert == "" {
+		var err error
+		certificate, err = pipes.SelfSignCertificate()
+		if err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+	} else {
+		c, err := tls.LoadX509KeyPair(cert, privKey)
+		if err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		certificate = []tls.Certificate{c}
 	}
 }
 
@@ -49,7 +75,7 @@ func loadList(filePath string) map[string]uint8 {
 	return result
 }
 
-func configInboundFilter(whiteList, blackList string) Types.IOFilter {
+func configInboundFilter(whiteList, blackList string) global.IOFilter {
 	if whiteList != "" {
 		reference := loadList(whiteList)
 		return func(host string) bool {
@@ -66,7 +92,7 @@ func configInboundFilter(whiteList, blackList string) Types.IOFilter {
 	return nil
 }
 
-func configOutboundFilter(whiteList, blackList string) Types.IOFilter {
+func configOutboundFilter(whiteList, blackList string) global.IOFilter {
 	if whiteList != "" {
 		reference := loadList(whiteList)
 		return func(host string) bool {
@@ -83,7 +109,7 @@ func configOutboundFilter(whiteList, blackList string) Types.IOFilter {
 	return nil
 }
 
-func configAuthMethod(command, usersFile string) Types.AuthenticationMethod {
+func configAuthMethod(command, usersFile string) global.AuthenticationMethod {
 	if command != "" {
 		return func(username []byte, password []byte) (bool, error) {
 			cmd := exec.Command(command, hex.EncodeToString(username), hex.EncodeToString(password))
@@ -111,22 +137,22 @@ func configAuthMethod(command, usersFile string) Types.AuthenticationMethod {
 			return true, nil
 		}
 	} else if usersFile != "" {
-		reference := Tools.LoadUsers(usersFile)
+		reference := global.LoadUsers(usersFile)
 		return func(username []byte, password []byte) (bool, error) {
 			passwordHash, found := reference[string(username)]
 			if !found {
 				return false, nil
 			}
-			return Tools.SHA3512(password) == passwordHash, nil
+			return global.SHA3512(password) == passwordHash, nil
 		}
 
 	}
 	return nil
 }
 
-func configSocks5() (Types.IOFilter, Types.ProxyProtocol, error) {
+func configSocks5() (global.IOFilter, global.Protocol, error) {
 	if len(os.Args) < 5 {
-		return nil, SOCKS5.NewSocks5(nil, log.Println, nil), nil
+		return nil, socks5.NewSocks5(nil, log.Println, nil), nil
 	}
 	flagSet := flag.NewFlagSet("socks5", flag.ExitOnError)
 	authCommand := flagSet.String("auth-cmd", "", "shell command to pass the hex encoded username and password, exit code 0 means login success")
@@ -143,12 +169,12 @@ func configSocks5() (Types.IOFilter, Types.ProxyProtocol, error) {
 		panic(parsingError)
 	}
 
-	return configInboundFilter(*inboundWhiteList, *inboundBlackList), SOCKS5.NewSocks5(configAuthMethod(*authCommand, *usersFiles), log.Println, configOutboundFilter(*outboundWhiteList, *outboundBlackList)), nil
+	return configInboundFilter(*inboundWhiteList, *inboundBlackList), socks5.NewSocks5(configAuthMethod(*authCommand, *usersFiles), log.Println, configOutboundFilter(*outboundWhiteList, *outboundBlackList)), nil
 }
 
-func configPortForward() (Types.IOFilter, Types.ProxyProtocol, error) {
+func configPortForward() (global.IOFilter, global.Protocol, error) {
 	if len(os.Args) < 5 {
-		return nil, SOCKS5.NewSocks5(nil, log.Println, nil), nil
+		return nil, socks5.NewSocks5(nil, log.Println, nil), nil
 	}
 	flagSet := flag.NewFlagSet("port-forward", flag.ExitOnError)
 
@@ -164,12 +190,12 @@ func configPortForward() (Types.IOFilter, Types.ProxyProtocol, error) {
 		panic(parsingError)
 	}
 
-	return configInboundFilter(*inboundWhiteList, *inboundBlackList), PortForward.NewForward(*networkType, *targetAddress, log.Println), nil
+	return configInboundFilter(*inboundWhiteList, *inboundBlackList), port_forward.NewForward(*networkType, *targetAddress, log.Println), nil
 }
 
-func configHTTP() (Types.IOFilter, Types.ProxyProtocol, error) {
+func configHTTP() (global.IOFilter, global.Protocol, error) {
 	if len(os.Args) < 5 {
-		return nil, SOCKS5.NewSocks5(nil, log.Println, nil), nil
+		return nil, socks5.NewSocks5(nil, log.Println, nil), nil
 	}
 	flagSet := flag.NewFlagSet("http", flag.ExitOnError)
 	authCommand := flagSet.String("auth-cmd", "", "shell command to pass the hex encoded username and password, exit code 0 means login success")
@@ -186,16 +212,16 @@ func configHTTP() (Types.IOFilter, Types.ProxyProtocol, error) {
 		panic(parsingError)
 	}
 
-	return configInboundFilter(*inboundWhiteList, *inboundBlackList), HTTP.NewHTTP(
+	return configInboundFilter(*inboundWhiteList, *inboundBlackList), http.NewHTTP(
 		configAuthMethod(*authCommand, *usersFiles),
 		log.Println,
 		configOutboundFilter(*outboundWhiteList, *outboundBlackList),
 	), nil
 }
 
-func configTranslateSocks5() (Types.IOFilter, Types.ProxyProtocol, error) {
+func configTranslateSocks5() (global.IOFilter, global.Protocol, error) {
 	if len(os.Args) < 5 {
-		return nil, SOCKS5.NewSocks5(nil, log.Println, nil), nil
+		return nil, socks5.NewSocks5(nil, log.Println, nil), nil
 	}
 	flagSet := flag.NewFlagSet("translate-sock5", flag.ExitOnError)
 
@@ -214,14 +240,14 @@ func configTranslateSocks5() (Types.IOFilter, Types.ProxyProtocol, error) {
 	if parsingError != nil {
 		panic(parsingError)
 	}
-	translate, generationError := ForwardToSocks5.NewForwardToSocks5(*networkType, *socks5ProxyAddress, *socks5Username, *socks5Password, *targetAddress, log.Println)
+	translate, generationError := pf_to_socks5.NewForwardToSocks5(*networkType, *socks5ProxyAddress, *socks5Username, *socks5Password, *targetAddress, log.Println)
 	if generationError != nil {
 		return nil, nil, generationError
 	}
 	return configInboundFilter(*inboundWhiteList, *inboundBlackList), translate, nil
 }
 
-func configProtocol(protocol string) (Types.IOFilter, Types.ProxyProtocol, error) {
+func configProtocol(protocol string) (global.IOFilter, global.Protocol, error) {
 	switch protocol {
 	case "socks5":
 		return configSocks5()
@@ -261,15 +287,15 @@ func main() {
 		log.Fatal(setupError)
 	}
 	var (
-		pipe Types.Pipe
+		pipe global.Pipe
 	)
 	switch mode {
 	case "bind":
-		pipe = Pipes.NewBindPipe(networkType, address, proxyProtocol, log.Println, inboundFilter)
+		pipe = pipes.NewBindPipe(networkType, address, proxyProtocol, log.Println, inboundFilter)
 	case "master":
-		pipe = Master.NewMaster(networkType, c2Address, address, log.Println, inboundFilter, proxyProtocol)
+		pipe = pipes.NewMaster(networkType, c2Address, address, log.Println, inboundFilter, proxyProtocol, certificate)
 	case "slave":
-		pipe = Slave.NewSlave(networkType, c2Address, log.Println)
+		pipe = pipes.NewSlave(networkType, c2Address, log.Println, trust)
 	default:
 		panic("Unknown mode")
 	}

@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	Templates "github.com/shoriwe/FullProxy/internal/Tools"
+	Templates "github.com/shoriwe/FullProxy/v3/internal/global"
 	"os"
 )
 
