@@ -1,13 +1,9 @@
 package test
 
 import (
-	"bytes"
-	"fmt"
 	haochensocks5 "github.com/haochen233/socks5"
 	"github.com/shoriwe/FullProxy/v3/internal/proxy/socks5"
-	"net"
 	"testing"
-	"time"
 )
 
 //// Test No auth
@@ -174,54 +170,23 @@ func TestSocks5OutboundMasterSlaveHTTPRequest(t *testing.T) {
 }
 
 func TestSocks5NoAuthBind(t *testing.T) {
-	proxyServer := NewBindPipe(
-		socks5.NewSocks5(nil, nil, basicOutboundRule),
+	Socks5BindTest(
+		proxyAddress,
 		nil,
-	)
-	defer proxyServer.Close()
-	socksClient := haochensocks5.Client{
-		ProxyAddr: "127.0.0.1:9050",
-		Auth: map[haochensocks5.METHOD]haochensocks5.Authenticator{
+		map[haochensocks5.METHOD]haochensocks5.Authenticator{
 			haochensocks5.NO_AUTHENTICATION_REQUIRED: haochensocks5.NoAuth{},
 		},
-		DisableSocks4A: true,
-	}
-	var (
-		address *haochensocks5.Address
-		server  net.Conn
+		t,
 	)
-	go func() {
-		var (
-			secondError <-chan error
-			err         error
-		)
-		address, secondError, server, err = socksClient.Bind(haochensocks5.Version5, "127.0.0.1:9999")
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = <-secondError
-		if err != nil {
-			fmt.Println(err.Error())
-			t.Fatal(secondError)
-		}
-	}()
-	time.Sleep(3 * time.Second)
-	client, connError := net.Dial("tcp", address.String())
-	if connError != nil {
-		t.Fatal(connError)
-	}
-	defer server.Close()
-	defer client.Close()
-	_, writeError := server.Write([]byte("HOLA"))
-	if writeError != nil {
-		t.Fatal(writeError)
-	}
-	var message [4]byte
-	_, readError := client.Read(message[:])
-	if readError != nil {
-		t.Fatal(readError)
-	}
-	if !bytes.Equal(message[:], []byte("HOLA")) {
-		t.Fatal(string(message[:]))
-	}
+}
+
+func TestSocks5BasicAuthBind(t *testing.T) {
+	Socks5BindTest(
+		proxyAddress,
+		basicAuthFunc,
+		map[haochensocks5.METHOD]haochensocks5.Authenticator{
+			haochensocks5.USERNAME_PASSWORD: &haochensocks5.UserPasswd{Username: "sulcud", Password: "password"},
+		},
+		t,
+	)
 }
