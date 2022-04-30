@@ -129,9 +129,12 @@ Usage of port-forward:
 
 Serve a socks5 proxy using master and slave.
 
-Notice that if you don't specify a certificate (with environment variable `C2Certificate=/path/to/cert`) and a private key (with environment variable `C2PrivateKey=/path/to/priv.key`) in the master command, the tool will automatically generate one for you.
+Notice that if you don't specify a certificate (with environment variable `C2Certificate=/path/to/cert`) and a private
+key (with environment variable `C2PrivateKey=/path/to/priv.key`) in the master command, the tool will automatically
+generate one for you.
 
-If you are using a self-signed certificate, or you did not specify one, you should also use the environment variable `C2SlaveIgnoreTrust=1` to continue on untrusted cert.
+If you are using a self-signed certificate, or you did not specify one, you should also use the environment
+variable `C2SlaveIgnoreTrust=1` to continue on untrusted cert.
 
 #### Setup without certificate
 
@@ -235,13 +238,13 @@ You can find pre-compiled binaries for windows and Linux [Here](https://github.c
 ### fullproxy
 
 ```shell
-go install github.com/shoriwe/FullProxy/v3/cmd/fullproxy@latest
+go install github.com/shoriwe/fullproxy/v3/cmd/fullproxy@latest
 ```
 
 ### fullproxy-users
 
 ```shell
-go install github.com/shoriwe/FullProxy/v3/cmd/fullproxy-users@latest
+go install github.com/shoriwe/fullproxy/v3/cmd/fullproxy-users@latest
 ```
 
 ### Note

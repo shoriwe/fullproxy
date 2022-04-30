@@ -7,7 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"errors"
-	"github.com/shoriwe/FullProxy/v3/internal/global"
+	"github.com/shoriwe/fullproxy/v3/internal/global"
 	"math/big"
 	"net"
 	"time"

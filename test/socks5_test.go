@@ -2,7 +2,7 @@ package test
 
 import (
 	haochensocks5 "github.com/haochen233/socks5"
-	"github.com/shoriwe/FullProxy/v3/internal/proxy/socks5"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy/socks5"
 	"testing"
 )
 

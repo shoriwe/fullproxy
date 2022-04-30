@@ -2,8 +2,8 @@ package socks5
 
 import (
 	"encoding/binary"
-	"github.com/shoriwe/FullProxy/v3/internal/global"
-	"github.com/shoriwe/FullProxy/v3/internal/pipes"
+	"github.com/shoriwe/fullproxy/v3/internal/global"
+	"github.com/shoriwe/fullproxy/v3/internal/pipes"
 	"net"
 )
 

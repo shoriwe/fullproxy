@@ -1,7 +1,7 @@
 package socks5
 
 import (
-	"github.com/shoriwe/FullProxy/v3/internal/pipes"
+	"github.com/shoriwe/fullproxy/v3/internal/pipes"
 	"net"
 	"time"
 )

@@ -1,8 +1,8 @@
 package pf_to_socks5
 
 import (
-	"github.com/shoriwe/FullProxy/v3/internal/global"
-	"github.com/shoriwe/FullProxy/v3/internal/pipes"
+	"github.com/shoriwe/fullproxy/v3/internal/global"
+	"github.com/shoriwe/fullproxy/v3/internal/pipes"
 	"golang.org/x/net/proxy"
 	"net"
 )

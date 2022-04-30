@@ -1,7 +1,7 @@
 package test
 
 import (
-	http2 "github.com/shoriwe/FullProxy/v3/internal/proxy/http"
+	http2 "github.com/shoriwe/fullproxy/v3/internal/proxy/http"
 	"testing"
 )
 

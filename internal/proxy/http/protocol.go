@@ -3,7 +3,7 @@ package http
 import (
 	"bytes"
 	"encoding/base64"
-	"github.com/shoriwe/FullProxy/v3/internal/global"
+	"github.com/shoriwe/fullproxy/v3/internal/global"
 	"gopkg.in/elazarl/goproxy.v1"
 	"net"
 	"net/http"

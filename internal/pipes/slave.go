@@ -3,7 +3,7 @@ package pipes
 import (
 	"crypto/tls"
 	"errors"
-	"github.com/shoriwe/FullProxy/v3/internal/global"
+	"github.com/shoriwe/fullproxy/v3/internal/global"
 	"net"
 	"time"
 )
