@@ -3,36 +3,50 @@ package pipes
 import (
 	"crypto/tls"
 	"errors"
-	"github.com/shoriwe/fullproxy/v3/internal/global"
 	"net"
 	"time"
 )
 
 type Slave struct {
-	MasterConnection net.Conn
-	NetworkType      string
-	MasterC2Address  string
-	LoggingMethod    global.LoggingMethod
-	IgnoreTrust      bool
-	tlsConfig        *tls.Config
+	MasterConnection              net.Conn
+	NetworkType                   string
+	MasterC2Address               string
+	LoggingMethod                 LoggingMethod
+	InboundFilter, OutboundFilter IOFilter
+	IgnoreTrust                   bool
+	tlsConfig                     *tls.Config
 }
 
-func (slave *Slave) SetInboundFilter(_ global.IOFilter) error {
+func (slave *Slave) FilterInbound(addr net.Addr) error {
+	if slave.InboundFilter != nil {
+		return slave.InboundFilter(addr)
+	}
 	return nil
 }
 
-func NewSlave(networkType string, masterC2Address string, loggingMethod global.LoggingMethod, ignoreTrust bool) *Slave {
-	return &Slave{
-		NetworkType:     networkType,
-		MasterC2Address: masterC2Address,
-		LoggingMethod:   loggingMethod,
-		IgnoreTrust:     ignoreTrust,
+func (slave *Slave) FilterOutbound(addr net.Addr) error {
+	if slave.OutboundFilter != nil {
+		return slave.OutboundFilter(addr)
+	}
+	return nil
+}
+
+func (slave *Slave) LogData(a ...interface{}) {
+	if slave.LoggingMethod != nil {
+		slave.LoggingMethod(a...)
 	}
 }
 
-func (slave *Slave) SetLoggingMethod(loggingMethod global.LoggingMethod) error {
+func (slave *Slave) SetOutboundFilter(filter IOFilter) {
+	slave.OutboundFilter = filter
+}
+
+func (slave *Slave) SetInboundFilter(filter IOFilter) {
+	slave.InboundFilter = filter
+}
+
+func (slave *Slave) SetLoggingMethod(loggingMethod LoggingMethod) {
 	slave.LoggingMethod = loggingMethod
-	return nil
 }
 
 func (slave *Slave) dial(clientConnection net.Conn) error {
@@ -74,7 +88,7 @@ func (slave *Slave) dial(clientConnection net.Conn) error {
 	}
 	networkType := string(rawNetworkType)
 	address := string(rawAddress)
-	global.LogData(slave.LoggingMethod, "Connecting to: ", address)
+	slave.LogData("Connecting to: ", address)
 	var targetConnection net.Conn
 	targetConnection, connectionError = net.DialTimeout(networkType, address, time.Minute)
 	if connectionError != nil {
@@ -99,7 +113,7 @@ func (slave *Slave) command(command byte, clientConnection net.Conn) error {
 }
 
 func (slave *Slave) serve() error {
-	global.LogData(slave.LoggingMethod, "Received client connection from master")
+	slave.LogData("Received client connection from master")
 	clientConnection, connectionError := tls.Dial(slave.NetworkType, slave.MasterC2Address, slave.tlsConfig)
 	if connectionError != nil {
 		return connectionError
@@ -119,12 +133,12 @@ func (slave *Slave) Serve() error {
 	slave.tlsConfig = &tls.Config{
 		InsecureSkipVerify: slave.IgnoreTrust,
 	}
-	global.LogData(slave.LoggingMethod, "Connecting to master at: "+slave.MasterC2Address)
+	slave.LogData("Connecting to master at: " + slave.MasterC2Address)
 	masterConnection, connectionError := tls.Dial(slave.NetworkType, slave.MasterC2Address, slave.tlsConfig)
 	if connectionError != nil {
 		return connectionError
 	}
-	global.LogData(slave.LoggingMethod, "Successfully connected to target at: "+slave.MasterC2Address)
+	slave.LogData("Successfully connected to target at: " + slave.MasterC2Address)
 	slave.MasterConnection = masterConnection
 	var bytesReceived int
 	for {
@@ -135,5 +149,14 @@ func (slave *Slave) Serve() error {
 		for index := 0; index < bytesReceived; index++ {
 			go slave.serve()
 		}
+	}
+}
+
+func NewSlave(networkType string, masterC2Address string, loggingMethod LoggingMethod, ignoreTrust bool) Pipe {
+	return &Slave{
+		NetworkType:     networkType,
+		MasterC2Address: masterC2Address,
+		LoggingMethod:   loggingMethod,
+		IgnoreTrust:     ignoreTrust,
 	}
 }

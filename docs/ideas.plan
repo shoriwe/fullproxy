@@ -159,7 +159,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Pipes",
             "filepath": ""
           },
@@ -240,7 +240,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Master - Slave",
             "filepath": ""
           }
@@ -285,7 +285,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "TLS",
             "filepath": ""
           }

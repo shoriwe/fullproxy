@@ -3,7 +3,7 @@ package http
 import (
 	"bytes"
 	"encoding/base64"
-	"github.com/shoriwe/fullproxy/v3/internal/global"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy"
 	"gopkg.in/elazarl/goproxy.v1"
 	"net"
 	"net/http"
@@ -33,11 +33,9 @@ func newCustomListener() *customListener {
 }
 
 type HTTP struct {
-	AuthenticationMethod global.AuthenticationMethod
+	AuthenticationMethod proxy.AuthenticationMethod
 	proxyHttpServer      *goproxy.ProxyHttpServer
-	LoggingMethod        global.LoggingMethod
 	listener             *customListener
-	OutboundFilter       global.IOFilter
 	ListenAddress        *net.TCPAddr
 }
 
@@ -45,28 +43,24 @@ func (protocol *HTTP) SetListenAddress(address net.Addr) {
 	protocol.ListenAddress = address.(*net.TCPAddr)
 }
 
-func (protocol *HTTP) SetListen(_ global.ListenFunc) {
+func (protocol *HTTP) SetListen(_ proxy.ListenFunc) {
 }
 
-func (protocol *HTTP) SetDial(dialFunc global.DialFunc) {
+func (protocol *HTTP) SetDial(dialFunc proxy.DialFunc) {
 	protocol.proxyHttpServer.Tr.Dial = dialFunc
 	protocol.proxyHttpServer.ConnectDial = dialFunc
 }
 
 func NewHTTP(
-	authenticationMethod global.AuthenticationMethod,
-	loggingMethod global.LoggingMethod,
-	outboundFilter global.IOFilter,
-) global.Protocol {
+	authenticationMethod proxy.AuthenticationMethod,
+) proxy.Protocol {
 	proxyHttpServer := goproxy.NewProxyHttpServer()
 	listener := newCustomListener()
 	go http.Serve(listener, proxyHttpServer)
 	result := &HTTP{
 		AuthenticationMethod: authenticationMethod,
 		proxyHttpServer:      proxyHttpServer,
-		LoggingMethod:        loggingMethod,
 		listener:             listener,
-		OutboundFilter:       outboundFilter,
 	}
 	proxyHttpServer.OnRequest().HandleConnect(goproxy.AlwaysMitm)
 	proxyHttpServer.OnRequest().DoFunc(
@@ -102,28 +96,13 @@ func NewHTTP(
 				}
 			}
 
-			filterError := global.FilterOutbound(result.OutboundFilter, req.Host)
-			if filterError != nil {
-				return req, onErrorResponse
-			}
-
 			return req, nil
 		},
 	)
 	return result
 }
 
-func (protocol *HTTP) SetLoggingMethod(loggingMethod global.LoggingMethod) error {
-	protocol.LoggingMethod = loggingMethod
-	return nil
-}
-
-func (protocol *HTTP) SetOutboundFilter(filter global.IOFilter) error {
-	protocol.OutboundFilter = filter
-	return nil
-}
-
-func (protocol *HTTP) SetAuthenticationMethod(authenticationMethod global.AuthenticationMethod) error {
+func (protocol *HTTP) SetAuthenticationMethod(authenticationMethod proxy.AuthenticationMethod) error {
 	protocol.AuthenticationMethod = authenticationMethod
 	return nil
 }

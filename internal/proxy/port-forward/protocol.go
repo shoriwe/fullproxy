@@ -2,43 +2,33 @@ package port_forward
 
 import (
 	"errors"
-	"github.com/shoriwe/fullproxy/v3/internal/global"
 	"github.com/shoriwe/fullproxy/v3/internal/pipes"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy"
 	"net"
 )
 
 type Forward struct {
 	TargetAddress string
-	LoggingMethod global.LoggingMethod
-	DialFunc      global.DialFunc
+	DialFunc      proxy.DialFunc
 	ListenAddress *net.TCPAddr
 }
 
-func (localForward *Forward) SetListen(_ global.ListenFunc) {
+func (localForward *Forward) SetListen(_ proxy.ListenFunc) {
 }
 
 func (localForward *Forward) SetListenAddress(address net.Addr) {
 	localForward.ListenAddress = address.(*net.TCPAddr)
 }
 
-func NewForward(targetAddress string, loggingMethod global.LoggingMethod) global.Protocol {
-	return &Forward{TargetAddress: targetAddress, LoggingMethod: loggingMethod}
+func NewForward(targetAddress string) proxy.Protocol {
+	return &Forward{TargetAddress: targetAddress}
 }
 
-func (localForward *Forward) SetAuthenticationMethod(_ global.AuthenticationMethod) error {
+func (localForward *Forward) SetAuthenticationMethod(_ proxy.AuthenticationMethod) error {
 	return errors.New("This kind of proxy doesn't support authentication methods")
 }
 
-func (localForward *Forward) SetLoggingMethod(loggingMethod global.LoggingMethod) error {
-	localForward.LoggingMethod = loggingMethod
-	return nil
-}
-
-func (localForward *Forward) SetOutboundFilter(_ global.IOFilter) error {
-	return errors.New("This kind of proxy doesn't support OutboundFilters")
-}
-
-func (localForward *Forward) SetDial(dialFunc global.DialFunc) {
+func (localForward *Forward) SetDial(dialFunc proxy.DialFunc) {
 	localForward.DialFunc = dialFunc
 }
 

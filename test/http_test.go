@@ -10,7 +10,7 @@ import (
 func TestHTTPNoAuthHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(http2.NewHTTP(nil, nil, nil), nil)
+	p := NewBindPipe(http2.NewHTTP(nil), nil, nil)
 	defer p.Close()
 	if GetRequestHTTP(testUrl, "", "") != Success {
 		t.Fatal(testUrl)
@@ -22,7 +22,7 @@ func TestHTTPNoAuthHTTPRequest(t *testing.T) {
 func TestHTTPUsernamePasswordHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(http2.NewHTTP(basicAuthFunc, nil, nil), nil)
+	p := NewBindPipe(http2.NewHTTP(basicAuthFunc), nil, nil)
 	defer p.Close()
 	if GetRequestHTTP(testUrl, "sulcud", "password") != Success {
 		t.Fatal(testUrl)
@@ -37,7 +37,7 @@ func TestHTTPUsernamePasswordHTTPRequest(t *testing.T) {
 func TestHTTPInvalidInboundHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(http2.NewHTTP(basicAuthFunc, nil, nil), basicInboundRule)
+	p := NewBindPipe(http2.NewHTTP(basicAuthFunc), basicInboundRule, nil)
 	defer p.Close()
 	if GetRequestHTTP(testUrl, "sulcud", "password") != FailedRequest {
 		t.Fatal("Bypassed inbound")
@@ -49,7 +49,7 @@ func TestHTTPInvalidInboundHTTPRequest(t *testing.T) {
 func TestHTTPOutboundHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(http2.NewHTTP(basicAuthFunc, nil, basicOutboundRule), nil)
+	p := NewBindPipe(http2.NewHTTP(basicAuthFunc), nil, basicOutboundRule)
 	defer p.Close()
 	if GetRequestHTTP("google.com", "sulcud", "password") == Success {
 		t.Fatal("Bypassed outbound")
@@ -67,8 +67,7 @@ func TestHTTPNoAuthMasterSlaveHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
-		nil,
-		http2.NewHTTP(nil, nil, nil))
+		http2.NewHTTP(nil), nil, nil)
 	defer func() {
 		a.Close()
 		b.Close()
@@ -85,8 +84,7 @@ func TestHTTPUsernamePasswordMasterSlaveHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
-		nil,
-		http2.NewHTTP(basicAuthFunc, nil, nil))
+		http2.NewHTTP(basicAuthFunc), nil, nil)
 	defer func() {
 		a.Close()
 		b.Close()
@@ -103,8 +101,7 @@ func TestHTTPInboundMasterSlaveHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
-		basicInboundRule,
-		http2.NewHTTP(basicAuthFunc, nil, nil))
+		http2.NewHTTP(basicAuthFunc), basicInboundRule, nil)
 	defer func() {
 		a.Close()
 		b.Close()
@@ -119,8 +116,7 @@ func TestHTTPInboundMasterSlaveHTTPRequest(t *testing.T) {
 func TestHTTPInvalidOutboundMasterSlaveHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	a, b := NewMasterSlave(
-		nil,
-		http2.NewHTTP(basicAuthFunc, nil, basicOutboundRule))
+		http2.NewHTTP(basicAuthFunc), nil, basicOutboundRule)
 	defer func() {
 		_ = h.Close()
 		_ = a.Close()
@@ -135,8 +131,7 @@ func TestHTTPOutboundMasterSlaveHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
-		nil,
-		http2.NewHTTP(basicAuthFunc, nil, basicOutboundRule))
+		http2.NewHTTP(basicAuthFunc), nil, basicOutboundRule)
 	defer func() {
 		a.Close()
 		b.Close()

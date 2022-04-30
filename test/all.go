@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	haochensocks5 "github.com/haochen233/socks5"
-	"github.com/shoriwe/fullproxy/v3/internal/global"
 	"github.com/shoriwe/fullproxy/v3/internal/pipes"
+	proxy2 "github.com/shoriwe/fullproxy/v3/internal/proxy"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/socks5"
 	"golang.org/x/net/proxy"
 	"net"
@@ -43,33 +43,38 @@ func basicAuthFunc(username []byte, password []byte) error {
 	return errors.New("auth failed")
 }
 
-func basicOutboundRule(host string) error {
-	if host == "google.com" {
+func basicOutboundRule(addr net.Addr) error {
+	tcpAddr, resolveError := net.ResolveTCPAddr("tcp", "google.com:443")
+	if resolveError != nil {
+		return resolveError
+	}
+	if addr.String() == tcpAddr.String() {
 		return errors.New("host denied")
 	}
 	return nil
 }
 
-func basicInboundRule(host string) error {
-	if host == "127.0.0.1" {
+func basicInboundRule(addr net.Addr) error {
+	if addr.(*net.TCPAddr).IP.String() == "127.0.0.1" {
 		return errors.New("host denied")
 	}
 	return nil
 }
 
-func NewBindPipe(protocol global.Protocol, inboundFilter global.IOFilter) net.Listener {
+func NewBindPipe(protocol proxy2.Protocol, inboundFilter, outboundFilter pipes.IOFilter) net.Listener {
 	bindPipe := pipes.NewBindPipe(
 		networkType, proxyAddress,
 		protocol,
 		nil,
 		inboundFilter,
+		outboundFilter,
 	)
 	go bindPipe.Serve()
 	time.Sleep(2 * time.Second)
-	return bindPipe.Server
+	return bindPipe.(*pipes.Bind).Server
 }
 
-func NewMasterSlave(inboundFilter global.IOFilter, protocol global.Protocol) (net.Listener, net.Listener) {
+func NewMasterSlave(protocol proxy2.Protocol, inboundFilter, outboundFilter pipes.IOFilter) (net.Listener, net.Listener) {
 	cert, signError := pipes.SelfSignCertificate()
 	if signError != nil {
 		panic(signError)
@@ -80,6 +85,7 @@ func NewMasterSlave(inboundFilter global.IOFilter, protocol global.Protocol) (ne
 		proxyAddress,
 		nil,
 		inboundFilter,
+		outboundFilter,
 		protocol,
 		cert,
 	)
@@ -93,7 +99,7 @@ func NewMasterSlave(inboundFilter global.IOFilter, protocol global.Protocol) (ne
 	)
 	go slavePipe.Serve()
 	time.Sleep(1 * time.Second)
-	return masterPipe.ProxyListener, masterPipe.C2Listener
+	return masterPipe.(*pipes.Master).ProxyListener, masterPipe.(*pipes.Master).C2Listener
 }
 
 func StartIPv4HTTPServer(t *testing.T) net.Listener {
@@ -189,14 +195,15 @@ func GetRequestHTTP(targetUrl, username, password string) uint8 {
 
 func Socks5BindTest(
 	proxyAddress string,
-	authMethod global.AuthenticationMethod,
+	authMethod proxy2.AuthenticationMethod,
 	auth map[haochensocks5.METHOD]haochensocks5.Authenticator,
 	t *testing.T,
 ) {
 	time.Sleep(10 * time.Second)
 	proxyServer := NewBindPipe(
-		socks5.NewSocks5(authMethod, nil, basicOutboundRule),
+		socks5.NewSocks5(authMethod),
 		nil,
+		basicOutboundRule,
 	)
 	defer proxyServer.Close()
 	socksClient := haochensocks5.Client{

@@ -2,7 +2,7 @@ package socks5
 
 import (
 	"encoding/binary"
-	"github.com/shoriwe/fullproxy/v3/internal/global"
+	"github.com/shoriwe/fullproxy/v3/internal/proxy"
 	"net"
 	"strconv"
 )
@@ -12,11 +12,9 @@ const (
 )
 
 type Socks5 struct {
-	AuthenticationMethod global.AuthenticationMethod
-	LoggingMethod        global.LoggingMethod
-	OutboundFilter       global.IOFilter
-	Dial                 global.DialFunc
-	Listen               global.ListenFunc
+	AuthenticationMethod proxy.AuthenticationMethod
+	Dial                 proxy.DialFunc
+	Listen               proxy.ListenFunc
 	ListenAddress        *net.TCPAddr
 }
 
@@ -24,7 +22,7 @@ func (socks5 *Socks5) SetListenAddress(address net.Addr) {
 	socks5.ListenAddress = address.(*net.TCPAddr)
 }
 
-func (socks5 *Socks5) SetListen(listenFunc global.ListenFunc) {
+func (socks5 *Socks5) SetListen(listenFunc proxy.ListenFunc) {
 	socks5.Listen = listenFunc
 }
 
@@ -134,22 +132,13 @@ func NewContext(conn net.Conn) *Context {
 		ClientConnection: conn,
 	}
 }
-func (socks5 *Socks5) SetLoggingMethod(loggingMethod global.LoggingMethod) error {
-	socks5.LoggingMethod = loggingMethod
-	return nil
-}
 
-func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod global.AuthenticationMethod) error {
+func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod proxy.AuthenticationMethod) error {
 	socks5.AuthenticationMethod = authenticationMethod
 	return nil
 }
 
-func (socks5 *Socks5) SetOutboundFilter(filter global.IOFilter) error {
-	socks5.OutboundFilter = filter
-	return nil
-}
-
-func (socks5 *Socks5) SetDial(dialFunc global.DialFunc) {
+func (socks5 *Socks5) SetDial(dialFunc proxy.DialFunc) {
 	socks5.Dial = dialFunc
 }
 
@@ -182,13 +171,9 @@ func (socks5 *Socks5) Handle(clientConnection net.Conn) error {
 }
 
 func NewSocks5(
-	authenticationMethod global.AuthenticationMethod,
-	loggingMethod global.LoggingMethod,
-	outboundFilter global.IOFilter,
-) global.Protocol {
+	authenticationMethod proxy.AuthenticationMethod,
+) proxy.Protocol {
 	return &Socks5{
 		AuthenticationMethod: authenticationMethod,
-		LoggingMethod:        loggingMethod,
-		OutboundFilter:       outboundFilter,
 	}
 }

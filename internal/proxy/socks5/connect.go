@@ -2,23 +2,11 @@ package socks5
 
 import (
 	"encoding/binary"
-	"github.com/shoriwe/fullproxy/v3/internal/global"
 	"github.com/shoriwe/fullproxy/v3/internal/pipes"
 	"net"
 )
 
 func (socks5 *Socks5) Connect(context *Context) error {
-	filterError := global.FilterOutbound(socks5.OutboundFilter, context.DSTAddress)
-	if filterError != nil {
-		_ = context.Reply(CommandReply{
-			Version:    SocksV5,
-			StatusCode: ConnectionNotAllowedByRuleSet,
-			Address:    context.DSTRawAddress,
-			Port:       context.DSTPort,
-		})
-		return filterError
-	}
-
 	// Try to connect to the target
 
 	targetConnection, connectionError := socks5.Dial("tcp", context.DST)
