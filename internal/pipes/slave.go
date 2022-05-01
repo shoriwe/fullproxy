@@ -3,6 +3,7 @@ package pipes
 import (
 	"crypto/tls"
 	"errors"
+	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"net"
 	"time"
 )
@@ -100,7 +101,7 @@ func (slave *Slave) dial(clientConnection net.Conn) error {
 		_, _ = clientConnection.Write([]byte{NewConnectionFailed})
 		return connectionError
 	}
-	return ForwardTraffic(clientConnection, targetConnection)
+	return common.ForwardTraffic(clientConnection, targetConnection)
 }
 
 func (slave *Slave) command(command byte, clientConnection net.Conn) error {

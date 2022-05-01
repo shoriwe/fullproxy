@@ -2,7 +2,7 @@ package port_forward
 
 import (
 	"errors"
-	"github.com/shoriwe/fullproxy/v3/internal/pipes"
+	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"net"
 )
@@ -25,7 +25,7 @@ func NewForward(targetAddress string) servers.Protocol {
 }
 
 func (localForward *Forward) SetAuthenticationMethod(_ servers.AuthenticationMethod) error {
-	return errors.New("This kind of proxy doesn't support authentication methods")
+	return errors.New("this kind of proxy doesn't support authentication methods")
 }
 
 func (localForward *Forward) SetDial(dialFunc servers.DialFunc) {
@@ -38,5 +38,5 @@ func (localForward *Forward) Handle(clientConnection net.Conn) error {
 	if connectionError != nil {
 		return connectionError
 	}
-	return pipes.ForwardTraffic(clientConnection, targetConnection)
+	return common.ForwardTraffic(clientConnection, targetConnection)
 }

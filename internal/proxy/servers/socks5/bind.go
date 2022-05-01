@@ -1,7 +1,7 @@
 package socks5
 
 import (
-	"github.com/shoriwe/fullproxy/v3/internal/pipes"
+	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"net"
 	"time"
 )
@@ -67,5 +67,5 @@ func (socks5 *Socks5) Bind(context *Context) error {
 			Port:       targetConnection.RemoteAddr().(*net.TCPAddr).Port,
 		},
 	)
-	return pipes.ForwardTraffic(context.ClientConnection, targetConnection)
+	return common.ForwardTraffic(context.ClientConnection, targetConnection)
 }

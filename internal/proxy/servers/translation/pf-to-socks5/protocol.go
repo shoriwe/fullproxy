@@ -1,7 +1,7 @@
 package pf_to_socks5
 
 import (
-	"github.com/shoriwe/fullproxy/v3/internal/pipes"
+	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"golang.org/x/net/proxy"
 	"net"
@@ -52,5 +52,5 @@ func (forwardToSocks5 *ForwardToSocks5) Handle(clientConnection net.Conn) error 
 		return connectionError
 	}
 	defer targetConnection.Close()
-	return pipes.ForwardTraffic(clientConnection, targetConnection)
+	return common.ForwardTraffic(clientConnection, targetConnection)
 }

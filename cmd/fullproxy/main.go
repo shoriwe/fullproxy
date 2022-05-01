@@ -6,7 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/shoriwe/fullproxy/v3/internal/global"
+	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"github.com/shoriwe/fullproxy/v3/internal/pipes"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/http"
@@ -138,13 +138,13 @@ func configAuthMethod(command, usersFile string) servers.AuthenticationMethod {
 			return true, nil
 		}
 	} else if usersFile != "" {
-		reference := global.LoadUsers(usersFile)
+		reference := common.LoadUsers(usersFile)
 		return func(username []byte, password []byte) (bool, error) {
 			passwordHash, found := reference[string(username)]
 			if !found {
 				return false, nil
 			}
-			return global.SHA3512(password) == passwordHash, nil
+			return common.SHA3512(password) == passwordHash, nil
 		}
 
 	}

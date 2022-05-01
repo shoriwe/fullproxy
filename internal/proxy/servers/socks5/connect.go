@@ -2,7 +2,7 @@ package socks5
 
 import (
 	"encoding/binary"
-	"github.com/shoriwe/fullproxy/v3/internal/pipes"
+	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"net"
 )
 
@@ -43,5 +43,5 @@ func (socks5 *Socks5) Connect(context *Context) error {
 	})
 
 	// Forward traffic
-	return pipes.ForwardTraffic(context.ClientConnection, targetConnection)
+	return common.ForwardTraffic(context.ClientConnection, targetConnection)
 }
