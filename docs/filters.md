@@ -2,7 +2,7 @@
 
 ## Incoming connections
 
-```
+```mermaid
 sequenceDiagram
 Client ->> Proxy : Connects
 alt Client address whitelisted
@@ -14,7 +14,7 @@ end
 
 ## Outgoing connections
 
-```
+```mermaid
 sequenceDiagram
 Client ->> Proxy : Connects
 Client -> Proxy : Protocol Negotiation
@@ -28,7 +28,7 @@ end
 
 ## Listen
 
-```
+```mermaid
 sequenceDiagram
 Client ->> Proxy : Connects
 Client -> Proxy : Protocol negotiation
@@ -41,7 +41,7 @@ end
 
 ## Accept
 
-```
+```mermaid
 sequenceDiagram
 Client ->> Proxy : Connects
 Client -> Proxy : Protocol negotiation

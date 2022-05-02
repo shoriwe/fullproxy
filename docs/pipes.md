@@ -6,7 +6,7 @@ Pipes are used to separate the logic of proxying protocols and network connectio
 
 ### Successful negotiation
 
-```
+```mermaid
 sequenceDiagram
 Client ->> Proxy : Connects
 Proxy -> Client : Protocol negotiation
@@ -18,7 +18,7 @@ Client --> Server : Proxy traffic
 
 This pipe is intended to forward traffic accessible by a machine that cannot bind but can connect to external servers, for this same reason this kind of proxy pipe doesn't support commands like **SOCKS5 BIND**.
 
-```
+```mermaid
 sequenceDiagram
 participant Client
 participant Master
