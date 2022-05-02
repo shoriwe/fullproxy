@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"github.com/shoriwe/fullproxy/v3/internal/pipes"
 	socks52 "github.com/shoriwe/fullproxy/v3/internal/proxy/clients/socks5"
 	proxy2 "github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
@@ -46,19 +47,23 @@ func basicAuthFunc(username []byte, password []byte) error {
 	return errors.New("auth failed")
 }
 
-func basicOutboundRule(addr net.Addr) error {
-	tcpAddr, resolveError := net.ResolveTCPAddr("tcp", "google.com:443")
-	if resolveError != nil {
-		return resolveError
+func basicOutboundRule(address string) error {
+	host, _, splitError := net.SplitHostPort(address)
+	if splitError != nil {
+		return splitError
 	}
-	if addr.String() == tcpAddr.String() {
+	if host == "google.com" {
 		return errors.New("host denied")
 	}
 	return nil
 }
 
-func basicInboundRule(addr net.Addr) error {
-	if addr.(*net.TCPAddr).IP.String() == "127.0.0.1" {
+func basicInboundRule(address string) error {
+	host, _, splitError := net.SplitHostPort(address)
+	if splitError != nil {
+		return splitError
+	}
+	if host == "127.0.0.1" {
 		return errors.New("host denied")
 	}
 	return nil
@@ -78,7 +83,7 @@ func NewBindPipe(protocol proxy2.Protocol, inboundFilter, outboundFilter pipes.I
 }
 
 func NewMasterSlave(protocol proxy2.Protocol, inboundFilter, outboundFilter pipes.IOFilter) (net.Listener, net.Listener) {
-	cert, signError := pipes.SelfSignCertificate()
+	cert, signError := common.SelfSignCertificate()
 	if signError != nil {
 		panic(signError)
 	}

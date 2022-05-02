@@ -44,7 +44,7 @@ func init() {
 	}
 	if privKey == cert && cert == "" {
 		var err error
-		certificate, err = pipes.SelfSignCertificate()
+		certificate, err = common.SelfSignCertificate()
 		if err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)

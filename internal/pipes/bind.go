@@ -14,6 +14,18 @@ type Bind struct {
 	InboundFilter, OutboundFilter IOFilter
 }
 
+func (bind *Bind) Dial(networkType, address string) (net.Conn, error) {
+	if filterError := bind.FilterInbound(address); filterError != nil {
+		return nil, filterError
+	}
+	return net.Dial(networkType, address)
+}
+
+func (bind *Bind) Listen(networkType, address string) (net.Listener, error) {
+	// TODO: Listen filter
+	return net.Listen(networkType, address)
+}
+
 func (bind *Bind) LogData(a ...interface{}) {
 	if bind.LoggingMethod != nil {
 		bind.LoggingMethod(a...)
@@ -32,22 +44,22 @@ func (bind *Bind) SetOutboundFilter(filter IOFilter) {
 	bind.OutboundFilter = filter
 }
 
-func (bind *Bind) FilterInbound(addr net.Addr) error {
+func (bind *Bind) FilterInbound(address string) error {
 	if bind.InboundFilter != nil {
-		return bind.InboundFilter(addr)
+		return bind.InboundFilter(address)
 	}
 	return nil
 }
 
-func (bind *Bind) FilterOutbound(addr net.Addr) error {
+func (bind *Bind) FilterOutbound(address string) error {
 	if bind.OutboundFilter != nil {
-		return bind.OutboundFilter(addr)
+		return bind.OutboundFilter(address)
 	}
 	return nil
 }
 
 func (bind *Bind) serve(clientConnection net.Conn) {
-	if filterError := bind.FilterInbound(clientConnection.RemoteAddr()); filterError != nil {
+	if filterError := bind.FilterInbound(clientConnection.RemoteAddr().String()); filterError != nil {
 		bind.LogData(filterError)
 		return
 	}
@@ -56,7 +68,6 @@ func (bind *Bind) serve(clientConnection net.Conn) {
 	if handleError != nil {
 		bind.LogData(handleError.Error())
 	}
-	return
 }
 
 func (bind *Bind) Serve() error {
@@ -67,8 +78,8 @@ func (bind *Bind) Serve() error {
 	bind.Server = listener
 	defer bind.Server.Close()
 	bind.LogData("Successfully listening at: " + bind.BindAddress)
-	bind.Protocol.SetDial(net.Dial)     // TODO: Add filter inbound
-	bind.Protocol.SetListen(net.Listen) // TODO: Add filter outbound
+	bind.Protocol.SetDial(bind.Dial)
+	bind.Protocol.SetListen(bind.Listen)
 	bind.Protocol.SetListenAddress(listener.Addr())
 	for {
 		clientConnection, connectionError := bind.Server.Accept()

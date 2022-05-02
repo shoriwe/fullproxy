@@ -1,60 +1,12 @@
 package pipes
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/tls"
-	"crypto/x509"
-	"crypto/x509/pkix"
 	"errors"
+	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
-	"math/big"
 	"net"
-	"time"
 )
-
-func SelfSignCertificate() ([]tls.Certificate, error) {
-	var (
-		priv *rsa.PrivateKey
-		cert []byte
-		err  error
-	)
-	now := time.Now()
-	template := &x509.Certificate{
-		SerialNumber: big.NewInt(now.Unix()),
-		Subject: pkix.Name{
-			CommonName:         "localhost",
-			Country:            []string{"MARS"},
-			Organization:       []string{"localhost"},
-			OrganizationalUnit: []string{"quickserve"},
-		},
-		NotBefore:             now,
-		NotAfter:              now.AddDate(0, 0, 1), // Valid for one day
-		SubjectKeyId:          []byte{113, 117, 105, 99, 107, 115, 101, 114, 118, 101},
-		BasicConstraintsValid: true,
-		IsCA:                  true,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		KeyUsage: x509.KeyUsageKeyEncipherment |
-			x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-	}
-
-	priv, err = rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, err
-	}
-
-	cert, err = x509.CreateCertificate(rand.Reader, template, template,
-		priv.Public(), priv)
-	if err != nil {
-		return nil, err
-	}
-
-	var outCert tls.Certificate
-	outCert.Certificate = append(outCert.Certificate, cert)
-	outCert.PrivateKey = priv
-	return []tls.Certificate{outCert}, nil
-
-}
 
 // Master
 /*
@@ -75,6 +27,63 @@ type Master struct {
 	TLSConfig                     *tls.Config
 }
 
+func (master *Master) Dial(network, address string) (net.Conn, error) {
+	if filterError := master.FilterOutbound(address); filterError != nil {
+		return nil, filterError
+	}
+	numberOfBytesWritten, connectionError := master.SlaveConnection.Write([]byte{RequestNewMasterConnectionCommand})
+	if connectionError != nil {
+		master.finish = true
+		return nil, connectionError
+	} else if numberOfBytesWritten != 1 {
+		master.finish = true
+		return nil, errors.New("protocol error")
+	}
+	var targetConnection net.Conn
+	targetConnection, connectionError = master.C2Listener.Accept()
+	if connectionError != nil {
+		return nil, connectionError
+	}
+	// Request connection to target
+	networkLength := len(network)
+	addressLength := len(address)
+	payloadLength := 3 + networkLength + addressLength
+	request := make([]byte, 0, payloadLength)
+	request = append(request, DialCommand)
+	request = append(request, byte(networkLength))
+	request = append(request, []byte(network)...)
+	request = append(request, byte(addressLength))
+	request = append(request, []byte(address)...)
+	var bytesWritten int
+	bytesWritten, connectionError = targetConnection.Write(request)
+	if connectionError != nil {
+		_ = targetConnection.Close()
+		return nil, connectionError
+	} else if bytesWritten != payloadLength {
+		_ = targetConnection.Close()
+		return nil, SlaveConnectionRequestError
+	}
+	response := make([]byte, 1)
+	var bytesReceived int
+	bytesReceived, connectionError = targetConnection.Read(response)
+	if connectionError != nil {
+		_ = targetConnection.Close()
+		return nil, connectionError
+	} else if bytesReceived != 1 {
+		_ = targetConnection.Close()
+		return nil, SlaveConnectionRequestError
+	}
+	switch response[0] {
+	case NewConnectionSucceeded:
+		return targetConnection, nil
+	}
+	return nil, SlaveConnectionRequestError
+}
+
+func (master *Master) Listen(_, _ string) (net.Listener, error) {
+	return nil, errors.New("not supported for master/slave protocol")
+}
+
 func (master *Master) LogData(a ...interface{}) {
 	if master.LoggingMethod != nil {
 		master.LoggingMethod(a...)
@@ -85,16 +94,16 @@ func (master *Master) SetOutboundFilter(filter IOFilter) {
 	master.OutboundFilter = filter
 }
 
-func (master *Master) FilterInbound(addr net.Addr) error {
+func (master *Master) FilterInbound(address string) error {
 	if master.InboundFilter != nil {
-		return master.InboundFilter(addr)
+		return master.InboundFilter(address)
 	}
 	return nil
 }
 
-func (master *Master) FilterOutbound(addr net.Addr) error {
+func (master *Master) FilterOutbound(address string) error {
 	if master.OutboundFilter != nil {
-		return master.OutboundFilter(addr)
+		return master.OutboundFilter(address)
 	}
 	return nil
 }
@@ -107,68 +116,9 @@ func (master *Master) SetLoggingMethod(loggingMethod LoggingMethod) {
 	master.LoggingMethod = loggingMethod
 }
 
-func (master *Master) protocolDialFunc() servers.DialFunc {
-	return func(network, address string) (net.Conn, error) {
-		resolvedAddress, resolveError := net.ResolveTCPAddr("tcp", address)
-		if resolveError != nil {
-			return nil, resolveError
-		}
-		if filterError := master.FilterOutbound(resolvedAddress); filterError != nil {
-			return nil, filterError
-		}
-		numberOfBytesWritten, connectionError := master.SlaveConnection.Write([]byte{RequestNewMasterConnectionCommand})
-		if connectionError != nil {
-			master.finish = true
-			return nil, connectionError
-		} else if numberOfBytesWritten != 1 {
-			master.finish = true
-			return nil, errors.New("protocol error")
-		}
-		var targetConnection net.Conn
-		targetConnection, connectionError = master.C2Listener.Accept()
-		if connectionError != nil {
-			return nil, connectionError
-		}
-		// Request connection to target
-		networkLength := len(network)
-		addressLength := len(address)
-		payloadLength := 3 + networkLength + addressLength
-		request := make([]byte, 0, payloadLength)
-		request = append(request, DialCommand)
-		request = append(request, byte(networkLength))
-		request = append(request, []byte(network)...)
-		request = append(request, byte(addressLength))
-		request = append(request, []byte(address)...)
-		var bytesWritten int
-		bytesWritten, connectionError = targetConnection.Write(request)
-		if connectionError != nil {
-			_ = targetConnection.Close()
-			return nil, connectionError
-		} else if bytesWritten != payloadLength {
-			_ = targetConnection.Close()
-			return nil, SlaveConnectionRequestError
-		}
-		response := make([]byte, 1)
-		var bytesReceived int
-		bytesReceived, connectionError = targetConnection.Read(response)
-		if connectionError != nil {
-			_ = targetConnection.Close()
-			return nil, connectionError
-		} else if bytesReceived != 1 {
-			_ = targetConnection.Close()
-			return nil, SlaveConnectionRequestError
-		}
-		switch response[0] {
-		case NewConnectionSucceeded:
-			return targetConnection, nil
-		}
-		return nil, SlaveConnectionRequestError
-	}
-}
-
 func (master *Master) serve(client net.Conn) {
 	master.LogData("Received connection from: ", client.RemoteAddr().String())
-	if err := master.FilterInbound(client.RemoteAddr()); err != nil {
+	if err := master.FilterInbound(client.RemoteAddr().String()); err != nil {
 		master.LogData(err)
 		return
 	}
@@ -181,7 +131,7 @@ func (master *Master) serve(client net.Conn) {
 func (master *Master) Serve() error {
 	if master.TLSConfig.Certificates == nil {
 		var selfSignedError error
-		master.TLSConfig.Certificates, selfSignedError = SelfSignCertificate()
+		master.TLSConfig.Certificates, selfSignedError = common.SelfSignCertificate()
 		if selfSignedError != nil {
 			return selfSignedError
 		}
@@ -219,11 +169,8 @@ func (master *Master) Serve() error {
 	}
 	master.LogData("slave Address: " + slaveConnection.RemoteAddr().String())
 	master.SlaveConnection = slaveConnection
-	master.Protocol.SetDial(master.protocolDialFunc())
-	master.Protocol.SetListen(
-		func(network, address string) (net.Listener, error) {
-			return nil, errors.New("not supported for master/slave protocol")
-		})
+	master.Protocol.SetDial(master.Dial)
+	master.Protocol.SetListen(master.Listen)
 	master.Protocol.SetListenAddress(master.ProxyListener.Addr())
 	var clientConnection net.Conn
 	for !master.finish {
