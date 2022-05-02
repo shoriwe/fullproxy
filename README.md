@@ -10,7 +10,7 @@ Bind and reverse connection based, SOCKS5, HTTP and PortForward proxy.
 
 # Description
 
-<img src="logo/white_logo_color_background.jpg" alt="FullProxyLogo" style="zoom:25%;" />
+![logo](logo/white_logo_color_background.jpg)
 
 `FullProxy` is a `Bind` and `Reverse Connection` (with TLS) `HTTP`, `SOCKS5` and `PortForward` portable proxy.
 
@@ -47,12 +47,12 @@ Outputs:
 
 ```
 path/to/fullproxy MODE NETWORK_TYPE ADDRESS PROTOCOL [OPTIONS]
-	- MODE:         bind|master|slave
-	- NETWORK_TYPE: tcp|udp
-	- ADDRESS:      IPv4|IPv6 or Domain followed by ":" and the PORT; For Example -> "127.0.0.1:80"
-	- PROTOCOL:     socks5|http|port-forward|translate-socks5
+ - MODE:         bind|master|slave
+ - NETWORK_TYPE: tcp|udp
+ - ADDRESS:      IPv4|IPv6 or Domain followed by ":" and the PORT; For Example -> "127.0.0.1:80"
+ - PROTOCOL:     socks5|http|port-forward|translate-socks5
 Environment Variables:
-	- C2Address     Host and port of the C2 port of the master server
+ - C2Address     Host and port of the C2 port of the master server
 ```
 
 ### SOCKS5
@@ -178,7 +178,7 @@ user@linux:~$ export C2Address="127.0.0.1:9051" && export C2SlaveIgnoreTrust="1"
 
 ### fullproxy-users
 
-This tool will create a valid `JSON` file to use with the flag ` -users-file`
+This tool will create a valid `JSON` file to use with the flag `-users-file`
 
 ```shell
 user@linux:~$ fullproxy-users
