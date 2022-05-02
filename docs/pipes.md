@@ -16,9 +16,7 @@ Client --> Server : Proxy traffic
 
 ## Master / Slave pipe
 
-This pipe is intended to forward traffic accessible by a machine that cannot bind but can connect to external servers.
-
-For the same of forwarding traffic in non .
+This pipe is intended to forward traffic accessible by a machine that cannot bind but can connect to external servers, for this same reason this kind of proxy pipe doesn't support commands like **SOCKS5 BIND**.
 
 ```
 sequenceDiagram
