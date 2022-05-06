@@ -1,6 +1,7 @@
 package pipes
 
 import (
+	"crypto/tls"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"net"
 )
@@ -12,6 +13,7 @@ type Bind struct {
 	Protocol                      servers.Protocol
 	LoggingMethod                 LoggingMethod
 	InboundFilter, OutboundFilter IOFilter
+	TLSCertificates               []tls.Certificate
 }
 
 func (bind *Bind) Dial(networkType, address string) (net.Conn, error) {
@@ -23,6 +25,7 @@ func (bind *Bind) Dial(networkType, address string) (net.Conn, error) {
 
 func (bind *Bind) Listen(networkType, address string) (net.Listener, error) {
 	// TODO: Listen filter
+	// TODO: Return Filterable listener
 	return net.Listen(networkType, address)
 }
 
@@ -71,7 +74,15 @@ func (bind *Bind) serve(clientConnection net.Conn) {
 }
 
 func (bind *Bind) Serve() error {
-	listener, listenError := net.Listen(bind.NetworkType, bind.BindAddress)
+	var (
+		listener    net.Listener
+		listenError error
+	)
+	if bind.TLSCertificates == nil {
+		listener, listenError = net.Listen(bind.NetworkType, bind.BindAddress)
+	} else {
+		listener, listenError = tls.Listen(bind.NetworkType, bind.BindAddress, &tls.Config{Certificates: bind.TLSCertificates})
+	}
 	if listenError != nil {
 		return listenError
 	}
@@ -96,13 +107,15 @@ func NewBindPipe(
 	protocol servers.Protocol,
 	method LoggingMethod,
 	inboundFilter, outboundFilter IOFilter,
+	certificates []tls.Certificate,
 ) Pipe {
 	return &Bind{
-		NetworkType:    networkType,
-		BindAddress:    bindAddress,
-		Protocol:       protocol,
-		LoggingMethod:  method,
-		InboundFilter:  inboundFilter,
-		OutboundFilter: outboundFilter,
+		NetworkType:     networkType,
+		BindAddress:     bindAddress,
+		Protocol:        protocol,
+		LoggingMethod:   method,
+		InboundFilter:   inboundFilter,
+		OutboundFilter:  outboundFilter,
+		TLSCertificates: certificates,
 	}
 }

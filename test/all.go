@@ -76,6 +76,7 @@ func NewBindPipe(protocol proxy2.Protocol, inboundFilter, outboundFilter pipes.I
 		nil,
 		inboundFilter,
 		outboundFilter,
+		nil,
 	)
 	go bindPipe.Serve()
 	time.Sleep(2 * time.Second)
