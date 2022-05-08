@@ -69,15 +69,37 @@ func basicInboundRule(address string) error {
 	return nil
 }
 
-func NewBindPipe(protocol proxy2.Protocol, inboundFilter, outboundFilter pipes.IOFilter) net.Listener {
+func basicListenRule(address string) error {
+	host, _, splitError := net.SplitHostPort(address)
+	if splitError != nil {
+		return splitError
+	}
+	if host == "127.0.0.1" {
+		return errors.New("listen in localhost denied")
+	}
+	return nil
+}
+
+func basicAcceptRule(address string) error {
+	host, _, splitError := net.SplitHostPort(address)
+	if splitError != nil {
+		return splitError
+	}
+	if host == "127.0.0.1" {
+		return errors.New("connections from localhost denied")
+	}
+	return nil
+}
+
+func NewBindPipe(protocol proxy2.Protocol, inboundFilter, outboundFilter, listenFilter, acceptFilter pipes.IOFilter) net.Listener {
 	bindPipe := pipes.NewBindPipe(
 		networkType, proxyAddress,
 		protocol,
-		nil,
-		inboundFilter,
-		outboundFilter,
-		nil,
 	)
+	bindPipe.SetInboundFilter(inboundFilter)
+	bindPipe.SetOutboundFilter(outboundFilter)
+	bindPipe.SetListenFilter(listenFilter)
+	bindPipe.SetAcceptFilter(acceptFilter)
 	go bindPipe.Serve()
 	time.Sleep(2 * time.Second)
 	return bindPipe.(*pipes.Bind).Server
@@ -92,18 +114,16 @@ func NewMasterSlave(protocol proxy2.Protocol, inboundFilter, outboundFilter pipe
 		networkType,
 		c2Address,
 		proxyAddress,
-		nil,
-		inboundFilter,
-		outboundFilter,
 		protocol,
-		cert,
 	)
+	masterPipe.SetInboundFilter(inboundFilter)
+	masterPipe.SetOutboundFilter(outboundFilter)
+	masterPipe.SetTLSCertificates(cert)
 	go masterPipe.Serve()
 	time.Sleep(1 * time.Second)
 	slavePipe := pipes.NewSlave(
 		networkType,
 		c2Address,
-		nil,
 		true,
 	)
 	go slavePipe.Serve()
@@ -202,9 +222,10 @@ func GetRequestHTTP(targetUrl, username, password string) uint8 {
 	return Success
 }
 
-func Socks5BindTest(
+func Socks6BindSucceed(
 	proxyAddress string,
 	authMethod proxy2.AuthenticationMethod,
+	listenFilter, acceptFilter pipes.IOFilter,
 	username, password string,
 	t *testing.T,
 ) {
@@ -213,6 +234,7 @@ func Socks5BindTest(
 		socks5.NewSocks5(authMethod),
 		nil,
 		basicOutboundRule,
+		listenFilter, acceptFilter,
 	)
 	defer proxyServer.Close()
 	socksClient := socks52.Socks5{

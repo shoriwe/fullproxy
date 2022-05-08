@@ -1,7 +1,9 @@
 package socks5
 
 import (
+	"errors"
 	"github.com/shoriwe/fullproxy/v3/internal/common"
+	"github.com/shoriwe/fullproxy/v3/internal/pipes"
 	"net"
 	"time"
 )
@@ -37,7 +39,14 @@ func (socks5 *Socks5) Bind(context *Context) error {
 	if replyError != nil {
 		return replyError
 	}
-	_ = listener.(*net.TCPListener).SetDeadline(time.Now().Add(time.Minute))
+	switch listener.(type) {
+	case *net.TCPListener:
+		_ = listener.(*net.TCPListener).SetDeadline(time.Now().Add(time.Minute))
+	case *pipes.TCPListener:
+		_ = listener.(*pipes.TCPListener).Listener.SetDeadline(time.Now().Add(time.Minute))
+	default:
+		return errors.New("unsupported listener")
+	}
 	targetConnection, acceptError := listener.Accept()
 	if acceptError != nil {
 		_ = context.Reply(CommandReply{

@@ -27,6 +27,21 @@ type Master struct {
 	TLSConfig                     *tls.Config
 }
 
+func (master *Master) SetTLSCertificates(certificates []tls.Certificate) {
+	master.TLSConfig = &tls.Config{Certificates: certificates}
+}
+
+func (master *Master) SetListenFilter(_ IOFilter) {
+}
+
+func (master *Master) SetAcceptFilter(_ IOFilter) {
+
+}
+
+func (master *Master) FilterListen(_ string) error {
+	return nil
+}
+
 func (master *Master) Dial(network, address string) (net.Conn, error) {
 	if filterError := master.FilterOutbound(address); filterError != nil {
 		return nil, filterError
@@ -185,19 +200,12 @@ func (master *Master) Serve() error {
 
 func NewMaster(
 	networkType, c2Address, proxyAddress string,
-	loggingMethod LoggingMethod,
-	inboundFilter, outboundFilter IOFilter,
 	protocol servers.Protocol,
-	certificates []tls.Certificate,
 ) Pipe {
 	return &Master{
-		NetworkType:    networkType,
-		C2Address:      c2Address,
-		ProxyAddress:   proxyAddress,
-		LoggingMethod:  loggingMethod,
-		InboundFilter:  inboundFilter,
-		OutboundFilter: outboundFilter,
-		Protocol:       protocol,
-		TLSConfig:      &tls.Config{Certificates: certificates},
+		NetworkType:  networkType,
+		C2Address:    c2Address,
+		ProxyAddress: proxyAddress,
+		Protocol:     protocol,
 	}
 }

@@ -18,6 +18,18 @@ type Slave struct {
 	tlsConfig                     *tls.Config
 }
 
+func (slave *Slave) SetTLSCertificates(_ []tls.Certificate) {}
+
+func (slave *Slave) SetListenFilter(_ IOFilter) {
+}
+
+func (slave *Slave) SetAcceptFilter(_ IOFilter) {
+}
+
+func (slave *Slave) FilterListen(_ string) error {
+	return nil
+}
+
 func (slave *Slave) SetInboundFilter(_ IOFilter) {
 	return
 }
@@ -161,11 +173,10 @@ func (slave *Slave) Serve() error {
 	}
 }
 
-func NewSlave(networkType string, masterC2Address string, loggingMethod LoggingMethod, ignoreTrust bool) Pipe {
+func NewSlave(networkType string, masterC2Address string, ignoreTrust bool) Pipe {
 	return &Slave{
 		NetworkType:     networkType,
 		MasterC2Address: masterC2Address,
-		LoggingMethod:   loggingMethod,
 		IgnoreTrust:     ignoreTrust,
 	}
 }

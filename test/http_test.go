@@ -10,7 +10,7 @@ import (
 func TestHTTPNoAuthHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(http2.NewHTTP(nil), nil, nil)
+	p := NewBindPipe(http2.NewHTTP(nil), nil, nil, nil, nil)
 	defer p.Close()
 	if GetRequestHTTP(testUrl, "", "") != Success {
 		t.Fatal(testUrl)
@@ -22,7 +22,7 @@ func TestHTTPNoAuthHTTPRequest(t *testing.T) {
 func TestHTTPUsernamePasswordHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(http2.NewHTTP(basicAuthFunc), nil, nil)
+	p := NewBindPipe(http2.NewHTTP(basicAuthFunc), nil, nil, nil, nil)
 	defer p.Close()
 	if GetRequestHTTP(testUrl, "sulcud", "password") != Success {
 		t.Fatal(testUrl)
@@ -37,7 +37,7 @@ func TestHTTPUsernamePasswordHTTPRequest(t *testing.T) {
 func TestHTTPInvalidInboundHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(http2.NewHTTP(basicAuthFunc), basicInboundRule, nil)
+	p := NewBindPipe(http2.NewHTTP(basicAuthFunc), basicInboundRule, nil, nil, nil)
 	defer p.Close()
 	if GetRequestHTTP(testUrl, "sulcud", "password") != FailedRequest {
 		t.Fatal("Bypassed inbound")
@@ -49,7 +49,7 @@ func TestHTTPInvalidInboundHTTPRequest(t *testing.T) {
 func TestHTTPOutboundHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(http2.NewHTTP(basicAuthFunc), nil, basicOutboundRule)
+	p := NewBindPipe(http2.NewHTTP(basicAuthFunc), nil, basicOutboundRule, nil, nil)
 	defer p.Close()
 	if GetRequestHTTP("google.com", "sulcud", "password") == Success {
 		t.Fatal("Bypassed outbound")

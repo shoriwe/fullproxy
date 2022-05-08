@@ -7,13 +7,32 @@ import (
 )
 
 type Bind struct {
-	NetworkType                   string
-	BindAddress                   string
-	Server                        net.Listener
-	Protocol                      servers.Protocol
-	LoggingMethod                 LoggingMethod
-	InboundFilter, OutboundFilter IOFilter
-	TLSCertificates               []tls.Certificate
+	NetworkType                                               string
+	BindAddress                                               string
+	Server                                                    net.Listener
+	Protocol                                                  servers.Protocol
+	LoggingMethod                                             LoggingMethod
+	InboundFilter, OutboundFilter, ListenFilter, AcceptFilter IOFilter
+	TLSCertificates                                           []tls.Certificate
+}
+
+func (bind *Bind) SetTLSCertificates(certificates []tls.Certificate) {
+	bind.TLSCertificates = certificates
+}
+
+func (bind *Bind) SetListenFilter(filter IOFilter) {
+	bind.ListenFilter = filter
+}
+
+func (bind *Bind) SetAcceptFilter(filter IOFilter) {
+	bind.AcceptFilter = filter
+}
+
+func (bind *Bind) FilterListen(address string) error {
+	if bind.ListenFilter != nil {
+		return bind.ListenFilter(address)
+	}
+	return nil
 }
 
 func (bind *Bind) Dial(networkType, address string) (net.Conn, error) {
@@ -24,9 +43,15 @@ func (bind *Bind) Dial(networkType, address string) (net.Conn, error) {
 }
 
 func (bind *Bind) Listen(networkType, address string) (net.Listener, error) {
-	// TODO: Listen filter
+	if filterError := bind.FilterListen(address); filterError != nil {
+		return nil, filterError
+	}
+	listener, listenError := net.Listen(networkType, address)
+	if listenError != nil {
+		return nil, listenError
+	}
 	// TODO: Return Filterable listener
-	return net.Listen(networkType, address)
+	return &TCPListener{listener.(*net.TCPListener), bind.AcceptFilter}, nil
 }
 
 func (bind *Bind) LogData(a ...interface{}) {
@@ -105,17 +130,10 @@ func (bind *Bind) Serve() error {
 func NewBindPipe(
 	networkType, bindAddress string,
 	protocol servers.Protocol,
-	method LoggingMethod,
-	inboundFilter, outboundFilter IOFilter,
-	certificates []tls.Certificate,
 ) Pipe {
 	return &Bind{
-		NetworkType:     networkType,
-		BindAddress:     bindAddress,
-		Protocol:        protocol,
-		LoggingMethod:   method,
-		InboundFilter:   inboundFilter,
-		OutboundFilter:  outboundFilter,
-		TLSCertificates: certificates,
+		NetworkType: networkType,
+		BindAddress: bindAddress,
+		Protocol:    protocol,
 	}
 }

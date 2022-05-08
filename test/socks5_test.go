@@ -1,8 +1,12 @@
 package test
 
 import (
+	"bytes"
+	socks52 "github.com/shoriwe/fullproxy/v3/internal/proxy/clients/socks5"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/socks5"
+	"net"
 	"testing"
+	"time"
 )
 
 //// Test No auth
@@ -10,7 +14,7 @@ import (
 func TestSocks5NoAuthHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(nil), nil, nil)
+	p := NewBindPipe(socks5.NewSocks5(nil), nil, nil, nil, nil)
 	defer p.Close()
 	if GetRequestSocks5(testUrl, "", "") != Success {
 		t.Fatal(testUrl)
@@ -22,7 +26,7 @@ func TestSocks5NoAuthHTTPRequest(t *testing.T) {
 func TestSocks5IPv6HTTPRequest(t *testing.T) {
 	h := StartIPv6HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(nil), nil, nil)
+	p := NewBindPipe(socks5.NewSocks5(nil), nil, nil, nil, nil)
 	defer p.Close()
 	result := GetRequestSocks5(testUrlIPv6, "", "")
 	if result != Success {
@@ -35,7 +39,7 @@ func TestSocks5IPv6HTTPRequest(t *testing.T) {
 func TestSocks5UsernamePasswordHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc), nil, nil)
+	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc), nil, nil, nil, nil)
 	defer p.Close()
 	if GetRequestSocks5(testUrl, "sulcud", "password") != Success {
 		t.Fatal(testUrl)
@@ -50,7 +54,7 @@ func TestSocks5UsernamePasswordHTTPRequest(t *testing.T) {
 func TestSocks5InvalidInboundHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc), basicInboundRule, nil)
+	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc), basicInboundRule, nil, nil, nil)
 	defer p.Close()
 	if GetRequestSocks5(testUrl, "sulcud", "password") != FailedRequest {
 		t.Fatal("Bypassed inbound")
@@ -64,6 +68,7 @@ func TestSocks5OutboundHTTPRequest(t *testing.T) {
 	defer h.Close()
 	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc),
 		nil, basicOutboundRule,
+		nil, nil,
 	)
 	defer p.Close()
 	if GetRequestSocks5("google.com", "sulcud", "password") == Success {
@@ -164,19 +169,102 @@ func TestSocks5OutboundMasterSlaveHTTPRequest(t *testing.T) {
 // BIND
 
 func TestSocks5NoAuthBind(t *testing.T) {
-	Socks5BindTest(
+	Socks6BindSucceed(
 		proxyAddress,
 		nil,
+		nil, nil,
 		"", "",
 		t,
 	)
 }
 
 func TestSocks5BasicAuthBind(t *testing.T) {
-	Socks5BindTest(
+	Socks6BindSucceed(
 		proxyAddress,
 		basicAuthFunc,
+		nil, nil,
 		"sulcud", "password",
 		t,
 	)
+}
+
+func TestSocks5BindListenFilter(t *testing.T) {
+	time.Sleep(10 * time.Second)
+	proxyServer := NewBindPipe(
+		socks5.NewSocks5(basicAuthFunc),
+		nil,
+		basicOutboundRule,
+		basicListenRule, nil,
+	)
+	defer proxyServer.Close()
+	socksClient := socks52.Socks5{
+		Network:  "tcp",
+		Address:  proxyAddress,
+		Username: "sulcud",
+		Password: "password",
+	}
+	_, listenError := socksClient.Listen("tcp", SampleAddress.String())
+	if listenError == nil {
+		t.Fatal("the listen should fail")
+	}
+}
+
+func TestSocks5BindAcceptFilter(t *testing.T) {
+	time.Sleep(10 * time.Second)
+	proxyServer := NewBindPipe(
+		socks5.NewSocks5(basicAuthFunc),
+		nil,
+		basicOutboundRule,
+		nil, basicAcceptRule,
+	)
+	defer proxyServer.Close()
+	socksClient := socks52.Socks5{
+		Network:  "tcp",
+		Address:  proxyAddress,
+		Username: "sulcud",
+		Password: "password",
+	}
+	var (
+		listener                     net.Listener
+		client, server               net.Conn
+		connectionError, listenError error
+	)
+	go func() {
+		listener, listenError = socksClient.Listen("tcp", SampleAddress.String())
+		if listenError != nil {
+			t.Fatal(listenError)
+		}
+		client, connectionError = listener.Accept()
+		if connectionError != nil {
+			t.Fatal(connectionError)
+		}
+		_, writeError := client.Write(SampleMessage)
+		if writeError != nil {
+			t.Fatal(writeError)
+		}
+	}()
+	time.Sleep(2 * time.Second)
+	defer func(listener net.Listener) {
+		if listener != nil {
+			_ = listener.Close()
+		}
+	}(listener)
+	defer func(client net.Conn) {
+		if client != nil {
+			_ = client.Close()
+		}
+	}(client)
+	server, connectionError = net.DialTCP("tcp", SampleAddress, listener.Addr().(*net.TCPAddr))
+	if connectionError != nil {
+		t.Fatal(connectionError)
+	}
+	defer server.Close()
+	response := make([]byte, len(SampleMessage))
+	_, readError := server.Read(response)
+	if readError == nil {
+		t.Fatal("connection should close, expected EOF or connection closed")
+	}
+	if bytes.Equal(response, SampleMessage) {
+		t.Fatal("empty array should not equal to targeted one")
+	}
 }
