@@ -7,7 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/shoriwe/fullproxy/v3/internal/common"
-	"github.com/shoriwe/fullproxy/v3/internal/pipes"
+	"github.com/shoriwe/fullproxy/v3/internal/listeners"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/http"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/port-forward"
@@ -288,15 +288,15 @@ func main() {
 		log.Fatal(setupError)
 	}
 	var (
-		pipe pipes.Pipe
+		pipe listeners.Listener
 	)
 	switch mode {
 	case "bind":
-		pipe = pipes.NewBindPipe(networkType, address, proxyProtocol, log.Println, inboundFilter)
+		pipe = listeners.NewBindListener(networkType, address, proxyProtocol, log.Println, inboundFilter)
 	case "master":
-		pipe = pipes.NewMaster(networkType, c2Address, address, log.Println, inboundFilter, proxyProtocol, certificate)
+		pipe = listeners.NewMaster(networkType, c2Address, address, log.Println, inboundFilter, proxyProtocol, certificate)
 	case "slave":
-		pipe = pipes.NewSlave(networkType, c2Address, log.Println, trust)
+		pipe = listeners.NewSlave(networkType, c2Address, log.Println, trust)
 	default:
 		panic("Unknown mode")
 	}

@@ -11,7 +11,8 @@ Available SOCKS5 commands
 - **CONNECT**
 - **BIND**
 
-**UDP associate** wasn't implemented for security reasons since all the features that make this command available for authenticated accounts are vendor specific so there is no
+**UDP associate** wasn't implemented for security reasons since all the features that make this command available for
+authenticated accounts are vendor specific so there is no
 
 ## HTTP
 

@@ -5,6 +5,7 @@ import (
 	socks52 "github.com/shoriwe/fullproxy/v3/internal/proxy/clients/socks5"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/socks5"
 	"net"
+	"strings"
 	"testing"
 	"time"
 )
@@ -14,7 +15,7 @@ import (
 func TestSocks5NoAuthHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(nil), nil, nil, nil, nil)
+	p := NewBindPipe(socks5.NewSocks5(nil), nil)
 	defer p.Close()
 	if GetRequestSocks5(testUrl, "", "") != Success {
 		t.Fatal(testUrl)
@@ -26,7 +27,7 @@ func TestSocks5NoAuthHTTPRequest(t *testing.T) {
 func TestSocks5IPv6HTTPRequest(t *testing.T) {
 	h := StartIPv6HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(nil), nil, nil, nil, nil)
+	p := NewBindPipe(socks5.NewSocks5(nil), nil)
 	defer p.Close()
 	result := GetRequestSocks5(testUrlIPv6, "", "")
 	if result != Success {
@@ -39,7 +40,7 @@ func TestSocks5IPv6HTTPRequest(t *testing.T) {
 func TestSocks5UsernamePasswordHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc), nil, nil, nil, nil)
+	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc), nil)
 	defer p.Close()
 	if GetRequestSocks5(testUrl, "sulcud", "password") != Success {
 		t.Fatal(testUrl)
@@ -54,7 +55,7 @@ func TestSocks5UsernamePasswordHTTPRequest(t *testing.T) {
 func TestSocks5InvalidInboundHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc), basicInboundRule, nil, nil, nil)
+	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc), &BasicInbound{})
 	defer p.Close()
 	if GetRequestSocks5(testUrl, "sulcud", "password") != FailedRequest {
 		t.Fatal("Bypassed inbound")
@@ -66,10 +67,7 @@ func TestSocks5InvalidInboundHTTPRequest(t *testing.T) {
 func TestSocks5OutboundHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc),
-		nil, basicOutboundRule,
-		nil, nil,
-	)
+	p := NewBindPipe(socks5.NewSocks5(basicAuthFunc), nil)
 	defer p.Close()
 	if GetRequestSocks5("google.com", "sulcud", "password") == Success {
 		t.Fatal("Bypassed outbound")
@@ -87,7 +85,7 @@ func TestSocks5NoAuthMasterSlaveHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
-		socks5.NewSocks5(nil), nil, nil)
+		socks5.NewSocks5(nil), nil)
 	defer func() {
 		a.Close()
 		b.Close()
@@ -102,7 +100,7 @@ func TestSocks5NoAuthIPv6MasterSlaveHTTPRequest(t *testing.T) {
 	h := StartIPv6HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
-		socks5.NewSocks5(nil), nil, nil)
+		socks5.NewSocks5(nil), nil)
 	defer func() {
 		a.Close()
 		b.Close()
@@ -118,7 +116,7 @@ func TestSocks5UsernamePasswordMasterSlaveHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
-		socks5.NewSocks5(basicAuthFunc), nil, nil)
+		socks5.NewSocks5(basicAuthFunc), nil)
 	defer func() {
 		a.Close()
 		b.Close()
@@ -135,7 +133,7 @@ func TestSocks5InboundMasterSlaveHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
-		socks5.NewSocks5(basicAuthFunc), basicInboundRule, nil)
+		socks5.NewSocks5(basicAuthFunc), &BasicInbound{})
 	defer func() {
 		a.Close()
 		b.Close()
@@ -152,7 +150,7 @@ func TestSocks5OutboundMasterSlaveHTTPRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
-		socks5.NewSocks5(basicAuthFunc), nil, basicOutboundRule)
+		socks5.NewSocks5(basicAuthFunc), &BasicOutbound{})
 	defer func() {
 		a.Close()
 		b.Close()
@@ -171,7 +169,6 @@ func TestSocks5OutboundMasterSlaveHTTPRequest(t *testing.T) {
 func TestSocks5NoAuthBind(t *testing.T) {
 	Socks6BindSucceed(
 		proxyAddress,
-		nil,
 		nil, nil,
 		"", "",
 		t,
@@ -182,7 +179,7 @@ func TestSocks5BasicAuthBind(t *testing.T) {
 	Socks6BindSucceed(
 		proxyAddress,
 		basicAuthFunc,
-		nil, nil,
+		nil,
 		"sulcud", "password",
 		t,
 	)
@@ -192,9 +189,7 @@ func TestSocks5BindListenFilter(t *testing.T) {
 	time.Sleep(10 * time.Second)
 	proxyServer := NewBindPipe(
 		socks5.NewSocks5(basicAuthFunc),
-		nil,
-		basicOutboundRule,
-		basicListenRule, nil,
+		&BasicListen{},
 	)
 	defer proxyServer.Close()
 	socksClient := socks52.Socks5{
@@ -213,9 +208,7 @@ func TestSocks5BindAcceptFilter(t *testing.T) {
 	time.Sleep(10 * time.Second)
 	proxyServer := NewBindPipe(
 		socks5.NewSocks5(basicAuthFunc),
-		nil,
-		basicOutboundRule,
-		nil, basicAcceptRule,
+		&BasicAccept{},
 	)
 	defer proxyServer.Close()
 	socksClient := socks52.Socks5{
@@ -240,7 +233,9 @@ func TestSocks5BindAcceptFilter(t *testing.T) {
 		}
 		_, writeError := client.Write(SampleMessage)
 		if writeError != nil {
-			t.Fatal(writeError)
+			if !strings.Contains(writeError.Error(), "closed") {
+				t.Fatal(writeError)
+			}
 		}
 	}()
 	time.Sleep(2 * time.Second)

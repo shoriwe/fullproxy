@@ -21,11 +21,17 @@ type ForwardToSocks5 struct {
 	Socks5Dialer  proxy.Dialer
 }
 
+func (forwardToSocks5 *ForwardToSocks5) SetListen(_ servers.ListenFunc) {
+}
+
+func (forwardToSocks5 *ForwardToSocks5) SetListenAddress(_ net.Addr) {
+}
+
 func (forwardToSocks5 *ForwardToSocks5) SetDial(dialFunc servers.DialFunc) {
 	forwardToSocks5.socks5Dialer.dialFunc = dialFunc
 }
 
-func NewForwardToSocks5(networkType, proxyAddress, username, password, targetAddress string) (*ForwardToSocks5, error) {
+func NewForwardToSocks5(networkType, proxyAddress, username, password, targetAddress string) (servers.Protocol, error) {
 	fDialer := &customDialer{dialFunc: net.Dial}
 	dialer, initializationError := proxy.SOCKS5(networkType, proxyAddress, &proxy.Auth{
 		User:     username,
@@ -41,8 +47,7 @@ func NewForwardToSocks5(networkType, proxyAddress, username, password, targetAdd
 	}, nil
 }
 
-func (forwardToSocks5 *ForwardToSocks5) SetAuthenticationMethod(_ servers.AuthenticationMethod) error {
-	return nil
+func (forwardToSocks5 *ForwardToSocks5) SetAuthenticationMethod(_ servers.AuthenticationMethod) {
 }
 
 func (forwardToSocks5 *ForwardToSocks5) Handle(clientConnection net.Conn) error {

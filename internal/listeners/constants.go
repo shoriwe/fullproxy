@@ -1,4 +1,4 @@
-package pipes
+package listeners
 
 import (
 	"errors"

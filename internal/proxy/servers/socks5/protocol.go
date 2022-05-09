@@ -133,9 +133,8 @@ func NewContext(conn net.Conn) *Context {
 	}
 }
 
-func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod servers.AuthenticationMethod) error {
+func (socks5 *Socks5) SetAuthenticationMethod(authenticationMethod servers.AuthenticationMethod) {
 	socks5.AuthenticationMethod = authenticationMethod
-	return nil
 }
 
 func (socks5 *Socks5) SetDial(dialFunc servers.DialFunc) {

@@ -2,6 +2,7 @@ package servers
 
 import (
 	"net"
+	"net/http"
 )
 
 type (
@@ -14,10 +15,15 @@ type (
 	ListenFunc func(network, address string) (net.Listener, error)
 
 	Protocol interface {
-		SetAuthenticationMethod(AuthenticationMethod) error
 		Handle(net.Conn) error
+		SetAuthenticationMethod(AuthenticationMethod)
 		SetDial(dialFunc DialFunc)
 		SetListen(listenFunc ListenFunc)
 		SetListenAddress(address net.Addr)
+	}
+
+	HTTPHandler interface {
+		Protocol
+		http.Handler
 	}
 )

@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/shoriwe/fullproxy/v3/internal/common"
-	"github.com/shoriwe/fullproxy/v3/internal/pipes"
+	"github.com/shoriwe/fullproxy/v3/internal/listeners"
 	socks52 "github.com/shoriwe/fullproxy/v3/internal/proxy/clients/socks5"
 	proxy2 "github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/socks5"
@@ -47,7 +46,34 @@ func basicAuthFunc(username []byte, password []byte) error {
 	return errors.New("auth failed")
 }
 
-func basicOutboundRule(address string) error {
+type BasicInbound struct{}
+
+func (b *BasicInbound) Outbound(address string) error {
+	return nil
+}
+
+func (b *BasicInbound) Listen(address string) error {
+	return nil
+}
+
+func (b *BasicInbound) Accept(address string) error {
+	return nil
+}
+
+func (b *BasicInbound) Inbound(address string) error {
+	host, _, splitError := net.SplitHostPort(address)
+	if splitError != nil {
+		return splitError
+	}
+	if host == "127.0.0.1" {
+		return errors.New("host denied")
+	}
+	return nil
+}
+
+type BasicOutbound struct{}
+
+func (b *BasicOutbound) Outbound(address string) error {
 	host, _, splitError := net.SplitHostPort(address)
 	if splitError != nil {
 		return splitError
@@ -58,18 +84,25 @@ func basicOutboundRule(address string) error {
 	return nil
 }
 
-func basicInboundRule(address string) error {
-	host, _, splitError := net.SplitHostPort(address)
-	if splitError != nil {
-		return splitError
-	}
-	if host == "127.0.0.1" {
-		return errors.New("host denied")
-	}
+func (b *BasicOutbound) Listen(address string) error {
 	return nil
 }
 
-func basicListenRule(address string) error {
+func (b *BasicOutbound) Accept(address string) error {
+	return nil
+}
+
+func (b *BasicOutbound) Inbound(address string) error {
+	return nil
+}
+
+type BasicListen struct{}
+
+func (b *BasicListen) Outbound(address string) error {
+	return nil
+}
+
+func (b *BasicListen) Listen(address string) error {
 	host, _, splitError := net.SplitHostPort(address)
 	if splitError != nil {
 		return splitError
@@ -80,7 +113,25 @@ func basicListenRule(address string) error {
 	return nil
 }
 
-func basicAcceptRule(address string) error {
+func (b *BasicListen) Accept(address string) error {
+	return nil
+}
+
+func (b *BasicListen) Inbound(address string) error {
+	return nil
+}
+
+type BasicAccept struct{}
+
+func (b *BasicAccept) Outbound(address string) error {
+	return nil
+}
+
+func (b *BasicAccept) Listen(address string) error {
+	return nil
+}
+
+func (b *BasicAccept) Accept(address string) error {
 	host, _, splitError := net.SplitHostPort(address)
 	if splitError != nil {
 		return splitError
@@ -91,44 +142,95 @@ func basicAcceptRule(address string) error {
 	return nil
 }
 
-func NewBindPipe(protocol proxy2.Protocol, inboundFilter, outboundFilter, listenFilter, acceptFilter pipes.IOFilter) net.Listener {
-	bindPipe := pipes.NewBindPipe(
-		networkType, proxyAddress,
-		protocol,
-	)
-	bindPipe.SetInboundFilter(inboundFilter)
-	bindPipe.SetOutboundFilter(outboundFilter)
-	bindPipe.SetListenFilter(listenFilter)
-	bindPipe.SetAcceptFilter(acceptFilter)
-	go bindPipe.Serve()
-	time.Sleep(2 * time.Second)
-	return bindPipe.(*pipes.Bind).Server
+func (b *BasicAccept) Inbound(address string) error {
+	return nil
 }
 
-func NewMasterSlave(protocol proxy2.Protocol, inboundFilter, outboundFilter pipes.IOFilter) (net.Listener, net.Listener) {
-	cert, signError := common.SelfSignCertificate()
-	if signError != nil {
-		panic(signError)
+func NewBindHandler(handler proxy2.HTTPHandler, filters listeners.Filters) net.Listener {
+	if filters == nil {
+		filters = &listeners.NoFilter{}
 	}
-	masterPipe := pipes.NewMaster(
+	listener, listenError := listeners.NewBindListener(networkType, proxyAddress, nil)
+	if listenError != nil {
+		panic(listenError)
+	}
+	listener.SetFilters(filters)
+	go listeners.ServeHTTPHandler(listener, handler, nil)
+	return listener
+}
+
+func NewMasterSlaveHandler(handler proxy2.HTTPHandler, filters listeners.Filters) (net.Listener, net.Listener) {
+	if filters == nil {
+		filters = &listeners.NoFilter{}
+	}
+	master, listenError := listeners.NewMaster(
 		networkType,
-		c2Address,
 		proxyAddress,
-		protocol,
-	)
-	masterPipe.SetInboundFilter(inboundFilter)
-	masterPipe.SetOutboundFilter(outboundFilter)
-	masterPipe.SetTLSCertificates(cert)
-	go masterPipe.Serve()
-	time.Sleep(1 * time.Second)
-	slavePipe := pipes.NewSlave(
+		nil,
 		networkType,
 		c2Address,
-		true,
+		nil,
 	)
+	if listenError != nil {
+		panic(listenError)
+	}
+	master.SetFilters(filters)
+	go listeners.ServeHTTPHandler(master, handler, nil)
+	time.Sleep(1 * time.Second)
+	slave, listenError := listeners.NewSlave(networkType, c2Address, nil)
+	if listenError != nil {
+		panic(listenError)
+	}
+	go slave.Serve()
+	time.Sleep(1 * time.Second)
+	return master, slave
+}
+
+func NewBindPipe(protocol proxy2.Protocol, filters listeners.Filters) net.Listener {
+	if filters == nil {
+		filters = &listeners.NoFilter{}
+	}
+	bindPipe, listenError := listeners.NewBindListener(
+		networkType, proxyAddress,
+		nil,
+	)
+	if listenError != nil {
+		panic(listenError)
+	}
+	bindPipe.SetFilters(filters)
+	go listeners.Serve(bindPipe, protocol, nil)
+	return bindPipe
+}
+
+func NewMasterSlave(protocol proxy2.Protocol, filters listeners.Filters) (net.Listener, net.Listener) {
+	if filters == nil {
+		filters = &listeners.NoFilter{}
+	}
+	masterPipe, listenError := listeners.NewMaster(
+		networkType,
+		proxyAddress,
+		nil,
+		networkType,
+		c2Address,
+		nil,
+	)
+	if listenError != nil {
+		panic(listenError)
+	}
+	masterPipe.SetFilters(filters)
+	go listeners.Serve(masterPipe, protocol, nil)
+	time.Sleep(1 * time.Second)
+	slavePipe, listenError := listeners.NewSlave(
+		networkType,
+		c2Address,
+		nil,
+	)
+	if listenError != nil {
+		panic(listenError)
+	}
 	go slavePipe.Serve()
 	time.Sleep(1 * time.Second)
-	return masterPipe.(*pipes.Master).ProxyListener, masterPipe.(*pipes.Master).C2Listener
+	return masterPipe.(*listeners.Master).ProxyListener, masterPipe.(*listeners.Master).C2Listener
 }
 
 func StartIPv4HTTPServer(t *testing.T) net.Listener {
@@ -225,16 +327,14 @@ func GetRequestHTTP(targetUrl, username, password string) uint8 {
 func Socks6BindSucceed(
 	proxyAddress string,
 	authMethod proxy2.AuthenticationMethod,
-	listenFilter, acceptFilter pipes.IOFilter,
+	filters listeners.Filters,
 	username, password string,
 	t *testing.T,
 ) {
 	time.Sleep(10 * time.Second)
 	proxyServer := NewBindPipe(
 		socks5.NewSocks5(authMethod),
-		nil,
-		basicOutboundRule,
-		listenFilter, acceptFilter,
+		filters,
 	)
 	defer proxyServer.Close()
 	socksClient := socks52.Socks5{

@@ -1,17 +1,14 @@
-package pipes
+package listeners
 
 import "net"
 
 type TCPListener struct {
-	Listener     *net.TCPListener
-	acceptFilter IOFilter
+	Listener *net.TCPListener
+	Filters  Filters
 }
 
 func (T *TCPListener) FilterAccept(address string) error {
-	if T.acceptFilter != nil {
-		return T.acceptFilter(address)
-	}
-	return nil
+	return T.Filters.Accept(address)
 }
 
 func (T *TCPListener) Accept() (net.Conn, error) {

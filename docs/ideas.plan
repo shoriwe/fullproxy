@@ -1,19 +1,19 @@
 {
   "version": "0.8.0-alpha.4.2",
   "pan": {
-    "X": -1002.5026,
-    "Y": -7.987357
+    "X": -879.4367,
+    "Y": 173.3287
   },
-  "zoom": 0.6975900530815125,
+  "zoom": 0.6498711109161377,
   "pages": [
     {
       "name": "New Page",
       "id": 0,
       "pan": {
-        "X": -1002.5026,
-        "Y": -7.987357
+        "X": -879.4368,
+        "Y": 173.32867
       },
-      "zoom": 0.6975900530815125,
+      "zoom": 0.6498711109161377,
       "cards": [
         {
           "id": 0,
@@ -88,7 +88,8 @@
           "contents": "Checkbox",
           "properties": {
             "checked": true,
-            "description": "Unit tests"
+            "description": "Unit tests",
+            "filepath": ""
           }
         },
         {
@@ -117,7 +118,8 @@
           "contents": "Checkbox",
           "properties": {
             "checked": true,
-            "description": "Filters"
+            "description": "Filters",
+            "filepath": ""
           }
         },
         {
@@ -131,7 +133,8 @@
           "contents": "Checkbox",
           "properties": {
             "checked": true,
-            "description": "Listen"
+            "description": "Listen",
+            "filepath": ""
           }
         },
         {
@@ -145,7 +148,8 @@
           "contents": "Checkbox",
           "properties": {
             "checked": true,
-            "description": "Accept"
+            "description": "Accept",
+            "filepath": ""
           }
         },
         {
@@ -196,7 +200,8 @@
           "contents": "Checkbox",
           "properties": {
             "checked": true,
-            "description": "SOCKS5"
+            "description": "SOCKS5",
+            "filepath": ""
           }
         },
         {
@@ -210,7 +215,8 @@
           "contents": "Checkbox",
           "properties": {
             "checked": true,
-            "description": "Bind"
+            "description": "Bind",
+            "filepath": ""
           }
         },
         {
@@ -236,6 +242,11 @@
             {
               "start": 11,
               "end": 18,
+              "joints": []
+            },
+            {
+              "start": 11,
+              "end": 66,
               "joints": []
             }
           ]
@@ -348,21 +359,6 @@
           }
         },
         {
-          "id": 18,
-          "rect": {
-            "X": -1824,
-            "Y": -256,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Reverse proxy",
-            "filepath": ""
-          }
-        },
-        {
           "id": 19,
           "rect": {
             "X": -1344,
@@ -408,21 +404,6 @@
           }
         },
         {
-          "id": 22,
-          "rect": {
-            "X": -1792,
-            "Y": -224,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Load balancer",
-            "filepath": ""
-          }
-        },
-        {
           "id": 23,
           "rect": {
             "X": -1312,
@@ -449,21 +430,6 @@
           "properties": {
             "checked": false,
             "description": "Logging",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 25,
-          "rect": {
-            "X": -1792,
-            "Y": -192,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "HTTP",
             "filepath": ""
           }
         },
@@ -513,17 +479,17 @@
           }
         },
         {
-          "id": 29,
+          "id": 66,
           "rect": {
-            "X": -1760,
+            "X": -1824,
             "Y": -160,
             "W": 288,
-            "H": 32
+            "H": 64
           },
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Domain redirection",
+            "description": "HTTP raw proxy Host header based",
             "filepath": ""
           }
         },
@@ -539,21 +505,6 @@
           "properties": {
             "checked": true,
             "description": "Bind",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 31,
-          "rect": {
-            "X": -1760,
-            "Y": -128,
-            "W": 288,
-            "H": 64
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Header based redirection",
             "filepath": ""
           }
         },
@@ -618,6 +569,21 @@
           }
         },
         {
+          "id": 67,
+          "rect": {
+            "X": -1792,
+            "Y": -96,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Domain filter",
+            "filepath": ""
+          }
+        },
+        {
           "id": 36,
           "rect": {
             "X": -832,
@@ -648,17 +614,17 @@
           }
         },
         {
-          "id": 38,
+          "id": 68,
           "rect": {
-            "X": -1760,
+            "X": -1792,
             "Y": -64,
             "W": 288,
-            "H": 64
+            "H": 32
           },
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Path based redirection",
+            "description": "Inject Headers",
             "filepath": ""
           }
         },
@@ -693,6 +659,21 @@
           }
         },
         {
+          "id": 69,
+          "rect": {
+            "X": -1792,
+            "Y": -32,
+            "W": 288,
+            "H": 64
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Inject GET arguments",
+            "filepath": ""
+          }
+        },
+        {
           "id": 41,
           "rect": {
             "X": 480,
@@ -708,17 +689,17 @@
           }
         },
         {
-          "id": 42,
+          "id": 70,
           "rect": {
             "X": -1792,
-            "Y": 0,
+            "Y": 32,
             "W": 288,
-            "H": 32
+            "H": 64
           },
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Raw",
+            "description": "Inject POST arguments",
             "filepath": ""
           }
         },
@@ -783,6 +764,21 @@
           }
         },
         {
+          "id": 18,
+          "rect": {
+            "X": -928,
+            "Y": 160,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Reverse proxy",
+            "filepath": ""
+          }
+        },
+        {
           "id": 47,
           "rect": {
             "X": 448,
@@ -794,6 +790,21 @@
           "properties": {
             "checked": false,
             "description": "Listen TLS",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 22,
+          "rect": {
+            "X": -896,
+            "Y": 192,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Load balancer",
             "filepath": ""
           }
         },
@@ -813,6 +824,21 @@
           }
         },
         {
+          "id": 25,
+          "rect": {
+            "X": -896,
+            "Y": 224,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "HTTP",
+            "filepath": ""
+          }
+        },
+        {
           "id": 49,
           "rect": {
             "X": 480,
@@ -828,6 +854,21 @@
           }
         },
         {
+          "id": 29,
+          "rect": {
+            "X": -864,
+            "Y": 256,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Domain redirection",
+            "filepath": ""
+          }
+        },
+        {
           "id": 50,
           "rect": {
             "X": 480,
@@ -839,6 +880,21 @@
           "properties": {
             "checked": false,
             "description": "Certificate autority",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 31,
+          "rect": {
+            "X": -864,
+            "Y": 288,
+            "W": 288,
+            "H": 64
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Header based redirection",
             "filepath": ""
           }
         },
@@ -873,6 +929,21 @@
           }
         },
         {
+          "id": 38,
+          "rect": {
+            "X": -864,
+            "Y": 352,
+            "W": 288,
+            "H": 64
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Path based redirection",
+            "filepath": ""
+          }
+        },
+        {
           "id": 53,
           "rect": {
             "X": 448,
@@ -899,6 +970,21 @@
           "properties": {
             "checked": false,
             "description": "Socks5",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 42,
+          "rect": {
+            "X": -896,
+            "Y": 416,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Raw",
             "filepath": ""
           }
         },
