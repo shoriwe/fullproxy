@@ -11,8 +11,6 @@ func closer(conn1, conn2 io.Closer) {
 }
 
 func netCopy(dst, src net.Conn) error {
-	defer src.Close()
-	defer dst.Close()
 	_, err := io.Copy(dst, src)
 	return err
 }

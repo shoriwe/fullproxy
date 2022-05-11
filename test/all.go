@@ -9,6 +9,7 @@ import (
 	proxy2 "github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/socks5"
 	"golang.org/x/net/proxy"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -25,8 +26,8 @@ var (
 )
 
 const (
-	testUrl          = "http://127.0.0.1:8080/big.txt"
-	testUrlIPv6      = "http://[::1]:8080/big.txt"
+	testUrl          = "http://127.0.0.1:8080/big"
+	testUrlIPv6      = "http://[::1]:8080/big"
 	networkType      = "tcp"
 	httpIPv6Address  = "[::1]:8080"
 	httpAddress      = "127.0.0.1:8080"
@@ -36,6 +37,7 @@ const (
 	Success          = iota
 	FailedProxySetup
 	FailedRequest
+	DefaultChunkSize = 0xF
 )
 
 func basicAuthFunc(username []byte, password []byte) error {
@@ -239,9 +241,9 @@ func StartIPv4HTTPServer(t *testing.T) net.Listener {
 		t.Fatal(listenError)
 	}
 	server := http.NewServeMux()
-	server.HandleFunc("/big.txt",
+	server.HandleFunc("/big",
 		func(writer http.ResponseWriter, request *http.Request) {
-			_, _ = writer.Write(bytes.Repeat([]byte{'A'}, 0xFFFF))
+			_, _ = writer.Write(bytes.Repeat([]byte{'A'}, DefaultChunkSize))
 		},
 	)
 	go http.Serve(httpListener, server)
@@ -255,9 +257,9 @@ func StartIPv6HTTPServer(t *testing.T) net.Listener {
 		t.Fatal(listenError)
 	}
 	server := http.NewServeMux()
-	server.HandleFunc("/big.txt",
+	server.HandleFunc("/big",
 		func(writer http.ResponseWriter, request *http.Request) {
-			_, _ = writer.Write(bytes.Repeat([]byte{'A'}, 0xFFFF))
+			_, _ = writer.Write(bytes.Repeat([]byte{'A'}, DefaultChunkSize))
 		},
 	)
 	go http.Serve(httpListener, server)
@@ -386,4 +388,63 @@ func Socks6BindSucceed(
 	if !bytes.Equal(response, SampleMessage) {
 		t.Fatal(string(response))
 	}
+}
+
+func NewHTTPServers(t *testing.T) (net.Listener, net.Listener) {
+	httpListener := func() net.Listener {
+		listener, listenError := net.Listen(networkType, "127.0.0.1:8080")
+		if listenError != nil {
+			t.Fatal(listenError)
+		}
+		server := http.NewServeMux()
+		server.HandleFunc("/big",
+			func(writer http.ResponseWriter, request *http.Request) {
+				_, _ = writer.Write(bytes.Repeat([]byte{'A'}, DefaultChunkSize))
+			},
+		)
+		go http.Serve(listener, server)
+		return listener
+	}()
+	httpListener2 := func() net.Listener {
+		listener, listenError := net.Listen(networkType, "127.0.0.1:8081")
+		if listenError != nil {
+			t.Fatal(listenError)
+		}
+		server := http.NewServeMux()
+		server.HandleFunc("/big",
+			func(writer http.ResponseWriter, request *http.Request) {
+				defer request.
+				_, _ = writer.Write(bytes.Repeat([]byte{'B'}, DefaultChunkSize))
+			},
+		)
+		go http.Serve(listener, server)
+		return listener
+	}()
+
+	return httpListener, httpListener2
+}
+
+func GetRequestContents(url string) []byte {
+	defer http.DefaultClient.CloseIdleConnections()
+	response, requestError := http.Get(url)
+	if requestError != nil {
+		return nil
+	}
+	defer response.Body.Close()
+	contents, readError := io.ReadAll(response.Body)
+	if readError != nil {
+		return nil
+	}
+	return contents
+}
+
+func GetRequestToPool() int {
+	target := "http://127.0.0.1:9050/big"
+	if !bytes.Equal(GetRequestContents(target), bytes.Repeat([]byte{'A'}, DefaultChunkSize)) {
+		return FailedRequest
+	}
+	if !bytes.Equal(GetRequestContents(target), bytes.Repeat([]byte{'B'}, DefaultChunkSize)) {
+		return FailedRequest
+	}
+	return Success
 }
