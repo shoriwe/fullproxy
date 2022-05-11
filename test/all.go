@@ -413,7 +413,6 @@ func NewHTTPServers(t *testing.T) (net.Listener, net.Listener) {
 		server := http.NewServeMux()
 		server.HandleFunc("/big",
 			func(writer http.ResponseWriter, request *http.Request) {
-				defer request.
 				_, _ = writer.Write(bytes.Repeat([]byte{'B'}, DefaultChunkSize))
 			},
 		)
