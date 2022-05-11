@@ -276,7 +276,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Raw",
             "filepath": ""
           }
@@ -353,7 +353,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Load balancer",
             "filepath": ""
           }
@@ -833,7 +833,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Reverse proxy",
             "filepath": ""
           }
@@ -908,7 +908,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "HTTP",
             "filepath": ""
           }
@@ -989,7 +989,7 @@
           }
         },
         {
-          "id": 64,
+          "id": 60,
           "rect": {
             "X": -864,
             "Y": 288,
@@ -998,7 +998,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Path based redirection",
             "filepath": ""
           }
@@ -1049,7 +1049,7 @@
           }
         },
         {
-          "id": 67,
+          "id": 64,
           "rect": {
             "X": -896,
             "Y": 352,
@@ -1094,7 +1094,7 @@
           }
         },
         {
-          "id": 68,
+          "id": 67,
           "rect": {
             "X": 480,
             "Y": 416,
@@ -1109,7 +1109,7 @@
           }
         },
         {
-          "id": 69,
+          "id": 68,
           "rect": {
             "X": 480,
             "Y": 480,
@@ -1124,7 +1124,7 @@
           }
         },
         {
-          "id": 70,
+          "id": 69,
           "rect": {
             "X": 448,
             "Y": 544,
@@ -1139,7 +1139,7 @@
           }
         },
         {
-          "id": 71,
+          "id": 70,
           "rect": {
             "X": 480,
             "Y": 576,
@@ -1154,7 +1154,7 @@
           }
         },
         {
-          "id": 72,
+          "id": 71,
           "rect": {
             "X": 448,
             "Y": 640,
@@ -1169,7 +1169,7 @@
           }
         },
         {
-          "id": 73,
+          "id": 72,
           "rect": {
             "X": 480,
             "Y": 672,
@@ -1184,7 +1184,7 @@
           }
         },
         {
-          "id": 74,
+          "id": 73,
           "rect": {
             "X": 448,
             "Y": 704,
@@ -1199,7 +1199,7 @@
           }
         },
         {
-          "id": 75,
+          "id": 74,
           "rect": {
             "X": 480,
             "Y": 768,
@@ -1214,7 +1214,7 @@
           }
         },
         {
-          "id": 76,
+          "id": 75,
           "rect": {
             "X": 512,
             "Y": 800,
@@ -1229,7 +1229,7 @@
           }
         },
         {
-          "id": 77,
+          "id": 76,
           "rect": {
             "X": 512,
             "Y": 832,
@@ -1244,7 +1244,7 @@
           }
         },
         {
-          "id": 78,
+          "id": 77,
           "rect": {
             "X": 480,
             "Y": 864,
