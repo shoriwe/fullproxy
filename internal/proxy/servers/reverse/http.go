@@ -13,10 +13,11 @@ import (
 
 type (
 	Target struct {
-		Header        http.Header
-		Path          string
-		CurrentTarget int
-		Targets       []string
+		RequestHeader  http.Header
+		ResponseHeader http.Header
+		Path           string
+		CurrentTarget  int
+		Targets        []string
 	}
 	HTTP struct {
 		Targets map[string]*Target
@@ -64,9 +65,11 @@ func createRequest(received *http.Request, reference *Target) (*http.Request, er
 	if newRequestError != nil {
 		return nil, newRequestError
 	}
-	request.Header = reference.Header.Clone()
-	for key, value := range received.Header {
-		request.Header.Set(key, value[0])
+	request.Header = reference.RequestHeader.Clone()
+	for key, values := range received.Header {
+		for _, value := range values {
+			request.Header.Add(key, value)
+		}
 	}
 	return request, nil
 }
@@ -83,8 +86,15 @@ func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 			if requestError != nil {
 				return
 			}
-			for key, value := range response.Header {
-				writer.Header().Set(key, value[0])
+			for key, values := range response.Header {
+				for _, value := range values {
+					writer.Header().Add(key, value)
+				}
+			}
+			for key, values := range target.ResponseHeader {
+				for _, value := range values {
+					writer.Header().Add(key, value)
+				}
 			}
 			writer.WriteHeader(response.StatusCode)
 			_, copyError := io.Copy(writer, response.Body)

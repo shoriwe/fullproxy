@@ -1,8 +1,8 @@
 {
   "version": "0.8.0-alpha.4.2",
   "pan": {
-    "X": -1229.4269,
-    "Y": -2.2883847
+    "X": -1229.4266,
+    "Y": -2.2883842
   },
   "zoom": 0.655729353427887,
   "pages": [
@@ -87,7 +87,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Unit tests",
             "filepath": ""
           }
@@ -229,7 +229,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Reverse proxy",
             "filepath": ""
           }
@@ -398,7 +398,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "HTTP",
             "filepath": ""
           }
@@ -533,7 +533,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Path based redirection",
             "filepath": ""
           }
@@ -608,7 +608,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Inject headers",
             "filepath": ""
           }
