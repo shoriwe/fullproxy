@@ -1,19 +1,19 @@
 {
   "version": "0.8.0-alpha.4.2",
   "pan": {
-    "X": 887.03424,
-    "Y": 535.5588
+    "X": -316.37573,
+    "Y": 565.4684
   },
-  "zoom": 0.47162923216819763,
+  "zoom": 0.37236687541007996,
   "pages": [
     {
       "name": "New Page",
       "id": 0,
       "pan": {
-        "X": 887.0344,
-        "Y": 535.5662
+        "X": -316.3758,
+        "Y": 565.46826
       },
-      "zoom": 0.47162923216819763,
+      "zoom": 0.37236687541007996,
       "cards": [
         {
           "id": 0,
@@ -444,7 +444,8 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Drivers"
+            "description": "Drivers",
+            "filepath": ""
           }
         },
         {
@@ -488,21 +489,7 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Inbound scripts"
-          }
-        },
-        {
-          "id": 27,
-          "rect": {
-            "X": 1088,
-            "Y": -224,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Logging",
+            "description": "Inbound scripts",
             "filepath": ""
           }
         },
@@ -547,21 +534,7 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Outbound scripts"
-          }
-        },
-        {
-          "id": 30,
-          "rect": {
-            "X": 1088,
-            "Y": -192,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "New Checkbox",
+            "description": "Outbound scripts",
             "filepath": ""
           }
         },
@@ -591,7 +564,8 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Listen scripts"
+            "description": "Listen scripts",
+            "filepath": ""
           }
         },
         {
@@ -665,7 +639,8 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Accept scripts"
+            "description": "Accept scripts",
+            "filepath": ""
           }
         },
         {
@@ -724,7 +699,8 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Authentication scripts"
+            "description": "Authentication scripts",
+            "filepath": ""
           }
         },
         {
@@ -1368,7 +1344,8 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Proxy address"
+            "description": "Proxy address",
+            "filepath": ""
           }
         },
         {
@@ -1382,7 +1359,8 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Credentials"
+            "description": "Credentials",
+            "filepath": ""
           }
         },
         {
