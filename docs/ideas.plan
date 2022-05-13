@@ -1,19 +1,19 @@
 {
   "version": "0.8.0-alpha.4.2",
   "pan": {
-    "X": -1035.8959,
-    "Y": -20.21585
+    "X": -1229.4269,
+    "Y": -2.2883847
   },
-  "zoom": 0.5910281538963318,
+  "zoom": 0.655729353427887,
   "pages": [
     {
       "name": "New Page",
       "id": 0,
       "pan": {
-        "X": -1035.8959,
-        "Y": -20.21585
+        "X": -1229.4266,
+        "Y": -2.2883842
       },
-      "zoom": 0.5910281538963318,
+      "zoom": 0.655729353427887,
       "cards": [
         {
           "id": 0,
@@ -428,7 +428,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Load balancer",
             "filepath": ""
           }
@@ -443,7 +443,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Domain based redirection",
             "filepath": ""
           }
@@ -534,7 +534,7 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Header based redirection",
+            "description": "Path based redirection",
             "filepath": ""
           }
         },
@@ -604,12 +604,12 @@
             "X": -1888,
             "Y": -128,
             "W": 288,
-            "H": 64
+            "H": 32
           },
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Path based redirection",
+            "description": "Inject headers",
             "filepath": ""
           }
         },
@@ -1051,7 +1051,7 @@
         {
           "id": 64,
           "rect": {
-            "X": -896,
+            "X": -864,
             "Y": 352,
             "W": 288,
             "H": 32
@@ -1059,7 +1059,7 @@
           "contents": "Checkbox",
           "properties": {
             "checked": true,
-            "description": "Raw",
+            "description": "Inject headers",
             "filepath": ""
           }
         },
@@ -1081,6 +1081,21 @@
         {
           "id": 66,
           "rect": {
+            "X": -896,
+            "Y": 384,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": true,
+            "description": "Raw",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 67,
+          "rect": {
             "X": 448,
             "Y": 384,
             "W": 288,
@@ -1094,7 +1109,7 @@
           }
         },
         {
-          "id": 67,
+          "id": 68,
           "rect": {
             "X": 480,
             "Y": 416,
@@ -1109,7 +1124,7 @@
           }
         },
         {
-          "id": 68,
+          "id": 69,
           "rect": {
             "X": 480,
             "Y": 480,
@@ -1124,7 +1139,7 @@
           }
         },
         {
-          "id": 69,
+          "id": 70,
           "rect": {
             "X": 448,
             "Y": 544,
@@ -1139,7 +1154,7 @@
           }
         },
         {
-          "id": 70,
+          "id": 71,
           "rect": {
             "X": 480,
             "Y": 576,
@@ -1154,7 +1169,7 @@
           }
         },
         {
-          "id": 71,
+          "id": 72,
           "rect": {
             "X": 448,
             "Y": 640,
@@ -1169,7 +1184,7 @@
           }
         },
         {
-          "id": 72,
+          "id": 73,
           "rect": {
             "X": 480,
             "Y": 672,
@@ -1184,7 +1199,7 @@
           }
         },
         {
-          "id": 73,
+          "id": 74,
           "rect": {
             "X": 448,
             "Y": 704,
@@ -1199,7 +1214,7 @@
           }
         },
         {
-          "id": 74,
+          "id": 75,
           "rect": {
             "X": 480,
             "Y": 768,
@@ -1214,7 +1229,7 @@
           }
         },
         {
-          "id": 75,
+          "id": 76,
           "rect": {
             "X": 512,
             "Y": 800,
@@ -1229,7 +1244,7 @@
           }
         },
         {
-          "id": 76,
+          "id": 77,
           "rect": {
             "X": 512,
             "Y": 832,
@@ -1244,7 +1259,7 @@
           }
         },
         {
-          "id": 77,
+          "id": 78,
           "rect": {
             "X": 480,
             "Y": 864,

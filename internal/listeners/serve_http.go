@@ -61,5 +61,9 @@ func ServeHTTPHandler(listener Listener, handler servers.HTTPHandler, logFunc Lo
 			log.Println(args)
 		}
 	}
-	return http.Serve(&listenerInboundFilter{listener}, handler)
+	server := http.Server{
+		Addr:    listener.Addr().String(),
+		Handler: handler,
+	}
+	return server.Serve(&listenerInboundFilter{Listener: listener})
 }
