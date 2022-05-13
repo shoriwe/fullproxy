@@ -30,6 +30,14 @@ Available commands:
 
 To obtain the help of any command, you should execute it without arguments or with `-h`, `--help` arguments.
 
+## Slave
+
+The slave command connects to master to forward traffic.
+
+```shell
+Usage: fullproxy slave MASTER_ADDRESS
+```
+
 ## SOCKS5
 
 The `socks5` command permits the user to start quickly a SOCKS5 server.
@@ -48,8 +56,8 @@ Usage: fullproxy socks5 [ARGUMENTS]
 Arguments:
 
 -h, --help: 	Show this help message.
---bind="":		Address to bind.
---master="":	Bind address for master/slave communication.
+--listen="":	Address to listen.
+--master="":	Listen address for master/slave communication.
 ```
 
 ## HTTP
@@ -70,8 +78,8 @@ Usage: fullproxy http [ARGUMENTS]
 Arguments:
 
 -h, --help: 	Show this help message.
---bind="":		Address to bind.
---master="":	Bind address for master/slave communication.
+--listen="":	Address to listen.
+--master="":	Listen address for master/slave communication.
 ```
 
 ## Port Forward
@@ -92,8 +100,8 @@ Usage: fullproxy forward [ARGUMENTS]
 Arguments:
 
 -h, --help: 	Show this help message.
---bind="":		Address to bind.
---master="":	Bind address for master/slave communication.
+--listen="":	Address to listen.
+--master="":	Listen address for master/slave communication.
 --target="":	Target address to redirect the traffic.
 ```
 
@@ -115,11 +123,12 @@ Usage: fullproxy translate [ARGUMENTS]
 Arguments:
 
 -h, --help: 			Show this help message.
---bind="":				Address to bind.
+--listen="":			Address to listen.
+--source=""				Address to the source proxy.
 --source-protocol="":	Proxy protocol to used by clients.
 --target="":			Target proxy address.
 --target-protocol="":	Proxy protocol been used by target.
---master="":			Bind address for master/slave communication.
+--master="":			Listen address for master/slave communication.
 ```
 
 ## Reverse
@@ -141,8 +150,8 @@ Arguments:
 
 -h, --help: 	Show this help message.
 --pool:			List of targets used by the load balancer.
---bind="":		Address to bind.
---master="":	Bind address for master/slave communication.
+--listen="":	Address to listen.
+--master="":	Listen address for master/slave communication.
 ```
 
 ## HTTP Hosts
@@ -163,8 +172,8 @@ Usage: fullproxy hosts [ARGUMENTS]
 Arguments:
 
 -h, --help: 	Show this help message.
---bind="":		Address to bind.
---master="":	Bind address for master/slave communication.
+--listen="":	Address to listen.
+--master="":	Listen address for master/slave communication.
 ```
 
 ## Config

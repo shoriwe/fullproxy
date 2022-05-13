@@ -33,6 +33,9 @@ func (l *listenerInboundFilter) Accept() (net.Conn, error) {
 }
 
 func ServeHTTPHandler(listener Listener, handler servers.HTTPHandler, logFunc LogFunc) error {
+	if listener.Filter() == nil {
+		listener.SetFilters(&NoFilter{})
+	}
 	handler.SetDial(func(network, address string) (net.Conn, error) {
 		filterError := listener.Filter().Outbound(address)
 		if filterError != nil {
