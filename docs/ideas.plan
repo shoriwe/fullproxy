@@ -1,19 +1,19 @@
 {
   "version": "0.8.0-alpha.4.2",
   "pan": {
-    "X": -1229.4266,
-    "Y": -2.2883842
+    "X": 733.51807,
+    "Y": 623.8007
   },
-  "zoom": 0.655729353427887,
+  "zoom": 0.4649350941181183,
   "pages": [
     {
       "name": "New Page",
       "id": 0,
       "pan": {
-        "X": -1229.4266,
-        "Y": -2.2883842
+        "X": 733.5182,
+        "Y": 623.80084
       },
-      "zoom": 0.655729353427887,
+      "zoom": 0.4649350941181183,
       "cards": [
         {
           "id": 0,
@@ -87,7 +87,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": true,
+            "checked": false,
             "description": "Unit tests",
             "filepath": ""
           }
@@ -244,7 +244,7 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "Proxy protocols",
             "filepath": ""
           },
@@ -256,12 +256,12 @@
             },
             {
               "start": 12,
-              "end": 49,
+              "end": 50,
               "joints": []
             },
             {
               "start": 12,
-              "end": 48,
+              "end": 49,
               "joints": []
             }
           ]
@@ -314,21 +314,6 @@
           ]
         },
         {
-          "id": 15,
-          "rect": {
-            "X": 384,
-            "Y": -384,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Config yaml",
-            "filepath": ""
-          }
-        },
-        {
           "id": 16,
           "rect": {
             "X": 1056,
@@ -355,21 +340,6 @@
           "properties": {
             "checked": true,
             "description": "Load balancer",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 18,
-          "rect": {
-            "X": 416,
-            "Y": -352,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Pipe",
             "filepath": ""
           }
         },
@@ -404,9 +374,9 @@
           }
         },
         {
-          "id": 21,
+          "id": 15,
           "rect": {
-            "X": 448,
+            "X": 384,
             "Y": -320,
             "W": 288,
             "H": 64
@@ -414,7 +384,7 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Inbound filter driver list",
+            "description": "Config yaml structure",
             "filepath": ""
           }
         },
@@ -464,17 +434,17 @@
           }
         },
         {
-          "id": 25,
+          "id": 76,
           "rect": {
-            "X": 448,
+            "X": 416,
             "Y": -256,
             "W": 288,
-            "H": 64
+            "H": 32
           },
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Outbound filter driver list",
+            "description": "Listener",
             "filepath": ""
           }
         },
@@ -505,6 +475,21 @@
           "properties": {
             "checked": true,
             "description": "IPv6",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 21,
+          "rect": {
+            "X": 448,
+            "Y": -224,
+            "W": 288,
+            "H": 64
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Inbound filter driver list",
             "filepath": ""
           }
         },
@@ -554,21 +539,6 @@
           }
         },
         {
-          "id": 31,
-          "rect": {
-            "X": 448,
-            "Y": -192,
-            "W": 288,
-            "H": 64
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Listen filter driver list",
-            "filepath": ""
-          }
-        },
-        {
           "id": 32,
           "rect": {
             "X": 1088,
@@ -595,6 +565,21 @@
           "properties": {
             "checked": true,
             "description": "Bind",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 25,
+          "rect": {
+            "X": 448,
+            "Y": -160,
+            "W": 288,
+            "H": 64
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Outbound filter driver list",
             "filepath": ""
           }
         },
@@ -659,22 +644,22 @@
           }
         },
         {
-          "id": 38,
+          "id": 39,
           "rect": {
-            "X": 448,
-            "Y": -128,
+            "X": -1952,
+            "Y": -96,
             "W": 288,
-            "H": 64
+            "H": 32
           },
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Accept filter driver list",
+            "description": "Host based proxying",
             "filepath": ""
           }
         },
         {
-          "id": 39,
+          "id": 40,
           "rect": {
             "X": -832,
             "Y": -96,
@@ -689,7 +674,7 @@
           }
         },
         {
-          "id": 40,
+          "id": 41,
           "rect": {
             "X": -416,
             "Y": -96,
@@ -704,7 +689,22 @@
           }
         },
         {
-          "id": 41,
+          "id": 31,
+          "rect": {
+            "X": 448,
+            "Y": -96,
+            "W": 288,
+            "H": 64
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Listen filter driver list",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 42,
           "rect": {
             "X": -832,
             "Y": -64,
@@ -719,24 +719,9 @@
           }
         },
         {
-          "id": 42,
+          "id": 38,
           "rect": {
             "X": 448,
-            "Y": -64,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Master/Slave",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 43,
-          "rect": {
-            "X": 480,
             "Y": -32,
             "W": 288,
             "H": 64
@@ -744,14 +729,14 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Slave connection TLS enabled",
+            "description": "Accept filter driver list",
             "filepath": ""
           }
         },
         {
-          "id": 44,
+          "id": 77,
           "rect": {
-            "X": 512,
+            "X": 480,
             "Y": 32,
             "W": 288,
             "H": 32
@@ -759,57 +744,27 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Certficate",
+            "description": "Type",
             "filepath": ""
           }
         },
         {
-          "id": 45,
+          "id": 78,
           "rect": {
             "X": 512,
             "Y": 64,
             "W": 288,
-            "H": 32
+            "H": 96
           },
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Key",
+            "description": "When Master set TLS certificate for slave connection",
             "filepath": ""
           }
         },
         {
-          "id": 46,
-          "rect": {
-            "X": 512,
-            "Y": 96,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Certificate autority",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 47,
-          "rect": {
-            "X": 512,
-            "Y": 128,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Self signed",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 48,
+          "id": 49,
           "rect": {
             "X": -1664,
             "Y": 160,
@@ -818,13 +773,13 @@
           },
           "contents": "Checkbox",
           "properties": {
-            "checked": false,
+            "checked": true,
             "description": "HTTP raw proxy Host header based",
             "filepath": ""
           }
         },
         {
-          "id": 49,
+          "id": 50,
           "rect": {
             "X": -928,
             "Y": 160,
@@ -839,9 +794,9 @@
           }
         },
         {
-          "id": 50,
+          "id": 84,
           "rect": {
-            "X": 448,
+            "X": 544,
             "Y": 160,
             "W": 288,
             "H": 32
@@ -849,12 +804,12 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Listen TLS",
+            "description": "Custom",
             "filepath": ""
           }
         },
         {
-          "id": 51,
+          "id": 52,
           "rect": {
             "X": -896,
             "Y": 192,
@@ -869,9 +824,9 @@
           }
         },
         {
-          "id": 52,
+          "id": 85,
           "rect": {
-            "X": 480,
+            "X": 544,
             "Y": 192,
             "W": 288,
             "H": 32
@@ -879,22 +834,7 @@
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Certficate",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 53,
-          "rect": {
-            "X": -1632,
-            "Y": 224,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Domain filter",
+            "description": "Self signed",
             "filepath": ""
           }
         },
@@ -914,37 +854,22 @@
           }
         },
         {
-          "id": 55,
+          "id": 79,
           "rect": {
-            "X": 480,
+            "X": 512,
             "Y": 224,
             "W": 288,
-            "H": 32
+            "H": 96
           },
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Key",
+            "description": "When Slave set trust any master certificate",
             "filepath": ""
           }
         },
         {
           "id": 56,
-          "rect": {
-            "X": -1632,
-            "Y": 256,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Inject Headers",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 57,
           "rect": {
             "X": -864,
             "Y": 256,
@@ -961,36 +886,6 @@
         {
           "id": 58,
           "rect": {
-            "X": 480,
-            "Y": 256,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Certificate autority",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 59,
-          "rect": {
-            "X": -1632,
-            "Y": 288,
-            "W": 288,
-            "H": 64
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Inject GET arguments",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 60,
-          "rect": {
             "X": -864,
             "Y": 288,
             "W": 288,
@@ -1004,52 +899,22 @@
           }
         },
         {
-          "id": 61,
+          "id": 80,
           "rect": {
             "X": 480,
-            "Y": 288,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Self signed",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 62,
-          "rect": {
-            "X": 448,
             "Y": 320,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Log file",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 63,
-          "rect": {
-            "X": -1632,
-            "Y": 352,
             "W": 288,
             "H": 64
           },
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Inject POST arguments",
+            "description": "TLS certificate for proxy port",
             "filepath": ""
           }
         },
         {
-          "id": 64,
+          "id": 61,
           "rect": {
             "X": -864,
             "Y": 352,
@@ -1064,22 +929,7 @@
           }
         },
         {
-          "id": 65,
-          "rect": {
-            "X": 448,
-            "Y": 352,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Copy chunk size",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 66,
+          "id": 63,
           "rect": {
             "X": -896,
             "Y": 384,
@@ -1094,10 +944,190 @@
           }
         },
         {
-          "id": 67,
+          "id": 81,
           "rect": {
-            "X": 448,
+            "X": 512,
             "Y": 384,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Custom",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 82,
+          "rect": {
+            "X": 512,
+            "Y": 416,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Self signed",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 86,
+          "rect": {
+            "X": 480,
+            "Y": 448,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Log output",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 87,
+          "rect": {
+            "X": 512,
+            "Y": 480,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Stderr",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 88,
+          "rect": {
+            "X": 512,
+            "Y": 512,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Custom file",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 89,
+          "rect": {
+            "X": 480,
+            "Y": 544,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Sniff output",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 91,
+          "rect": {
+            "X": 512,
+            "Y": 576,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "None",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 90,
+          "rect": {
+            "X": 512,
+            "Y": 608,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "File",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 92,
+          "rect": {
+            "X": 544,
+            "Y": 640,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Stdout",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 93,
+          "rect": {
+            "X": 544,
+            "Y": 672,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Custom file",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 94,
+          "rect": {
+            "X": 480,
+            "Y": 704,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Protocol to use",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 74,
+          "rect": {
+            "X": 480,
+            "Y": 704,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Host",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 64,
+          "rect": {
+            "X": 512,
+            "Y": 736,
             "W": 288,
             "H": 32
           },
@@ -1109,10 +1139,55 @@
           }
         },
         {
+          "id": 65,
+          "rect": {
+            "X": 544,
+            "Y": 768,
+            "W": 288,
+            "H": 64
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Authentication driver list",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 66,
+          "rect": {
+            "X": 544,
+            "Y": 832,
+            "W": 288,
+            "H": 64
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Bind command  accept timeout",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 67,
+          "rect": {
+            "X": 512,
+            "Y": 896,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "HTTP",
+            "filepath": ""
+          }
+        },
+        {
           "id": 68,
           "rect": {
-            "X": 480,
-            "Y": 416,
+            "X": 544,
+            "Y": 928,
             "W": 288,
             "H": 64
           },
@@ -1126,53 +1201,8 @@
         {
           "id": 69,
           "rect": {
-            "X": 480,
-            "Y": 480,
-            "W": 288,
-            "H": 64
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Bind command  accept timeout",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 70,
-          "rect": {
-            "X": 448,
-            "Y": 544,
-            "W": 288,
-            "H": 32
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "HTTP",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 71,
-          "rect": {
-            "X": 480,
-            "Y": 576,
-            "W": 288,
-            "H": 64
-          },
-          "contents": "Checkbox",
-          "properties": {
-            "checked": false,
-            "description": "Authentication driver list",
-            "filepath": ""
-          }
-        },
-        {
-          "id": 72,
-          "rect": {
-            "X": 448,
-            "Y": 640,
+            "X": 512,
+            "Y": 992,
             "W": 288,
             "H": 32
           },
@@ -1184,10 +1214,10 @@
           }
         },
         {
-          "id": 73,
+          "id": 70,
           "rect": {
-            "X": 480,
-            "Y": 672,
+            "X": 544,
+            "Y": 1024,
             "W": 288,
             "H": 32
           },
@@ -1199,10 +1229,10 @@
           }
         },
         {
-          "id": 74,
+          "id": 71,
           "rect": {
-            "X": 448,
-            "Y": 704,
+            "X": 512,
+            "Y": 1056,
             "W": 288,
             "H": 64
           },
@@ -1214,10 +1244,10 @@
           }
         },
         {
-          "id": 75,
+          "id": 72,
           "rect": {
-            "X": 480,
-            "Y": 768,
+            "X": 544,
+            "Y": 1120,
             "W": 288,
             "H": 32
           },
@@ -1229,25 +1259,85 @@
           }
         },
         {
-          "id": 76,
+          "id": 75,
           "rect": {
-            "X": 512,
-            "Y": 800,
+            "X": 544,
+            "Y": 1152,
             "W": 288,
             "H": 32
           },
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Credentials",
+            "description": "Target address",
             "filepath": ""
           }
         },
         {
-          "id": 77,
+          "id": 95,
           "rect": {
             "X": 512,
-            "Y": 832,
+            "Y": 1184,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Reverse proxy",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 96,
+          "rect": {
+            "X": 544,
+            "Y": 1216,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Raw",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 99,
+          "rect": {
+            "X": 576,
+            "Y": 1248,
+            "W": 288,
+            "H": 64
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Load balancer pool list",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 97,
+          "rect": {
+            "X": 544,
+            "Y": 1312,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "HTTP",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 100,
+          "rect": {
+            "X": 576,
+            "Y": 1344,
             "W": 288,
             "H": 32
           },
@@ -1259,17 +1349,77 @@
           }
         },
         {
-          "id": 78,
+          "id": 101,
           "rect": {
-            "X": 480,
-            "Y": 864,
+            "X": 608,
+            "Y": 1376,
             "W": 288,
             "H": 32
           },
           "contents": "Checkbox",
           "properties": {
             "checked": false,
-            "description": "Target address",
+            "description": "Path",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 103,
+          "rect": {
+            "X": 608,
+            "Y": 1408,
+            "W": 288,
+            "H": 64
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Load balancer pool list",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 104,
+          "rect": {
+            "X": 608,
+            "Y": 1472,
+            "W": 288,
+            "H": 64
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Response Headers to inject",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 105,
+          "rect": {
+            "X": 608,
+            "Y": 1536,
+            "W": 288,
+            "H": 64
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "Request Headers to Inject",
+            "filepath": ""
+          }
+        },
+        {
+          "id": 98,
+          "rect": {
+            "X": 544,
+            "Y": 1600,
+            "W": 288,
+            "H": 32
+          },
+          "contents": "Checkbox",
+          "properties": {
+            "checked": false,
+            "description": "HTTP Hosts",
             "filepath": ""
           }
         }
