@@ -12,7 +12,13 @@ func TestRawReverseProxy(t *testing.T) {
 	defer http.DefaultClient.CloseIdleConnections()
 	httpServer := StartIPv4HTTPServer(t)
 	defer httpServer.Close()
-	reverseProxy := NewBindPipe(reverse.NewRaw([]string{"127.0.0.1:8080"}), nil)
+	reverseProxy := NewBindPipe(reverse.NewRaw([]*reverse.Host{
+		{
+			Url:     "http://127.0.0.1:8080",
+			Network: "tcp",
+			Address: "127.0.0.1:8080",
+		},
+	}), nil)
 	defer reverseProxy.Close()
 
 	result := GetRequestRaw("http://127.0.0.1:9050")
@@ -25,7 +31,13 @@ func TestMultipleRequestRawReverseProxy(t *testing.T) {
 	defer http.DefaultClient.CloseIdleConnections()
 	httpServer := StartIPv4HTTPServer(t)
 	defer httpServer.Close()
-	reverseProxy := NewBindPipe(reverse.NewRaw([]string{"127.0.0.1:8080"}), nil)
+	reverseProxy := NewBindPipe(reverse.NewRaw([]*reverse.Host{
+		{
+			Url:     "http://127.0.0.1:8080",
+			Network: "tcp",
+			Address: "127.0.0.1:8080",
+		},
+	}), nil)
 	defer reverseProxy.Close()
 
 	for i := 0; i < 100; i++ {
@@ -42,7 +54,18 @@ func TestMultipleRequestPoolRawReverseProxy(t *testing.T) {
 	defer server2.Close()
 
 	reverseProxy := NewBindPipe(
-		reverse.NewRaw([]string{"127.0.0.1:8080", "127.0.0.1:8081"}),
+		reverse.NewRaw([]*reverse.Host{
+			{
+				Url:     "http://127.0.0.1:8080",
+				Network: "tcp",
+				Address: "127.0.0.1:8080",
+			},
+			{
+				Url:     "http://127.0.0.1:8081",
+				Network: "tcp",
+				Address: "127.0.0.1:8081",
+			},
+		}),
 		nil,
 	)
 	defer reverseProxy.Close()
@@ -61,7 +84,13 @@ func TestHTTPReverseProxy(t *testing.T) {
 			"127.0.0.1:9050": {
 				RequestHeader: http.Header{},
 				Path:          "/",
-				Targets:       []string{"http://127.0.0.1:8080"},
+				Targets: []*reverse.Host{
+					{
+						Url:     "http://127.0.0.1:8080",
+						Network: "tcp",
+						Address: "127.0.0.1:8080",
+					},
+				},
 			},
 		},
 	), nil)
@@ -93,7 +122,13 @@ func TestMultipleRequestHTTPReverseProxy(t *testing.T) {
 				RequestHeader:  http.Header{},
 				ResponseHeader: http.Header{},
 				Path:           "/",
-				Targets:        []string{"http://127.0.0.1:8080"},
+				Targets: []*reverse.Host{
+					{
+						Url:     "http://127.0.0.1:8080",
+						Network: "tcp",
+						Address: "127.0.0.1:8080",
+					},
+				},
 			},
 		},
 	), nil)
@@ -130,9 +165,17 @@ func TestMultipleRequestPoolHTTPReverseProxy(t *testing.T) {
 					ResponseHeader: http.Header{},
 					Path:           "/",
 					CurrentTarget:  0,
-					Targets: []string{
-						"http://127.0.0.1:8080",
-						"http://127.0.0.1:8081",
+					Targets: []*reverse.Host{
+						{
+							Url:     "http://127.0.0.1:8080",
+							Network: "tcp",
+							Address: "127.0.0.1:8080",
+						},
+						{
+							Url:     "http://127.0.0.1:8081",
+							Network: "tcp",
+							Address: "127.0.0.1:8081",
+						},
 					},
 				},
 			},
@@ -182,7 +225,13 @@ func TestHTTPReversePathBasedProxy(t *testing.T) {
 				RequestHeader:  http.Header{},
 				ResponseHeader: http.Header{},
 				Path:           "/app",
-				Targets:        []string{"http://127.0.0.1:8080"},
+				Targets: []*reverse.Host{
+					{
+						Url:     "http://127.0.0.1:8080",
+						Network: "tcp",
+						Address: "127.0.0.1:8080",
+					},
+				},
 			},
 		},
 	), nil)
@@ -215,8 +264,14 @@ func TestHTTPReverseInjectHeadersProxy(t *testing.T) {
 				ResponseHeader: http.Header{
 					"Name": []string{"sulcud"},
 				},
-				Path:    "/app",
-				Targets: []string{"http://127.0.0.1:8080"},
+				Path: "/app",
+				Targets: []*reverse.Host{
+					{
+						Url:     "http://127.0.0.1:8080",
+						Network: "tcp",
+						Address: "127.0.0.1:8080",
+					},
+				},
 			},
 		},
 	), nil)

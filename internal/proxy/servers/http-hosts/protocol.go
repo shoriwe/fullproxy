@@ -2,12 +2,10 @@ package http_hosts
 
 import (
 	"context"
-	"fmt"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 )
 
 type Hosts struct {
@@ -40,16 +38,7 @@ func (h *Hosts) SetListenAddress(address net.Addr) {
 }
 
 func (h *Hosts) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	host := request.URL.Hostname()
-	if request.URL.Port() != "" {
-		host = fmt.Sprintf("%s:%s", host, request.URL.Port())
-	}
-	u, parseError := url.Parse(fmt.Sprintf("%s://%s", request.URL.Scheme, host))
-	if parseError != nil {
-		return
-	}
-	u.Path = request.RequestURI
-	targetRequest, newRequestError := http.NewRequest(request.Method, u.String(), request.Body)
+	targetRequest, newRequestError := http.NewRequest(request.Method, request.URL.String(), request.Body)
 	if newRequestError != nil {
 		return
 	}

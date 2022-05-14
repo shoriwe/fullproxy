@@ -5,16 +5,15 @@ import (
 	"github.com/shoriwe/fullproxy/v3/internal/listeners"
 	port_forward "github.com/shoriwe/fullproxy/v3/internal/proxy/servers/port-forward"
 	"log"
+	"net/url"
 	"os"
 )
 
 func forward() {
 	var (
-		listen           string
-		master           string
-		target           string
-		listener         listeners.Listener
-		newListenerError error
+		listen string
+		master string
+		target string
 	)
 	forwardCmd := flag.NewFlagSet("forward", flag.ExitOnError)
 	forwardCmd.StringVar(&listen, "listen", "", "Address to listen for clients")
@@ -24,20 +23,17 @@ func forward() {
 	if parseError != nil {
 		printAndExit(parseError.Error(), 1)
 	}
-	if listen == "" {
-		printAndExit("no listen address provided", 1)
+	listener, listenError := createListener(listen, master)
+	if listenError != nil {
+		printAndExit(listenError.Error(), 1)
 	}
 	if target == "" {
 		printAndExit("no target address provided", 1)
 	}
-	if master != "" {
-		listener, newListenerError = listeners.NewMaster("tcp", listen, nil, "tcp", master, nil)
-	} else {
-		listener, newListenerError = listeners.NewBindListener("tcp", listen, nil)
+	targetUrl, parseTargetUrlError := url.Parse(target)
+	if parseTargetUrlError != nil {
+		printAndExit(parseTargetUrlError.Error(), 1)
 	}
-	if newListenerError != nil {
-		printAndExit(newListenerError.Error(), 1)
-	}
-	protocol := port_forward.NewForward(target)
+	protocol := port_forward.NewForward(targetUrl.Scheme, targetUrl.Host)
 	log.Fatal(listeners.Serve(listener, protocol, nil))
 }

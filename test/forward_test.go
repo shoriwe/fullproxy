@@ -10,7 +10,7 @@ import (
 func TestPortForwardBindRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(port_forward.NewForward(httpAddress), nil)
+	p := NewBindPipe(port_forward.NewForward("tcp", httpAddress), nil)
 	defer p.Close()
 	result := GetRequestRaw("http://" + proxyAddress + "/big.txt")
 	if result != Success {
@@ -21,7 +21,7 @@ func TestPortForwardBindRequest(t *testing.T) {
 func TestPortForwardBindIPv6Request(t *testing.T) {
 	h := StartIPv6HTTPServer(t)
 	defer h.Close()
-	p := NewBindPipe(port_forward.NewForward(httpIPv6Address), nil)
+	p := NewBindPipe(port_forward.NewForward("tcp", httpIPv6Address), nil)
 	defer p.Close()
 	result := GetRequestRaw("http://" + proxyAddress + "/big.txt")
 	if result != Success {
@@ -35,7 +35,7 @@ func TestPortForwardMasterSlaveRequest(t *testing.T) {
 	h := StartIPv4HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
-		port_forward.NewForward(httpAddress), nil)
+		port_forward.NewForward("tcp", httpAddress), nil)
 	defer func() {
 		a.Close()
 		b.Close()
@@ -50,7 +50,7 @@ func TestPortForwardMasterSlaveIPv6Request(t *testing.T) {
 	h := StartIPv6HTTPServer(t)
 	defer h.Close()
 	a, b := NewMasterSlave(
-		port_forward.NewForward(httpIPv6Address), nil)
+		port_forward.NewForward("tcp", httpIPv6Address), nil)
 	defer func() {
 		a.Close()
 		b.Close()

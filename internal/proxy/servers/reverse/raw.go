@@ -8,17 +8,17 @@ import (
 
 type Raw struct {
 	currentTarget int
-	Targets       []string
+	Targets       []*Host
 	Dial          servers.DialFunc
 }
 
-func (r *Raw) nextTarget() int {
+func (r *Raw) nextTarget() *Host {
 	if r.currentTarget >= len(r.Targets) {
 		r.currentTarget = 0
 	}
-	result := r.currentTarget
+	index := r.currentTarget
 	r.currentTarget++
-	return result
+	return r.Targets[index]
 }
 
 func (r *Raw) SetAuthenticationMethod(_ servers.AuthenticationMethod) {
@@ -35,14 +35,15 @@ func (r *Raw) SetDial(dialFunc servers.DialFunc) {
 }
 
 func (r *Raw) Handle(conn net.Conn) error {
-	targetConnection, connectionError := r.Dial("tcp", r.Targets[r.nextTarget()])
+	host := r.nextTarget()
+	targetConnection, connectionError := r.Dial(host.Network, host.Address)
 	if connectionError != nil {
 		return connectionError
 	}
 	return common.ForwardTraffic(conn, targetConnection)
 }
 
-func NewRaw(targets []string) servers.Protocol {
+func NewRaw(targets []*Host) servers.Protocol {
 	return &Raw{
 		currentTarget: 0,
 		Targets:       targets,

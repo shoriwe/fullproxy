@@ -10,11 +10,9 @@ import (
 
 func reverse() {
 	var (
-		pool             stringSlice
-		listen           string
-		master           string
-		listener         listeners.Listener
-		newListenerError error
+		pool   hostsSlice
+		listen string
+		master string
 	)
 	reverseCmd := flag.NewFlagSet("reverse", flag.ExitOnError)
 	reverseCmd.Var(&pool, "pool", "List of targets used by the load balancer.")
@@ -30,13 +28,9 @@ func reverse() {
 	if len(pool.contents) == 0 {
 		printAndExit("no pool targets provided", 1)
 	}
-	if master != "" {
-		listener, newListenerError = listeners.NewMaster("tcp", listen, nil, "tcp", master, nil)
-	} else {
-		listener, newListenerError = listeners.NewBindListener("tcp", listen, nil)
-	}
-	if newListenerError != nil {
-		printAndExit(newListenerError.Error(), 1)
+	listener, listenError := createListener(listen, master)
+	if listenError != nil {
+		printAndExit(listenError.Error(), 1)
 	}
 	protocol := reverse2.NewRaw(pool.contents)
 	log.Fatal(listeners.Serve(listener, protocol, nil))

@@ -17,15 +17,15 @@ type (
 		ResponseHeader http.Header
 		Path           string
 		CurrentTarget  int
-		Targets        []string
+		Targets        []*Host
 	}
 	HTTP struct {
 		Targets map[string]*Target
-		Client  *http.Client
+		Dial    servers.DialFunc
 	}
 )
 
-func (target *Target) nextTarget() string {
+func (target *Target) nextTarget() *Host {
 	if target.CurrentTarget >= len(target.Targets) {
 		target.CurrentTarget = 0
 	}
@@ -48,22 +48,19 @@ func (H *HTTP) Handle(_ net.Conn) error {
 }
 
 func (H *HTTP) SetDial(dialFunc servers.DialFunc) {
-	H.Client.Transport = &http.Transport{
-		DialContext: func(_ context.Context, network, address string) (net.Conn, error) {
-			return dialFunc(network, address)
-		},
-	}
+	H.Dial = dialFunc
 }
 
-func createRequest(received *http.Request, reference *Target) (*http.Request, error) {
-	u, parseError := url.Parse(reference.nextTarget())
+func createRequest(received *http.Request, reference *Target) (*http.Request, *Host, error) {
+	host := reference.nextTarget()
+	u, parseError := url.Parse(host.Url)
 	if parseError != nil {
-		return nil, parseError
+		return nil, nil, parseError
 	}
 	u.Path = path.Join(u.Path, strings.Replace(received.RequestURI, reference.Path, "/", 1))
 	request, newRequestError := http.NewRequest(received.Method, u.String(), received.Body)
 	if newRequestError != nil {
-		return nil, newRequestError
+		return nil, nil, newRequestError
 	}
 	request.Header = reference.RequestHeader.Clone()
 	for key, values := range received.Header {
@@ -71,18 +68,25 @@ func createRequest(received *http.Request, reference *Target) (*http.Request, er
 			request.Header.Add(key, value)
 		}
 	}
-	return request, nil
+	return request, host, nil
 }
 
 func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	target, found := H.Targets[request.Host]
 	if found {
 		if strings.Index(request.RequestURI, target.Path) == 0 {
-			targetRequest, requestCreationError := createRequest(request, target)
+			targetRequest, host, requestCreationError := createRequest(request, target)
 			if requestCreationError != nil {
 				return
 			}
-			response, requestError := H.Client.Do(targetRequest)
+			client := &http.Client{
+				Transport: &http.Transport{
+					DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+						return H.Dial(host.Network, host.Address)
+					},
+				},
+			}
+			response, requestError := client.Do(targetRequest)
 			if requestError != nil {
 				return
 			}
@@ -110,6 +114,5 @@ func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 func NewHTTP(targets map[string]*Target) servers.HTTPHandler {
 	return &HTTP{
 		Targets: targets,
-		Client:  &http.Client{},
 	}
 }

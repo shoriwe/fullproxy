@@ -7,34 +7,38 @@ import (
 )
 
 type Forward struct {
+	TargetNetwork string
 	TargetAddress string
 	DialFunc      servers.DialFunc
 	ListenAddress *net.TCPAddr
 }
 
-func (localForward *Forward) SetListen(_ servers.ListenFunc) {
+func (f *Forward) SetListen(_ servers.ListenFunc) {
 }
 
-func (localForward *Forward) SetListenAddress(address net.Addr) {
-	localForward.ListenAddress = address.(*net.TCPAddr)
+func (f *Forward) SetListenAddress(address net.Addr) {
+	f.ListenAddress = address.(*net.TCPAddr)
 }
 
-func NewForward(targetAddress string) servers.Protocol {
-	return &Forward{TargetAddress: targetAddress}
+func (f *Forward) SetAuthenticationMethod(_ servers.AuthenticationMethod) {
 }
 
-func (localForward *Forward) SetAuthenticationMethod(_ servers.AuthenticationMethod) {
+func (f *Forward) SetDial(dialFunc servers.DialFunc) {
+	f.DialFunc = dialFunc
 }
 
-func (localForward *Forward) SetDial(dialFunc servers.DialFunc) {
-	localForward.DialFunc = dialFunc
-}
-
-func (localForward *Forward) Handle(clientConnection net.Conn) error {
+func (f *Forward) Handle(clientConnection net.Conn) error {
 	defer clientConnection.Close()
-	targetConnection, connectionError := localForward.DialFunc("tcp", localForward.TargetAddress)
+	targetConnection, connectionError := f.DialFunc(f.TargetNetwork, f.TargetAddress)
 	if connectionError != nil {
 		return connectionError
 	}
 	return common.ForwardTraffic(clientConnection, targetConnection)
+}
+
+func NewForward(targetNetwork, targetAddress string) servers.Protocol {
+	return &Forward{
+		TargetNetwork: targetNetwork,
+		TargetAddress: targetAddress,
+	}
 }

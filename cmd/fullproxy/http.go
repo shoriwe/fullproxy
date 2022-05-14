@@ -10,10 +10,8 @@ import (
 
 func http() {
 	var (
-		listen           string
-		master           string
-		listener         listeners.Listener
-		newListenerError error
+		listen string
+		master string
 	)
 	httpCmd := flag.NewFlagSet("http", flag.ExitOnError)
 	httpCmd.StringVar(&listen, "listen", "", "Address to listen for clients")
@@ -22,16 +20,9 @@ func http() {
 	if parseError != nil {
 		printAndExit(parseError.Error(), 1)
 	}
-	if listen == "" {
-		printAndExit("no listen address provided", 1)
-	}
-	if master != "" {
-		listener, newListenerError = listeners.NewMaster("tcp", listen, nil, "tcp", master, nil)
-	} else {
-		listener, newListenerError = listeners.NewBindListener("tcp", listen, nil)
-	}
-	if newListenerError != nil {
-		printAndExit(newListenerError.Error(), 1)
+	listener, listenError := createListener(listen, master)
+	if listenError != nil {
+		printAndExit(listenError.Error(), 1)
 	}
 	protocol := http2.NewHTTP(nil)
 	log.Fatal(listeners.Serve(listener, protocol, nil))
