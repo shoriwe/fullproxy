@@ -15,9 +15,9 @@ func reverse() {
 		master string
 	)
 	reverseCmd := flag.NewFlagSet("reverse", flag.ExitOnError)
-	reverseCmd.Var(&pool, "pool", "List of targets used by the load balancer.")
-	reverseCmd.StringVar(&listen, "listen", "", "Address to listen for clients")
-	reverseCmd.StringVar(&master, "master", "", "Listen address for master/slave communication.")
+	reverseCmd.Var(&pool, "add", "Add target to the pool load balancer")
+	reverseCmd.StringVar(&listen, "listen", "", "Address to listen for clients. Argument URL structure is 'network://host:port'")
+	reverseCmd.StringVar(&master, "master", "", "Listen address for master/slave communication. Argument URL structure is 'network://host:port'")
 	parseError := reverseCmd.Parse(os.Args[2:])
 	if parseError != nil {
 		printAndExit(parseError.Error(), 1)

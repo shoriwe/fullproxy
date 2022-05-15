@@ -5,6 +5,7 @@ import (
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"golang.org/x/net/proxy"
 	"net"
+	"net/url"
 )
 
 type customDialer struct {
@@ -33,15 +34,24 @@ func (forwardToSocks5 *ForwardToSocks5) SetDial(dialFunc servers.DialFunc) {
 }
 
 func NewForwardToSocks5(
-	proxyNetwork, proxyAddress,
-	username, password,
+	proxyNetwork, proxyAddress string,
+	user *url.Userinfo,
 	targetNetwork, targetAddress string,
 ) (servers.Protocol, error) {
+	var (
+		dialer              proxy.Dialer
+		initializationError error
+	)
 	fDialer := &customDialer{dialFunc: net.Dial}
-	dialer, initializationError := proxy.SOCKS5(proxyNetwork, proxyAddress, &proxy.Auth{
-		User:     username,
-		Password: password,
-	}, fDialer)
+	if user != nil {
+		password, _ := user.Password()
+		dialer, initializationError = proxy.SOCKS5(proxyNetwork, proxyAddress, &proxy.Auth{
+			User:     user.Username(),
+			Password: password,
+		}, fDialer)
+	} else {
+		dialer, initializationError = proxy.SOCKS5(proxyNetwork, proxyAddress, nil, fDialer)
+	}
 	if initializationError != nil {
 		return nil, initializationError
 	}

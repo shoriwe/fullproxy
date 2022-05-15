@@ -14,8 +14,8 @@ func socks5() {
 		master string
 	)
 	socks5Cmd := flag.NewFlagSet("socks5", flag.ExitOnError)
-	socks5Cmd.StringVar(&listen, "listen", "", "Address to listen for clients")
-	socks5Cmd.StringVar(&master, "master", "", "Listen address for master/slave communication.")
+	socks5Cmd.StringVar(&listen, "listen", "", "Address to listen for clients. Argument URL structure is 'network://host:port'")
+	socks5Cmd.StringVar(&master, "master", "", "Listen address for master/slave communication. Argument URL structure is 'network://host:port'")
 	parseError := socks5Cmd.Parse(os.Args[2:])
 	if parseError != nil {
 		printAndExit(parseError.Error(), 1)

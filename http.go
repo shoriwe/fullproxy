@@ -14,8 +14,8 @@ func http() {
 		master string
 	)
 	httpCmd := flag.NewFlagSet("http", flag.ExitOnError)
-	httpCmd.StringVar(&listen, "listen", "", "Address to listen for clients")
-	httpCmd.StringVar(&master, "master", "", "Listen address for master/slave communication.")
+	httpCmd.StringVar(&listen, "listen", "", "Address to listen for clients. Argument URL structure is 'network://host:port'")
+	httpCmd.StringVar(&master, "master", "", "Listen address for master/slave communication. Argument URL structure is 'network://host:port'")
 	parseError := httpCmd.Parse(os.Args[2:])
 	if parseError != nil {
 		printAndExit(parseError.Error(), 1)

@@ -18,16 +18,10 @@ func SelfSignCertificate() ([]tls.Certificate, error) {
 	)
 	now := time.Now()
 	template := &x509.Certificate{
-		SerialNumber: big.NewInt(now.Unix()),
-		Subject: pkix.Name{
-			CommonName:         "localhost",
-			Country:            []string{"MARS"},
-			Organization:       []string{"localhost"},
-			OrganizationalUnit: []string{"quickserve"},
-		},
+		SerialNumber:          big.NewInt(now.Unix()),
+		Subject:               pkix.Name{},
 		NotBefore:             now,
-		NotAfter:              now.AddDate(0, 0, 1), // Valid for one day
-		SubjectKeyId:          []byte{113, 117, 105, 99, 107, 115, 101, 114, 118, 101},
+		NotAfter:              now.AddDate(1000, 0, 0),
 		BasicConstraintsValid: true,
 		IsCA:                  true,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},

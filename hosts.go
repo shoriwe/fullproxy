@@ -14,8 +14,8 @@ func hosts() {
 		master string
 	)
 	hostsCmd := flag.NewFlagSet("hosts", flag.ExitOnError)
-	hostsCmd.StringVar(&listen, "listen", "", "Address to listen for clients")
-	hostsCmd.StringVar(&master, "master", "", "Listen address for master/slave communication.")
+	hostsCmd.StringVar(&listen, "listen", "", "Address to listen for clients. Argument URL structure is 'network://host:port'")
+	hostsCmd.StringVar(&master, "master", "", "Listen address for master/slave communication. Argument URL structure is 'network://host:port'")
 	parseError := hostsCmd.Parse(os.Args[2:])
 	if parseError != nil {
 		printAndExit(parseError.Error(), 1)

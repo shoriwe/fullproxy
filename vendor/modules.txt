@@ -12,3 +12,6 @@ golang.org/x/sys/cpu
 # gopkg.in/elazarl/goproxy.v1 v1.0.0-20180725130230-947c36da3153
 ## explicit
 gopkg.in/elazarl/goproxy.v1
+# gopkg.in/yaml.v3 v3.0.0-20220512140231-539c8e751b99
+## explicit
+gopkg.in/yaml.v3

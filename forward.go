@@ -16,9 +16,9 @@ func forward() {
 		target string
 	)
 	forwardCmd := flag.NewFlagSet("forward", flag.ExitOnError)
-	forwardCmd.StringVar(&listen, "listen", "", "Address to listen for clients")
-	forwardCmd.StringVar(&master, "master", "", "Listen address for master/slave communication.")
-	forwardCmd.StringVar(&target, "target", "", "Target address to redirect the traffic.")
+	forwardCmd.StringVar(&listen, "listen", "", "Address to listen for clients. Argument URL structure is 'network://host:port'")
+	forwardCmd.StringVar(&master, "master", "", "Listen address for master/slave communication. Argument URL structure is 'network://host:port'")
+	forwardCmd.StringVar(&target, "target", "", "Target forward address. Argument URL structure is 'network://host:port'")
 	parseError := forwardCmd.Parse(os.Args[2:])
 	if parseError != nil {
 		printAndExit(parseError.Error(), 1)
