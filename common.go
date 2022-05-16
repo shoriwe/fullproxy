@@ -1,10 +1,18 @@
 package main
 
 import (
+	_ "embed"
 	"errors"
 	"github.com/shoriwe/fullproxy/v3/internal/listeners"
 	reverse2 "github.com/shoriwe/fullproxy/v3/internal/proxy/servers/reverse"
 	"net/url"
+)
+
+var (
+	//go:embed docs/yaml.md
+	yamlMarkdown string
+	//go:embed docs/scripting.md
+	scriptingMarkdown string
 )
 
 type hostsSlice struct {

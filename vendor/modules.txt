@@ -1,5 +1,15 @@
 # github.com/elazarl/goproxy v0.0.0-20210801061803-8e322dfb79c4
 ## explicit
+# github.com/shoriwe/gplasma v0.0.0-20211103070337-347bfcd57a67
+## explicit
+github.com/shoriwe/gplasma
+github.com/shoriwe/gplasma/pkg/compiler/ast
+github.com/shoriwe/gplasma/pkg/compiler/lexer
+github.com/shoriwe/gplasma/pkg/compiler/parser
+github.com/shoriwe/gplasma/pkg/errors
+github.com/shoriwe/gplasma/pkg/reader
+github.com/shoriwe/gplasma/pkg/tools
+github.com/shoriwe/gplasma/pkg/vm
 # golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 ## explicit
 golang.org/x/crypto/sha3

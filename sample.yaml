@@ -13,9 +13,9 @@ listeners:
       master-address: 127.0.0.1:9051
       master-tls: ~
       slave-trust: true
+      filters: ~
     protocol:
       type: socks5
-      filters: ~
       authentication: no_auth
       target-network: tcp
       target-address: 127.0.0.1:8080

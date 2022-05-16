@@ -1,0 +1,97 @@
+# Pending Expressions
+
+- [X] Binary
+- [X] Unary
+- [X] Parentheses expression
+- [X] Literal expression
+- [X] Identifier
+- [X] Selector
+- [X] Index
+- [X] Method call
+- [X] Lambda
+- [X] Array
+- [X] Tuple
+- [X] Hash
+- [X] Generator
+- [X] Await
+- [X] One line If
+- [X] One line unless
+
+# Pending Statements
+
+- [ ] Do While
+- [X] Raise
+- [X] Try
+- [X] BEGIN
+- [X] END
+- [X] Module
+- [X] Function Definition
+- [X] Async function definition
+- [X] For
+- [X] Until
+- [X] Interface
+- [X] Class
+- [X] GoTo
+- [X] Assign
+- [X] While
+- [X] If
+- [X] Unless
+- [X] Switch
+- [X] Struct
+- [X] Defer
+- [X] Go
+- [X] Return
+- [X] Yield
+- [X] Super
+- [X] Continue
+- [X] Break
+- [X] Redo
+- [X] Pass
+- [X] Enum
+
+## Cleanup
+
+- [ ] Binary
+- [ ] Unary
+- [ ] Parentheses expression
+- [ ] Literal expression
+- [ ] Identifier
+- [ ] Selector
+- [ ] Index
+- [ ] Method call
+- [ ] Lambda
+- [ ] Array
+- [ ] Tuple
+- [ ] Hash
+- [ ] Generator
+- [ ] Await
+- [ ] One line If
+- [ ] One line unless
+- [ ] Module
+- [ ] Function Definition
+- [ ] Async function definition
+- [ ] For
+- [ ] Until
+- [ ] Interface
+- [ ] Class
+- [ ] Try
+- [ ] BEGIN
+- [ ] END
+- [ ] Context
+- [ ] GoTo
+- [ ] Assign
+- [ ] While
+- [ ] If
+- [ ] Unless
+- [ ] Switch
+- [ ] Struct
+- [ ] Defer
+- [ ] Go
+- [ ] Return
+- [ ] Yield
+- [ ] Super
+- [ ] Continue
+- [ ] Break
+- [ ] Redo
+- [ ] Pass
+- [ ] Enum
