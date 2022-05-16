@@ -11,21 +11,21 @@ import (
 
 func slave() {
 	var (
-		listen string
+		master string
 	)
 	translateCmd := flag.NewFlagSet("translate", flag.ExitOnError)
-	translateCmd.StringVar(&listen, "listen", "", "Address to listen for clients. Argument URL structure is 'network://host:port'")
+	translateCmd.StringVar(&master, "master", "", "Address of master server. Argument URL structure is 'network://host:port'")
 	cmdParseError := translateCmd.Parse(os.Args[2:])
 	if cmdParseError != nil {
 		printAndExit(cmdParseError.Error(), 1)
 	}
-	listenURL, parseError := url.Parse(listen)
+	masterURL, parseError := url.Parse(master)
 	if parseError != nil {
 		printAndExit(parseError.Error(), 1)
 	}
 	slaveListener, newSlaveError := listeners.NewSlave(
-		listenURL.Scheme,
-		listenURL.Host,
+		masterURL.Scheme,
+		masterURL.Host,
 		&tls.Config{InsecureSkipVerify: true},
 	)
 	if newSlaveError != nil {

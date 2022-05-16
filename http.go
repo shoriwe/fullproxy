@@ -25,5 +25,5 @@ func http() {
 		printAndExit(listenError.Error(), 1)
 	}
 	protocol := http2.NewHTTP(nil)
-	log.Fatal(listeners.Serve(listener, protocol, nil))
+	log.Fatal(listeners.ServeHTTPHandler(listener, protocol, nil))
 }
