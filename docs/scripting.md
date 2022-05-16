@@ -4,7 +4,10 @@ This document describe the interfaces used in `fullproxy` driver development.
 
 ## Authentication functions
 
-Functions intended for authentication will be loaded using `SetAuth(function)`, functions should expect two string arguments, specifically corresponding to username and password, authentication succeed will be evaluated by the return values `True` in case of success or `False` in case of failure, notice if the function call raises an error it will be also considered an auth failure.
+Functions intended for authentication will be loaded using `SetAuth(function)`, functions should expect two string
+arguments, specifically corresponding to username and password, authentication succeed will be evaluated by the return
+values `True` in case of success or `False` in case of failure, notice if the function call raises an error it will be
+also considered an auth failure.
 
 Example:
 
@@ -28,7 +31,9 @@ Function intended to filter incoming, outgoing, listens and accepts can be loade
 - `SetListen(function)`
 - `SetAccept(function)`
 
-This functions are expected to receive a string value containing the `HOST:PORT` value of the connection. Allowing the connection will be evaluated by the return values `True` in case of success or `False` in case of failure, notice if the function call raises an error it will be also considered an allow failure.
+This functions are expected to receive a string value containing the `HOST:PORT` value of the connection. Allowing the
+connection will be evaluated by the return values `True` in case of success or `False` in case of failure, notice if the
+function call raises an error it will be also considered an allow failure.
 
 Example:
 
