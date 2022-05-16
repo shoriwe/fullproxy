@@ -20,7 +20,7 @@ listeners:
         listen: DRIVER_NAME # Ignore to no filer
         accept: DRIVER_NAME # Ignore to no filer
 
-      # Mandaroty by master and slave
+      # Mandatory by master and slave
       master-network: tcp | unix
       master-address: HOST:PORT | /PATH/TO/UNIX/SOCK
 
