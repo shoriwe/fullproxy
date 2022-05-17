@@ -20,20 +20,20 @@ type ListenerConfig struct {
 }
 
 type ProtocolConfig struct {
-	Type           string                   `yaml:"type"`
-	Authentication string                   `yaml:"authentication"`
-	TargetNetwork  string                   `yaml:"target-network"`
-	TargetAddress  string                   `yaml:"target-address"`
-	ProxyNetwork   string                   `yaml:"proxy-network"`
-	ProxyAddress   string                   `yaml:"proxy-address"`
-	Translation    string                   `yaml:"translation"`
-	Credentials    string                   `yaml:"credentials"`
-	RawHosts       map[string]reverse2.Host `yaml:"raw-hosts"`
+	Type           string                    `yaml:"type"`
+	Authentication string                    `yaml:"authentication"`
+	TargetNetwork  string                    `yaml:"target-network"`
+	TargetAddress  string                    `yaml:"target-address"`
+	ProxyNetwork   string                    `yaml:"proxy-network"`
+	ProxyAddress   string                    `yaml:"proxy-address"`
+	Translation    string                    `yaml:"translation"`
+	Credentials    string                    `yaml:"credentials"`
+	RawHosts       map[string]*reverse2.Host `yaml:"raw-hosts"`
 	HTTPHosts      map[string]struct {
-		Path            string                   `yaml:"path"`
-		ResponseHeaders map[string]string        `yaml:"response-headers"`
-		RequestHeaders  map[string]string        `yaml:"request-headers"`
-		Pool            map[string]reverse2.Host `yaml:"pool"`
+		Path            string                    `yaml:"path"`
+		ResponseHeaders map[string]string         `yaml:"response-headers"`
+		RequestHeaders  map[string]string         `yaml:"request-headers"`
+		Pool            map[string]*reverse2.Host `yaml:"pool"`
 	} `yaml:"http-hosts"`
 }
 

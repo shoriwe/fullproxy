@@ -112,11 +112,11 @@ func (r *runner) serveListener(
 		return
 	}
 	var (
-		httpReverseHosts map[string]*reverse2.Target
+		httpReverseHosts = map[string]*reverse2.Target{}
 		rawReverseHosts  []*reverse2.Host
 	)
 	for _, h := range c.Protocol.RawHosts {
-		rawReverseHosts = append(rawReverseHosts, &h)
+		rawReverseHosts = append(rawReverseHosts, h)
 	}
 	for hostname, t := range c.Protocol.HTTPHosts {
 		tt := &reverse2.Target{
@@ -133,7 +133,7 @@ func (r *runner) serveListener(
 			tt.ResponseHeader[key] = []string{value}
 		}
 		for _, h := range t.Pool {
-			tt.Targets = append(tt.Targets, &h)
+			tt.Targets = append(tt.Targets, h)
 		}
 		httpReverseHosts[hostname] = tt
 	}
