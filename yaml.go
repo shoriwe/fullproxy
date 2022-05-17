@@ -28,7 +28,7 @@ type ProtocolConfig struct {
 	ProxyAddress   string                   `yaml:"proxy-address"`
 	Translation    string                   `yaml:"translation"`
 	Credentials    string                   `yaml:"credentials"`
-	RawHosts       map[string]reverse2.Host `yaml:"raw-hosts"'`
+	RawHosts       map[string]reverse2.Host `yaml:"raw-hosts"`
 	HTTPHosts      map[string]struct {
 		Path            string                   `yaml:"path"`
 		ResponseHeaders map[string]string        `yaml:"response-headers"`
@@ -48,6 +48,7 @@ type Listener struct {
 }
 
 type ConfigFile struct {
+	InitOrder []string            `yaml:"init-order"`
 	Drivers   map[string]string   `yaml:"drivers"`
 	Listeners map[string]Listener `yaml:"listeners"`
 }

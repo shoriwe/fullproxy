@@ -3,4 +3,5 @@ build/*
 tests/*
 debug/venv/*
 debug/.idea/*
-logs/*
+logs/*.log
+logs/*.sniff

@@ -1,6 +1,9 @@
 # YAML config
 
 ```yaml
+init-order:
+  - LISTENER_NAME
+  - ...
 drivers: # This field is optional.
   DRIVER_NAME: /PATH/TO/PLASMA/SCRIPT
 listeners:

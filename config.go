@@ -45,6 +45,7 @@ func (r *runner) serveListener(
 			errorChan <- newSlaveError
 			return
 		}
+		log.Println(listenerName, "Started")
 		errorChan <- slaveListener.Serve()
 		return
 	}
@@ -102,6 +103,9 @@ func (r *runner) serveListener(
 			c.Config.MasterAddress,
 			masterTLSConfig,
 		)
+	default:
+		errorChan <- fmt.Errorf("unknown listener type of name %s", c.Config.Type)
+		return
 	}
 	if listenError != nil {
 		errorChan <- listenError
@@ -136,17 +140,25 @@ func (r *runner) serveListener(
 	// Prepare protocol
 	switch c.Protocol.Type {
 	case "socks5":
-		driver, found := r.drivers[c.Protocol.Authentication]
-		if !found {
-			errorChan <- fmt.Errorf("unknown driver %s", c.Protocol.Authentication)
+		var auth servers.AuthenticationMethod
+		if c.Protocol.Authentication != "" {
+			driver, found := r.drivers[c.Protocol.Authentication]
+			if !found {
+				errorChan <- fmt.Errorf("unknown driver %s", c.Protocol.Authentication)
+			}
+			auth = driver.Auth
 		}
-		protocol = socks52.NewSocks5(driver.Auth)
+		protocol = socks52.NewSocks5(auth)
 	case "http":
-		driver, found := r.drivers[c.Protocol.Authentication]
-		if !found {
-			errorChan <- fmt.Errorf("unknown driver %s", c.Protocol.Authentication)
+		var auth servers.AuthenticationMethod
+		if c.Protocol.Authentication != "" {
+			driver, found := r.drivers[c.Protocol.Authentication]
+			if !found {
+				errorChan <- fmt.Errorf("unknown driver %s", c.Protocol.Authentication)
+			}
+			auth = driver.Auth
 		}
-		protocol = http2.NewHTTP(driver.Auth)
+		protocol = http2.NewHTTP(auth)
 	case "forward":
 		protocol = port_forward.NewForward(
 			c.Protocol.TargetNetwork,
@@ -160,7 +172,7 @@ func (r *runner) serveListener(
 		}
 		protocol, newProtocolError = pf_to_socks5.NewForwardToSocks5(
 			c.Protocol.ProxyNetwork,
-			c.Protocol.ProxyNetwork,
+			c.Protocol.ProxyAddress,
 			userInfo,
 			c.Protocol.TargetNetwork,
 			c.Protocol.TargetAddress,
@@ -228,7 +240,7 @@ func (r *runner) serveListener(
 	if incoming != nil || outgoing != nil {
 		l = &hijackListener{l, incoming, outgoing}
 	}
-	log.Print("Serving ", listenerName)
+	log.Println(listenerName, "Started")
 	switch protocol.(type) {
 	case servers.HTTPHandler:
 		errorChan <- listeners.ServeHTTPHandler(l, protocol.(servers.HTTPHandler), logFunc)
@@ -250,10 +262,25 @@ func (r *runner) startConfig(c ConfigFile) {
 		}
 	}
 	log.Print("Drivers loaded")
+	log.Println("Starting listeners")
 	serveError := make(chan error, 1)
-	for listenerName, listener := range c.Listeners {
-		go r.serveListener(listenerName, listener, serveError)
+	if c.InitOrder != nil {
+		for _, listenerName := range c.InitOrder {
+			listener, found := c.Listeners[listenerName]
+			if !found {
+				printAndExit(fmt.Sprintf("listener with name %s never set", listenerName), 1)
+			}
+			log.Println("-", listenerName)
+			go r.serveListener(listenerName, listener, serveError)
+		}
+	} else {
+		for listenerName, listener := range c.Listeners {
+			log.Println("-", listenerName)
+			go r.serveListener(listenerName, listener, serveError)
+		}
 	}
+
+	log.Println("Listeners started")
 	printAndExit((<-serveError).Error(), 1)
 }
 
