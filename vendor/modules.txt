@@ -1,6 +1,6 @@
 # github.com/elazarl/goproxy v0.0.0-20210801061803-8e322dfb79c4
 ## explicit
-# github.com/shoriwe/gplasma v0.0.0-20211103070337-347bfcd57a67
+# github.com/shoriwe/gplasma v0.0.0-20220517214355-8a4aa6af9004
 ## explicit
 github.com/shoriwe/gplasma
 github.com/shoriwe/gplasma/pkg/compiler/ast

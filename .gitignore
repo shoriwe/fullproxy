@@ -3,3 +3,4 @@ build/*
 tests/*
 debug/venv/*
 debug/.idea/*
+logs/*

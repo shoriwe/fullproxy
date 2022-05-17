@@ -16,7 +16,6 @@ import (
 	"gopkg.in/yaml.v3"
 	"io"
 	"log"
-	"net"
 	http3 "net/http"
 	"net/url"
 	"os"
@@ -27,67 +26,13 @@ type runner struct {
 	drivers map[string]*Driver
 }
 
-type hijackConn struct {
-	net.Conn
-	read  func(b []byte) (int, error)
-	write func(b []byte) (int, error)
-}
-
-func (h *hijackConn) Read(b []byte) (n int, err error) {
-	return h.read(b)
-}
-
-func (h *hijackConn) Write(b []byte) (n int, err error) {
-	return h.write(b)
-}
-
-type hijackListener struct {
-	listeners.Listener
-	incoming, outgoing io.Writer
-}
-
-func (h *hijackListener) Dial(networkType, address string) (net.Conn, error) {
-	conn, connectionError := h.Dial(networkType, address)
-	if connectionError != nil {
-		return nil, connectionError
-	}
-	result := &hijackConn{
-		Conn: conn,
-	}
-	if h.incoming != nil {
-		result.read = func(b []byte) (int, error) {
-			length, readError := conn.Read(b)
-			if readError != nil {
-				return length, readError
-			}
-			_, writeError := fmt.Fprintf(h.incoming, "\n\n--------------------------------\n\n")
-			if writeError != nil {
-				return length, writeError
-			}
-			_, writeError = h.incoming.Write(b[:length])
-			return length, writeError
-		}
-	} else {
-		result.read = conn.Read
-	}
-	if h.outgoing != nil {
-		result.write = func(b []byte) (int, error) {
-			_, writeError := h.outgoing.Write(b)
-			if writeError != nil {
-				return 0, writeError
-			}
-			return conn.Write(b)
-		}
-	} else {
-		result.read = conn.Write
-	}
-	return result, nil
-}
-
 func (r *runner) serveListener(
+	listenerName string,
 	c Listener,
 	errorChan chan error,
 ) {
+	logger := &log.Logger{}
+	logger.SetOutput(os.Stderr)
 	if c.Config.Type == "slave" {
 		slaveListener, newSlaveError := listeners.NewSlave(
 			c.Config.MasterNetwork,
@@ -193,13 +138,13 @@ func (r *runner) serveListener(
 	case "socks5":
 		driver, found := r.drivers[c.Protocol.Authentication]
 		if !found {
-			errorChan <- fmt.Errorf("unknown driver %s", driver)
+			errorChan <- fmt.Errorf("unknown driver %s", c.Protocol.Authentication)
 		}
 		protocol = socks52.NewSocks5(driver.Auth)
 	case "http":
 		driver, found := r.drivers[c.Protocol.Authentication]
 		if !found {
-			errorChan <- fmt.Errorf("unknown driver %s", driver)
+			errorChan <- fmt.Errorf("unknown driver %s", c.Protocol.Authentication)
 		}
 		protocol = http2.NewHTTP(driver.Auth)
 	case "forward":
@@ -255,9 +200,9 @@ func (r *runner) serveListener(
 			return
 		}
 		defer f.Close()
-		log.Default().SetOutput(f)
+		logger.SetOutput(f)
 		logFunc = func(args ...interface{}) {
-			log.Print(args...)
+			logger.Print(args...)
 		}
 	}
 	var (
@@ -283,6 +228,7 @@ func (r *runner) serveListener(
 	if incoming != nil || outgoing != nil {
 		l = &hijackListener{l, incoming, outgoing}
 	}
+	log.Print("Serving ", listenerName)
 	switch protocol.(type) {
 	case servers.HTTPHandler:
 		errorChan <- listeners.ServeHTTPHandler(l, protocol.(servers.HTTPHandler), logFunc)
@@ -295,6 +241,7 @@ func (r *runner) startConfig(c ConfigFile) {
 	var (
 		err error
 	)
+	log.Print("Loading drivers")
 	r.drivers = map[string]*Driver{}
 	for name, script := range c.Drivers {
 		r.drivers[name], err = loadDriver(script)
@@ -302,9 +249,10 @@ func (r *runner) startConfig(c ConfigFile) {
 			printAndExit(err.Error(), 1)
 		}
 	}
+	log.Print("Drivers loaded")
 	serveError := make(chan error, 1)
-	for _, listener := range c.Listeners {
-		go r.serveListener(listener, serveError)
+	for listenerName, listener := range c.Listeners {
+		go r.serveListener(listenerName, listener, serveError)
 	}
 	printAndExit((<-serveError).Error(), 1)
 }

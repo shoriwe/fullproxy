@@ -34,6 +34,21 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				)
 			},
 		)
+		object.SetOnDemandSymbol(Contains,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 1,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							left := arguments[0]
+							if !left.IsTypeById(StringId) {
+								return p.NewInvalidTypeError(context, left.TypeName(), StringName), false
+							}
+							return p.InterpretAsBool(strings.Contains(self.String, left.String)), true
+						},
+					),
+				)
+			},
+		)
 		object.SetOnDemandSymbol(Add,
 			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),

@@ -8,6 +8,14 @@ import (
 	"sync"
 )
 
+var (
+	authenticationFailed     = errors.New("failed authentication")
+	permissionDeniedInbound  = errors.New("permission denied for inbound connection")
+	permissionDeniedOutbound = errors.New("permission denied for outbound connection")
+	permissionDeniedListen   = errors.New("permission denied for listen address")
+	permissionDeniedAccept   = errors.New("permission denied for accepted client")
+)
+
 type filter struct {
 	inbound  func(string) error
 	outbound func(string) error
@@ -87,6 +95,21 @@ func (d *Driver) Accept(address string) error {
 	return d.accept(address)
 }
 
+func interpretAsString(v *vm.Value, ctx *vm.Context, p *vm.Plasma) string {
+	if v.IsTypeById(vm.StringId) {
+		return v.String
+	}
+	toString, getToStringException := v.Get(p, ctx, "ToString")
+	if getToStringException != nil {
+		return "Failed to get ToString of object"
+	}
+	result, succeed := p.CallFunction(ctx, toString)
+	if !succeed {
+		return "Failed to call ToString"
+	}
+	return result.String
+}
+
 func (d *Driver) feature() vm.Feature {
 	return vm.Feature{
 		"SetAuth": func(context *vm.Context, plasma *vm.Plasma) *vm.Value {
@@ -102,12 +125,12 @@ func (d *Driver) feature() vm.Feature {
 								plasma.NewString(context, false, password),
 							)
 							if !succeed {
-								return errors.New("failed to execute function")
+								return errors.New(interpretAsString(result, context, plasma))
 							}
 							if result.Bool {
 								return nil
 							}
-							return errors.New("failed authentication")
+							return authenticationFailed
 						}
 						return plasma.GetNone(), true
 					},
@@ -126,12 +149,12 @@ func (d *Driver) feature() vm.Feature {
 								plasma.NewString(context, false, address),
 							)
 							if !succeed {
-								return errors.New("failed to execute function")
+								return errors.New(interpretAsString(result, context, plasma))
 							}
 							if result.Bool {
 								return nil
 							}
-							return errors.New("permission denied")
+							return permissionDeniedInbound
 						}
 						return plasma.GetNone(), true
 					},
@@ -150,12 +173,12 @@ func (d *Driver) feature() vm.Feature {
 								plasma.NewString(context, false, address),
 							)
 							if !succeed {
-								return errors.New("failed to execute function")
+								return errors.New(interpretAsString(result, context, plasma))
 							}
 							if result.Bool {
 								return nil
 							}
-							return errors.New("permission denied")
+							return permissionDeniedOutbound
 						}
 						return plasma.GetNone(), true
 					},
@@ -174,12 +197,12 @@ func (d *Driver) feature() vm.Feature {
 								plasma.NewString(context, false, address),
 							)
 							if !succeed {
-								return errors.New("failed to execute function")
+								return errors.New(interpretAsString(result, context, plasma))
 							}
 							if result.Bool {
 								return nil
 							}
-							return errors.New("permission denied")
+							return permissionDeniedListen
 						}
 						return plasma.GetNone(), true
 					},
@@ -198,12 +221,12 @@ func (d *Driver) feature() vm.Feature {
 								plasma.NewString(context, false, address),
 							)
 							if !succeed {
-								return errors.New("failed to execute function")
+								return errors.New(interpretAsString(result, context, plasma))
 							}
 							if result.Bool {
 								return nil
 							}
-							return errors.New("permission denied")
+							return permissionDeniedAccept
 						}
 						return plasma.GetNone(), true
 					},
