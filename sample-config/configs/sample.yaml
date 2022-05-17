@@ -1,0 +1,116 @@
+init-order:
+  - http-master
+  - socks5
+  - google
+  - http-slave
+  - forward
+  - reverse-http
+  - reverse-raw
+drivers:
+  auth: sample-config/scripts/auth.pm
+  filter: sample-config/scripts/filter.pm
+listeners:
+  socks5:
+    log: logs/socks5.log
+    sniff:
+      incoming: logs/socks5-incoming.sniff
+      outgoing: logs/socks5-outgoing.sniff
+    config:
+      type: basic
+      network: tcp
+      address: 127.0.0.1:9050
+      filters:
+        #inbound: filter
+        #outbound: filter
+        listen: filter
+        accept: filter
+    protocol:
+      type: socks5
+      authentication: auth
+  google:
+    log: logs/google.log
+    sniff:
+      incoming: logs/google-incoming.sniff
+      outgoing: logs/google-outgoing.sniff
+    config:
+      type: basic
+      network: tcp
+      address: 127.0.0.1:443
+    protocol:
+      type: translate
+      proxy-network: tcp
+      proxy-address: 127.0.0.1:9050
+      target-network: tcp
+      target-address: google.com:443
+      translation: socks5:forward
+      credentials: sulcud:password
+  http-master:
+    log: logs/http.log
+    sniff:
+      incoming: logs/http-incoming.sniff
+      outgoing: logs/http-outgoing.sniff
+    config:
+      type: master
+      network: tcp
+      address: 127.0.0.1:8079
+      master-network: tcp
+      master-address: 127.0.0.1:8081
+      master-tls:
+        - sample-config/tls/server.pem:sample-config/tls/server.key
+    protocol:
+      type: http
+  http-slave:
+    log: logs/slave.log
+    config:
+      type: slave
+      master-network: tcp
+      master-address: 127.0.0.1:8081
+      slave-trust: true
+  forward:
+    log: logs/forward.log
+    config:
+      type: basic
+      network: tcp
+      address: 127.0.0.1:8080
+    protocol:
+      type: forward
+      target-network: tcp
+      target-address: 127.0.0.1:8079
+  reverse-http:
+    log: logs/reverse-http.log
+    config:
+      type: basic
+      network: tcp
+      address: 127.0.0.1:8000
+    protocol:
+      type: reverse-http
+      http-hosts:
+        127.0.0.1:8000:
+          path: /
+          pool:
+            8001:
+              url: http://127.0.0.1:8001/name.txt
+              network: tcp
+              address: 127.0.0.1:8001
+        localhost:8000:
+          path: /
+          pool:
+            8002:
+              url: http://127.0.0.1:8002/name.txt
+              network: tcp
+              address: 127.0.0.1:8002
+  reverse-raw:
+    log: logs/reverse-raw.log
+    config:
+      type: basic
+      network: tcp
+      address: 127.0.0.1:9000
+    protocol:
+      type: reverse-raw
+      raw-hosts:
+        8001:
+          network: tcp
+          address: 127.0.0.1:8001
+        8002:
+          network: tcp
+          address: 127.0.0.1:8002

@@ -1,0 +1,95 @@
+### Language
+
+This are the expressions and statements that **`plasma`** currently supports:
+
+- [X] Expressions
+    - [X] Literals
+        - [X] Integers
+            - [X] Decimal
+            - [X] Hex
+            - [X] Binary
+            - [X] Octal
+        - [X] Float
+            - [X] Basic
+            - [X] Scientific
+        - [X] String
+            - [X] Single Quote
+            - [X] Double Quote
+        - [X] Bytes
+        - [X] Bool
+            - [X] True
+            - [X] False
+        - [X] None
+    - [X] Complex types
+        - [X] Tuple
+        - [X] Array
+        - [X] Hash Table
+    - [X] Unary Expressions
+        - [X] Negate Bits
+        - [X] Negate Bool
+    - [X] Binary Expressions
+        - [X] Add
+        - [X] Sub
+        - [X] Mul
+        - [X] Div
+        - [X] Mod
+        - [X] Pow
+        - [X] BitXor
+        - [X] BitAnd
+        - [X] BitOr
+        - [X] BitLeft
+        - [X] BitRight
+        - [X] And
+        - [X] Or
+        - [X] Xor
+        - [X] Equals
+        - [X] NotEquals
+        - [X] GreaterThan
+        - [X] LessThan
+        - [X] GreaterThanOrEqual
+        - [X] LessThanOrEqual
+    - [X] Lambda Expressions
+    - [X] One Line If
+    - [X] One Line Unless
+    - [X] Identifiers
+    - [X] Generators
+    - [X] Call
+        - [X] Function
+        - [X] Type
+    - [X] Index
+    - [X] Parentheses Expressions
+    - [X] Selector Expressions
+- [ ] Statements
+    - [X] Assign Statement
+    - [ ] DeferStatement
+    - [x] Do While
+        - [X] Continue
+        - [X] Break
+        - [X] Redo
+    - [X] While
+        - [X] Continue
+        - [X] Break
+        - [X] Redo
+    - [X] Until
+        - [X] Continue
+        - [X] Break
+        - [X] Redo
+    - [X] For Loop
+        - [X] Continue
+        - [X] Break
+        - [X] Redo
+    - [X] If - Else - Elif
+    - [X] Unless - Else - Elif
+    - [X] Switch
+    - [X] Module
+    - [X] Function Definition
+    - [X] Interface
+    - [X] Class
+    - [X] Raise
+    - [X] Try - Except
+    - [X] Begin
+    - [X] End
+    - [X] Return
+    - [X] Super
+    - [X] Pass
+    - [ ] Yield

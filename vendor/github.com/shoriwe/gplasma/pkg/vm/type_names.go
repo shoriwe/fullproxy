@@ -1,0 +1,26 @@
+package vm
+
+const (
+	TypeName          = "Type"
+	ValueName         = "Value"
+	FunctionName      = "Function"
+	StringName        = "String"
+	BoolName          = "Bool"
+	TrueName          = "True"
+	FalseName         = "False"
+	TupleName         = "Tuple"
+	IntegerName       = "Integer"
+	FloatName         = "Float"
+	ArrayName         = "Array"
+	NoneName          = "NoneType"
+	BytesName         = "Bytes"
+	HashName          = "Hash"
+	IteratorName      = "Iterator"
+	ModuleName        = "Module"
+	None              = "None"
+	CallableName      = "Callable"
+	Source            = "0xFFFFFF"
+	TemporalVariable1 = "0xAAAAAA"
+	TemporalVariable2 = "0xBBBBBB"
+	JunkVariable      = "0N-JUNK-VARIABLE"
+)
