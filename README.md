@@ -40,7 +40,7 @@ You can find pre-compiled binaries for windows and Linux [Here](https://github.c
 #### Go tool based
 
 ```shell
-go install github.com/shoriwe/fullproxy/v3
+go install github.com/shoriwe/fullproxy/v3@latest
 ```
 
 #### Git clone based
