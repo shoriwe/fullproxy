@@ -16,5 +16,6 @@ Foreach ($os IN $target_os) {
         $env:GOOS = $os;
         $env:GOARCH = $arch;
         go build -v -o "build/fullproxy-$os-$arch$extension" -ldflags="-s -w" -trimpath -buildvcs=false -mod vendor;
+        #go build -v -o "build/fullproxy-$os-$arch$extension" -mod vendor;
     }
 }
