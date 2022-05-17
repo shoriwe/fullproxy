@@ -6,13 +6,10 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/shoriwe/fullproxy)](https://goreportcard.com/report/github.com/shoriwe/fullproxy)
 [![Release](https://img.shields.io/github/release/shoriwe/fullproxy.svg?style=flat-square)](https://github.com/shoriwe/fullproxy/releases/latest)
 
-Bind and reverse connection based, SOCKS5, HTTP and PortForward proxy.
-
-## Description
+**fullproxy** is a `bind` and `master/slave` based proxy toolkit.
 
 ![logo](logo/white_logo_color_background.jpg)
 
-**fullproxy** is a `bind` and `master/slave` based proxy toolkit.
 
 ## Available protocols
 
