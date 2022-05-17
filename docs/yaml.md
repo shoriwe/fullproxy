@@ -5,6 +5,10 @@ drivers: # This field is optional.
   DRIVER_NAME: /PATH/TO/PLASMA/SCRIPT
 listeners:
   LISTENER_NAME:
+    log: /PATH/TO/FILE/TO/DATA
+    sniff:
+      incoming: /PATH/TO/FILE/WITH/INCOMING/TRAFFIC
+      outgoing: /PATH/TO/FILE/WITH/OUTGOING/TRAFFIC
     config:
       # Mandatory by all types of listeners
       type: basic | master | slave
@@ -46,6 +50,7 @@ listeners:
       proxy-network: tcp | unix
       proxy-address: HOST:PORT | /PATH/TO/UNIX/SOCK
       translation: socks5:forward # Currently only supported
+      credentials: USERNAME:PASSWORD
 
       # Mandatory for reverse-raw
       raw-hosts:

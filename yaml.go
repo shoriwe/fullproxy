@@ -27,6 +27,7 @@ type ProtocolConfig struct {
 	ProxyNetwork   string                   `yaml:"proxy-network"`
 	ProxyAddress   string                   `yaml:"proxy-address"`
 	Translation    string                   `yaml:"translation"`
+	Credentials    string                   `yaml:"credentials"`
 	RawHosts       map[string]reverse2.Host `yaml:"raw-hosts"'`
 	HTTPHosts      map[string]struct {
 		Path            string                   `yaml:"path"`
@@ -36,10 +37,17 @@ type ProtocolConfig struct {
 	} `yaml:"http-hosts"`
 }
 
+type Listener struct {
+	Log   string `yaml:"log"`
+	Sniff struct {
+		Incoming string `yaml:"incoming"`
+		Outgoing string `yaml:"outgoing"`
+	} `yaml:"sniff"`
+	Config   ListenerConfig `yaml:"config"`
+	Protocol ProtocolConfig `yaml:"protocol"`
+}
+
 type ConfigFile struct {
-	Drivers   map[string]string `yaml:"drivers"`
-	Listeners map[string]struct {
-		Config   ListenerConfig `yaml:"config"`
-		Protocol ProtocolConfig `yaml:"protocol"`
-	} `yaml:"listeners"`
+	Drivers   map[string]string   `yaml:"drivers"`
+	Listeners map[string]Listener `yaml:"listeners"`
 }

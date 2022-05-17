@@ -14,7 +14,11 @@ import (
 	socks52 "github.com/shoriwe/fullproxy/v3/internal/proxy/servers/socks5"
 	pf_to_socks5 "github.com/shoriwe/fullproxy/v3/internal/proxy/servers/translation/pf-to-socks5"
 	"gopkg.in/yaml.v3"
+	"io"
+	"log"
+	"net"
 	http3 "net/http"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -23,11 +27,65 @@ type runner struct {
 	drivers map[string]*Driver
 }
 
+type hijackConn struct {
+	net.Conn
+	read  func(b []byte) (int, error)
+	write func(b []byte) (int, error)
+}
+
+func (h *hijackConn) Read(b []byte) (n int, err error) {
+	return h.read(b)
+}
+
+func (h *hijackConn) Write(b []byte) (n int, err error) {
+	return h.write(b)
+}
+
+type hijackListener struct {
+	listeners.Listener
+	incoming, outgoing io.Writer
+}
+
+func (h *hijackListener) Dial(networkType, address string) (net.Conn, error) {
+	conn, connectionError := h.Dial(networkType, address)
+	if connectionError != nil {
+		return nil, connectionError
+	}
+	result := &hijackConn{
+		Conn: conn,
+	}
+	if h.incoming != nil {
+		result.read = func(b []byte) (int, error) {
+			length, readError := conn.Read(b)
+			if readError != nil {
+				return length, readError
+			}
+			_, writeError := fmt.Fprintf(h.incoming, "\n\n--------------------------------\n\n")
+			if writeError != nil {
+				return length, writeError
+			}
+			_, writeError = h.incoming.Write(b[:length])
+			return length, writeError
+		}
+	} else {
+		result.read = conn.Read
+	}
+	if h.outgoing != nil {
+		result.write = func(b []byte) (int, error) {
+			_, writeError := h.outgoing.Write(b)
+			if writeError != nil {
+				return 0, writeError
+			}
+			return conn.Write(b)
+		}
+	} else {
+		result.read = conn.Write
+	}
+	return result, nil
+}
+
 func (r *runner) serveListener(
-	c struct {
-		Config   ListenerConfig `yaml:"config"`
-		Protocol ProtocolConfig `yaml:"protocol"`
-	},
+	c Listener,
 	errorChan chan error,
 ) {
 	if c.Config.Type == "slave" {
@@ -150,10 +208,15 @@ func (r *runner) serveListener(
 			c.Protocol.TargetAddress,
 		)
 	case "translate":
+		var userInfo *url.Userinfo = nil
+		split := strings.Split(c.Protocol.Credentials, ":")
+		if len(split) == 2 {
+			userInfo = url.UserPassword(split[0], split[1])
+		}
 		protocol, newProtocolError = pf_to_socks5.NewForwardToSocks5(
 			c.Protocol.ProxyNetwork,
 			c.Protocol.ProxyNetwork,
-			nil, // TODO: Fix this, let the yaml config this field
+			userInfo,
 			c.Protocol.TargetNetwork,
 			c.Protocol.TargetAddress,
 		)
@@ -182,11 +245,49 @@ func (r *runner) serveListener(
 		listenerFilter.accept = f.accept
 	}
 	l.SetFilters(listenerFilter)
+	var (
+		logFunc listeners.LogFunc = nil
+	)
+	if c.Log != "" {
+		f, createError := os.Create(c.Log)
+		if createError != nil {
+			errorChan <- createError
+			return
+		}
+		defer f.Close()
+		log.Default().SetOutput(f)
+		logFunc = func(args ...interface{}) {
+			log.Print(args...)
+		}
+	}
+	var (
+		incoming, outgoing io.WriteCloser
+		createError        error
+	)
+	if c.Sniff.Incoming != "" {
+		incoming, createError = os.Create(c.Sniff.Incoming)
+		if createError != nil {
+			errorChan <- createError
+			return
+		}
+		defer incoming.Close()
+	}
+	if c.Sniff.Outgoing != "" {
+		outgoing, createError = os.Create(c.Sniff.Outgoing)
+		if createError != nil {
+			errorChan <- createError
+			return
+		}
+		defer outgoing.Close()
+	}
+	if incoming != nil || outgoing != nil {
+		l = &hijackListener{l, incoming, outgoing}
+	}
 	switch protocol.(type) {
 	case servers.HTTPHandler:
-		errorChan <- listeners.ServeHTTPHandler(l, protocol.(servers.HTTPHandler), nil) // TODO: Set logging file
+		errorChan <- listeners.ServeHTTPHandler(l, protocol.(servers.HTTPHandler), logFunc)
 	default:
-		errorChan <- listeners.Serve(l, protocol, nil) // TODO: Set logging file
+		errorChan <- listeners.Serve(l, protocol, logFunc)
 	}
 }
 

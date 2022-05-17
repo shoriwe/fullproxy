@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"github.com/shoriwe/fullproxy/v3/internal/common"
+	"log"
 	"net"
 	"time"
 )
@@ -35,7 +36,8 @@ func (slave *Slave) Accept() (net.Conn, error) {
 	}
 	switch command[0] {
 	case DialCommand:
-		return nil, slave.dial(clientConnection)
+		log.Println(clientConnection.RemoteAddr().String())
+		return clientConnection, slave.dial(clientConnection)
 	}
 	_, _ = clientConnection.Write([]byte{UnknownCommand})
 	return nil, errors.New("unknown command")
