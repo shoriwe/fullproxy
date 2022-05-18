@@ -28,6 +28,7 @@
 - [Pipes](docs/pipes.md)
 - [Proxying](docs/proxy.md)
 - [Filters](docs/filters.md)
+- [Plasma programming language](https://shoriwe.github.io)
 
 ## Installation
 
