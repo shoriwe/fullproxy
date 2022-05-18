@@ -1,11 +1,11 @@
 package common
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"net/http/httputil"
 )
 
 const (
@@ -63,9 +63,8 @@ func (r *RequestSniffer) Read(p []byte) (n int, err error) {
 	}
 	if !r.HeaderDone {
 		r.HeaderDone = true
-		requestClone := r.Request.Clone(r.Request.Context())
-		requestClone.Body = io.NopCloser(bytes.NewReader(nil))
-		_ = requestClone.Write(r.Writer)
+		dump, _ := httputil.DumpRequest(r.Request, false)
+		_, _ = r.Writer.Write(dump)
 	}
 	length, readError := r.Request.Body.Read(p)
 	_, _ = r.Writer.Write(p[:length])
@@ -89,23 +88,8 @@ func (r *ResponseSniffer) Read(p []byte) (n int, err error) {
 	}
 	if !r.HeaderDone {
 		r.HeaderDone = true
-		responseClone := &http.Response{
-			Status:           r.Response.Status,
-			StatusCode:       r.Response.StatusCode,
-			Proto:            r.Response.Proto,
-			ProtoMajor:       r.Response.ProtoMajor,
-			ProtoMinor:       r.Response.ProtoMinor,
-			Header:           r.Response.Header,
-			Body:             io.NopCloser(bytes.NewReader(nil)),
-			ContentLength:    r.Response.ContentLength,
-			TransferEncoding: r.Response.TransferEncoding,
-			Close:            r.Response.Close,
-			Uncompressed:     r.Response.Uncompressed,
-			Trailer:          r.Response.Trailer,
-			Request:          r.Response.Request,
-			TLS:              r.Response.TLS,
-		}
-		_ = responseClone.Write(r.Writer)
+		dump, _ := httputil.DumpResponse(r.Response, false)
+		_, _ = r.Writer.Write(dump)
 	}
 	length, readError := r.Response.Body.Read(p)
 	_, _ = r.Writer.Write(p[:length])

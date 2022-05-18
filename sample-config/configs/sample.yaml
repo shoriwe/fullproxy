@@ -78,6 +78,9 @@ listeners:
       target-address: 127.0.0.1:8079
   reverse-http:
     log: logs/reverse-http.log
+    sniff:
+      incoming: logs/reverse-http-incoming.sniff
+      outgoing: logs/reverse-http-outgoing.sniff
     config:
       type: basic
       network: tcp
@@ -101,6 +104,9 @@ listeners:
               address: 127.0.0.1:8002
   reverse-raw:
     log: logs/reverse-raw.log
+    sniff:
+      incoming: logs/reverse-raw-incoming.sniff
+      outgoing: logs/reverse-raw-outgoing.sniff
     config:
       type: basic
       network: tcp
