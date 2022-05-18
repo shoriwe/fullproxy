@@ -2,21 +2,22 @@ import requests
 
 
 def test_http_with_http_no_auth():
-	assert requests.get(
-		"http://127.0.0.1:8000/big.txt",
-		proxies={
-			"http": "http://127.0.0.1:8080",
-			"https": "http://127.0.0.1:8080"
-		},verify=False
-	)
-	r = requests.get(
-		"http://127.0.0.1:8000/big.txt",
-		proxies={
-			"http": "http://127.0.0.1:8080",
-			"https": "http://127.0.0.1:8080"
-		},verify=False
-	)
-	print(r.text)
+    r = requests.get(
+        "http://127.0.0.1:8000/",
+        proxies={
+            "http": "http://127.0.0.1:8080",
+            "https": "http://127.0.0.1:8080"
+        },verify=False
+    )
+    print(r.text)
+    r = requests.get(
+        "http://localhost:8000/",
+        proxies={
+            "http": "http://127.0.0.1:8080",
+            "https": "http://127.0.0.1:8080"
+        },verify=False
+    )
+    print(r.text)
 	
 
 

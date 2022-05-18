@@ -45,8 +45,12 @@ func (h *Hosts) SetListenAddress(address net.Addr) {
 }
 
 func (h *Hosts) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	_ = common.SniffRequest(h.IncomingSniffer, request)
-	targetRequest, newRequestError := http.NewRequest(request.Method, request.URL.String(), request.Body)
+	defer request.Body.Close()
+	targetRequest, newRequestError := http.NewRequest(request.Method, request.URL.String(), &common.RequestSniffer{
+		HeaderDone: false,
+		Writer:     h.OutgoingSniffer,
+		Request:    request,
+	})
 	if newRequestError != nil {
 		return
 	}
@@ -59,14 +63,18 @@ func (h *Hosts) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	if requestError != nil {
 		return
 	}
-	_ = common.SniffResponse(h.OutgoingSniffer, response)
+	defer response.Body.Close()
 	for key, values := range response.Header {
 		for _, value := range values {
 			writer.Header().Add(key, value)
 		}
 	}
 	writer.WriteHeader(response.StatusCode)
-	_, copyError := io.Copy(writer, response.Body)
+	_, copyError := io.Copy(writer, &common.ResponseSniffer{
+		HeaderDone: false,
+		Writer:     h.IncomingSniffer,
+		Response:   response,
+	})
 	if copyError != nil {
 		return
 	}

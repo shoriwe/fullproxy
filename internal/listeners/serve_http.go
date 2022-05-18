@@ -8,6 +8,7 @@ import (
 )
 
 type listenerInboundFilter struct {
+	logFunc  LogFunc
 	Listener Listener
 }
 
@@ -29,6 +30,7 @@ func (l *listenerInboundFilter) Accept() (net.Conn, error) {
 		_ = conn.Close()
 		return nil, filterError
 	}
+	l.logFunc("Connection from:", conn.RemoteAddr().String())
 	return conn, nil
 }
 
@@ -68,5 +70,5 @@ func ServeHTTPHandler(listener Listener, handler servers.HTTPHandler, logFunc Lo
 		Addr:    listener.Addr().String(),
 		Handler: handler,
 	}
-	return server.Serve(&listenerInboundFilter{Listener: listener})
+	return server.Serve(&listenerInboundFilter{logFunc: logFunc, Listener: listener})
 }

@@ -58,14 +58,18 @@ func (H *HTTP) SetDial(dialFunc servers.DialFunc) {
 	H.Dial = dialFunc
 }
 
-func createRequest(received *http.Request, reference *Target) (*http.Request, *Host, error) {
+func (H *HTTP) createRequest(received *http.Request, reference *Target) (*http.Request, *Host, error) {
 	host := reference.nextTarget()
 	u, parseError := url.Parse(host.Url)
 	if parseError != nil {
 		return nil, nil, parseError
 	}
 	u.Path = path.Join(u.Path, strings.Replace(received.RequestURI, reference.Path, "/", 1))
-	request, newRequestError := http.NewRequest(received.Method, u.String(), received.Body)
+	request, newRequestError := http.NewRequest(received.Method, u.String(), &common.RequestSniffer{
+		HeaderDone: false,
+		Writer:     H.OutgoingSniffer,
+		Request:    received,
+	})
 	if newRequestError != nil {
 		return nil, nil, newRequestError
 	}
@@ -79,11 +83,11 @@ func createRequest(received *http.Request, reference *Target) (*http.Request, *H
 }
 
 func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	_ = common.SniffRequest(H.IncomingSniffer, request)
+	defer request.Body.Close()
 	target, found := H.Targets[request.Host]
 	if found {
 		if strings.Index(request.RequestURI, target.Path) == 0 {
-			targetRequest, host, requestCreationError := createRequest(request, target)
+			targetRequest, host, requestCreationError := H.createRequest(request, target)
 			if requestCreationError != nil {
 				return
 			}
@@ -98,7 +102,7 @@ func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 			if requestError != nil {
 				return
 			}
-			_ = common.SniffResponse(H.OutgoingSniffer, response)
+			defer response.Body.Close()
 			for key, values := range response.Header {
 				for _, value := range values {
 					writer.Header().Add(key, value)
@@ -110,7 +114,11 @@ func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 				}
 			}
 			writer.WriteHeader(response.StatusCode)
-			_, copyError := io.Copy(writer, response.Body)
+			_, copyError := io.Copy(writer, &common.ResponseSniffer{
+				HeaderDone: false,
+				Writer:     H.IncomingSniffer,
+				Response:   response,
+			})
 			if copyError != nil {
 				return
 			}

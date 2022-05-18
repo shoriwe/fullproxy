@@ -44,10 +44,16 @@ func (H *HTTP) SetDial(dialFunc servers.DialFunc) {
 }
 
 func (H *HTTP) DoFunc(req *http.Request, _ *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-	_ = common.SniffRequest(H.IncomingSniffer, req)
 	onErrorResponse := goproxy.NewResponse(req,
 		goproxy.ContentTypeText, http.StatusForbidden,
 		"Don't waste your time!")
+	newRequest := req.Clone(req.Context())
+	newRequest.Body = &common.RequestSniffer{
+		HeaderDone: false,
+		Writer:     H.OutgoingSniffer,
+		Request:    req,
+	}
+	req = newRequest
 	if H.AuthenticationMethod != nil {
 		entry := req.Header.Get("Proxy-Authorization")
 		splitEntry := strings.Split(entry, " ")
@@ -78,9 +84,27 @@ func (H *HTTP) DoFunc(req *http.Request, _ *goproxy.ProxyCtx) (*http.Request, *h
 	return req, nil
 }
 
-func (H *HTTP) ResponseHandler(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
-	_ = common.SniffResponse(H.OutgoingSniffer, resp)
-	return resp
+func (H *HTTP) ResponseHandler(resp *http.Response, _ *goproxy.ProxyCtx) *http.Response {
+	return &http.Response{
+		Status:     resp.Status,
+		StatusCode: resp.StatusCode,
+		Proto:      resp.Proto,
+		ProtoMajor: resp.ProtoMajor,
+		ProtoMinor: resp.ProtoMinor,
+		Header:     resp.Header.Clone(),
+		Body: &common.ResponseSniffer{
+			HeaderDone: false,
+			Writer:     H.IncomingSniffer,
+			Response:   resp,
+		},
+		ContentLength:    resp.ContentLength,
+		TransferEncoding: resp.TransferEncoding,
+		Close:            resp.Close,
+		Uncompressed:     resp.Uncompressed,
+		Trailer:          resp.Trailer.Clone(),
+		Request:          resp.Request,
+		TLS:              resp.TLS,
+	}
 }
 
 func NewHTTP(
