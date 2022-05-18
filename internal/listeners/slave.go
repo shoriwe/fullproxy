@@ -101,7 +101,7 @@ func (slave *Slave) dial(clientConnection net.Conn) error {
 		_, _ = clientConnection.Write([]byte{NewConnectionFailed})
 		return connectionError
 	}
-	return common.ForwardTraffic(clientConnection, targetConnection)
+	return common.ForwardTraffic(clientConnection, targetConnection, nil, nil)
 }
 
 func (slave *Slave) Serve() error {

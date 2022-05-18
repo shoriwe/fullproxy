@@ -76,5 +76,5 @@ func (socks5 *Socks5) Bind(context *Context) error {
 			Port:       targetConnection.RemoteAddr().(*net.TCPAddr).Port,
 		},
 	)
-	return common.ForwardTraffic(context.ClientConnection, targetConnection)
+	return common.ForwardTraffic(context.ClientConnection, targetConnection, socks5.IncomingSniffer, socks5.OutgoingSniffer)
 }

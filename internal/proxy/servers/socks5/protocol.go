@@ -3,6 +3,7 @@ package socks5
 import (
 	"encoding/binary"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
+	"io"
 	"net"
 	"strconv"
 )
@@ -12,10 +13,16 @@ const (
 )
 
 type Socks5 struct {
-	AuthenticationMethod servers.AuthenticationMethod
-	Dial                 servers.DialFunc
-	Listen               servers.ListenFunc
-	ListenAddress        *net.TCPAddr
+	AuthenticationMethod             servers.AuthenticationMethod
+	Dial                             servers.DialFunc
+	Listen                           servers.ListenFunc
+	ListenAddress                    *net.TCPAddr
+	IncomingSniffer, OutgoingSniffer io.Writer
+}
+
+func (socks5 *Socks5) SetSniffers(incoming, outgoing io.Writer) {
+	socks5.IncomingSniffer = incoming
+	socks5.OutgoingSniffer = outgoing
 }
 
 func (socks5 *Socks5) SetListenAddress(address net.Addr) {

@@ -3,13 +3,20 @@ package reverse
 import (
 	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
+	"io"
 	"net"
 )
 
 type Raw struct {
-	currentTarget int
-	Targets       []*Host
-	Dial          servers.DialFunc
+	currentTarget                    int
+	Targets                          []*Host
+	Dial                             servers.DialFunc
+	IncomingSniffer, OutgoingSniffer io.Writer
+}
+
+func (r *Raw) SetSniffers(incoming, outgoing io.Writer) {
+	r.IncomingSniffer = incoming
+	r.OutgoingSniffer = outgoing
 }
 
 func (r *Raw) nextTarget() *Host {
@@ -40,7 +47,7 @@ func (r *Raw) Handle(conn net.Conn) error {
 	if connectionError != nil {
 		return connectionError
 	}
-	return common.ForwardTraffic(conn, targetConnection)
+	return common.ForwardTraffic(conn, targetConnection, r.IncomingSniffer, r.OutgoingSniffer)
 }
 
 func NewRaw(targets []*Host) servers.Protocol {

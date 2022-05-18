@@ -2,6 +2,7 @@ package http_hosts
 
 import (
 	"context"
+	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"io"
 	"net"
@@ -9,8 +10,14 @@ import (
 )
 
 type Hosts struct {
-	Client        *http.Client
-	ListenAddress *net.TCPAddr
+	Client                           *http.Client
+	ListenAddress                    *net.TCPAddr
+	IncomingSniffer, OutgoingSniffer io.Writer
+}
+
+func (h *Hosts) SetSniffers(incoming, outgoing io.Writer) {
+	h.IncomingSniffer = incoming
+	h.OutgoingSniffer = outgoing
 }
 
 func (h *Hosts) Handle(_ net.Conn) error {
@@ -38,6 +45,7 @@ func (h *Hosts) SetListenAddress(address net.Addr) {
 }
 
 func (h *Hosts) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	_ = common.SniffRequest(h.IncomingSniffer, request)
 	targetRequest, newRequestError := http.NewRequest(request.Method, request.URL.String(), request.Body)
 	if newRequestError != nil {
 		return
@@ -51,6 +59,7 @@ func (h *Hosts) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	if requestError != nil {
 		return
 	}
+	_ = common.SniffResponse(h.OutgoingSniffer, response)
 	for key, values := range response.Header {
 		for _, value := range values {
 			writer.Header().Add(key, value)

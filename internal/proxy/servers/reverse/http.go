@@ -2,6 +2,7 @@ package reverse
 
 import (
 	"context"
+	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"io"
 	"net"
@@ -20,10 +21,16 @@ type (
 		Targets        []*Host
 	}
 	HTTP struct {
-		Targets map[string]*Target
-		Dial    servers.DialFunc
+		Targets                          map[string]*Target
+		Dial                             servers.DialFunc
+		IncomingSniffer, OutgoingSniffer io.Writer
 	}
 )
+
+func (H *HTTP) SetSniffers(incoming, outgoing io.Writer) {
+	H.IncomingSniffer = incoming
+	H.OutgoingSniffer = outgoing
+}
 
 func (target *Target) nextTarget() *Host {
 	if target.CurrentTarget >= len(target.Targets) {
@@ -72,6 +79,7 @@ func createRequest(received *http.Request, reference *Target) (*http.Request, *H
 }
 
 func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	_ = common.SniffRequest(H.IncomingSniffer, request)
 	target, found := H.Targets[request.Host]
 	if found {
 		if strings.Index(request.RequestURI, target.Path) == 0 {
@@ -90,6 +98,7 @@ func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 			if requestError != nil {
 				return
 			}
+			_ = common.SniffResponse(H.OutgoingSniffer, response)
 			for key, values := range response.Header {
 				for _, value := range values {
 					writer.Header().Add(key, value)

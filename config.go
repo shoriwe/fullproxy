@@ -237,9 +237,7 @@ func (r *runner) serveListener(
 		}
 		defer outgoing.Close()
 	}
-	if incoming != nil || outgoing != nil {
-		l = &hijackListener{l, incoming, outgoing}
-	}
+	protocol.SetSniffers(incoming, outgoing)
 	log.Println(listenerName, "Started")
 	switch protocol.(type) {
 	case servers.HTTPHandler:

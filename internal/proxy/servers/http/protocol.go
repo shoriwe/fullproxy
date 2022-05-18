@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"gopkg.in/elazarl/goproxy.v1"
+	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -13,6 +15,13 @@ import (
 
 type HTTP struct {
 	*goproxy.ProxyHttpServer
+	AuthenticationMethod             servers.AuthenticationMethod
+	IncomingSniffer, OutgoingSniffer io.Writer
+}
+
+func (H *HTTP) SetSniffers(incoming, outgoing io.Writer) {
+	H.IncomingSniffer = incoming
+	H.OutgoingSniffer = outgoing
 }
 
 func (H *HTTP) SetListenAddress(_ net.Addr) {
@@ -34,48 +43,55 @@ func (H *HTTP) SetDial(dialFunc servers.DialFunc) {
 	}
 }
 
+func (H *HTTP) DoFunc(req *http.Request, _ *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+	_ = common.SniffRequest(H.IncomingSniffer, req)
+	onErrorResponse := goproxy.NewResponse(req,
+		goproxy.ContentTypeText, http.StatusForbidden,
+		"Don't waste your time!")
+	if H.AuthenticationMethod != nil {
+		entry := req.Header.Get("Proxy-Authorization")
+		splitEntry := strings.Split(entry, " ")
+		if len(splitEntry) != 2 {
+			return req, onErrorResponse
+		}
+
+		if splitEntry[0] != "Basic" {
+			return req, onErrorResponse
+		}
+
+		rawUsernamePassword, decodingError := base64.StdEncoding.DecodeString(splitEntry[1])
+		if decodingError != nil {
+			return req, onErrorResponse
+		}
+
+		splitRawUsernamePassword := bytes.Split(rawUsernamePassword, []byte{':'})
+		if len(splitRawUsernamePassword) != 2 {
+			return req, onErrorResponse
+		}
+
+		authenticationError := H.AuthenticationMethod(splitRawUsernamePassword[0], splitRawUsernamePassword[1])
+		if authenticationError != nil {
+			return req, onErrorResponse
+		}
+	}
+
+	return req, nil
+}
+
+func (H *HTTP) ResponseHandler(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
+	_ = common.SniffResponse(H.OutgoingSniffer, resp)
+	return resp
+}
+
 func NewHTTP(
 	authenticationMethod servers.AuthenticationMethod,
 ) servers.HTTPHandler {
-	handler := goproxy.NewProxyHttpServer()
-	handler.OnRequest().HandleConnect(goproxy.AlwaysMitm)
-	handler.OnRequest().DoFunc(
-		func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-			onErrorResponse := goproxy.NewResponse(req,
-				goproxy.ContentTypeText, http.StatusForbidden,
-				"Don't waste your time!")
-			if authenticationMethod != nil {
-
-				entry := req.Header.Get("Proxy-Authorization")
-				splitEntry := strings.Split(entry, " ")
-				if len(splitEntry) != 2 {
-					return req, onErrorResponse
-				}
-
-				if splitEntry[0] != "Basic" {
-					return req, onErrorResponse
-				}
-
-				rawUsernamePassword, decodingError := base64.StdEncoding.DecodeString(splitEntry[1])
-				if decodingError != nil {
-					return req, onErrorResponse
-				}
-
-				splitRawUsernamePassword := bytes.Split(rawUsernamePassword, []byte{':'})
-				if len(splitRawUsernamePassword) != 2 {
-					return req, onErrorResponse
-				}
-
-				authenticationError := authenticationMethod(splitRawUsernamePassword[0], splitRawUsernamePassword[1])
-				if authenticationError != nil {
-					return req, onErrorResponse
-				}
-			}
-
-			return req, nil
-		},
-	)
-	return &HTTP{
-		ProxyHttpServer: handler,
+	protocol := &HTTP{
+		ProxyHttpServer:      goproxy.NewProxyHttpServer(),
+		AuthenticationMethod: authenticationMethod,
 	}
+	protocol.ProxyHttpServer.OnRequest().HandleConnect(goproxy.AlwaysMitm)
+	protocol.ProxyHttpServer.OnRequest().DoFunc(protocol.DoFunc)
+	protocol.ProxyHttpServer.OnResponse().DoFunc(protocol.ResponseHandler)
+	return protocol
 }

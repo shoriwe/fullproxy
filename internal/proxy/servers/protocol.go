@@ -1,6 +1,7 @@
 package servers
 
 import (
+	"io"
 	"net"
 	"net/http"
 )
@@ -20,6 +21,7 @@ type (
 		SetDial(dialFunc DialFunc)
 		SetListen(listenFunc ListenFunc)
 		SetListenAddress(address net.Addr)
+		SetSniffers(incoming, outgoing io.Writer)
 	}
 
 	HTTPHandler interface {

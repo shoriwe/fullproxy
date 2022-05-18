@@ -4,6 +4,7 @@ import (
 	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"golang.org/x/net/proxy"
+	"io"
 	"net"
 	"net/url"
 )
@@ -17,10 +18,16 @@ func (c *customDialer) Dial(networkType string, address string) (net.Conn, error
 }
 
 type ForwardToSocks5 struct {
-	TargetNetwork string
-	TargetAddress string
-	socks5Dialer  *customDialer
-	Socks5Dialer  proxy.Dialer
+	TargetNetwork                    string
+	TargetAddress                    string
+	socks5Dialer                     *customDialer
+	Socks5Dialer                     proxy.Dialer
+	IncomingSniffer, OutgoingSniffer io.Writer
+}
+
+func (forwardToSocks5 *ForwardToSocks5) SetSniffers(incoming, outgoing io.Writer) {
+	forwardToSocks5.IncomingSniffer = incoming
+	forwardToSocks5.OutgoingSniffer = outgoing
 }
 
 func (forwardToSocks5 *ForwardToSocks5) SetListen(_ servers.ListenFunc) {
@@ -73,5 +80,7 @@ func (forwardToSocks5 *ForwardToSocks5) Handle(clientConnection net.Conn) error 
 		return connectionError
 	}
 	defer targetConnection.Close()
-	return common.ForwardTraffic(clientConnection, targetConnection)
+	return common.ForwardTraffic(
+		clientConnection, targetConnection,
+		forwardToSocks5.IncomingSniffer, forwardToSocks5.OutgoingSniffer)
 }
