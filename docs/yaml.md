@@ -18,7 +18,7 @@ listeners:
       network: tcp | unix
       address: HOST:PORT | /PATH/TO/UNIX/SOCK
       tls: # Ignore to generate a self signed cert
-        - /PATH/TO/TLS/KEY:/PATH/TO/TLS/PEM
+        - /PATH/TO/TLS/PEM:/PATH/TO/TLS/KEY
         - ...
       # Available for all types of protocol
       filters:
@@ -33,7 +33,7 @@ listeners:
 
       # Mandatory by master
       master-tls: # Ignore to generate a self signed cert.
-        - /PATH/TO/TLS/KEY:/PATH/TO/TLS/PEM
+        - /PATH/TO/TLS/PEM:/PATH/TO/TLS/KEY
 
       # Mandatory by slave
       slave-trust: true | false
