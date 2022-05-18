@@ -2,14 +2,14 @@ package common
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
 )
 
 const (
-	SniffSeparator    = "\n\n----------\n\n"
-	DefaultBufferSize = 1024 * 32
+	SniffSeparator = "\n\n------------------\n\n"
 )
 
 func closer(conn1, conn2 io.Closer) {
@@ -42,11 +42,9 @@ func (r *ReaderSniffer) Read(p []byte) (n int, err error) {
 		return r.Reader.Read(p)
 	}
 	length, readReadError := r.Reader.Read(p)
-	if readReadError != nil {
-		return length, readReadError
-	}
-	_, writeError := r.Writer.Write(p[:length])
-	return length, writeError
+	_, _ = r.Writer.Write(p[:length])
+	_, _ = fmt.Fprintf(r.Writer, SniffSeparator)
+	return length, readReadError
 }
 
 type RequestSniffer struct {
@@ -71,6 +69,7 @@ func (r *RequestSniffer) Read(p []byte) (n int, err error) {
 	}
 	length, readError := r.Request.Body.Read(p)
 	_, _ = r.Writer.Write(p[:length])
+	_, _ = fmt.Fprintf(r.Writer, SniffSeparator)
 	return length, readError
 }
 
@@ -110,5 +109,6 @@ func (r *ResponseSniffer) Read(p []byte) (n int, err error) {
 	}
 	length, readError := r.Response.Body.Read(p)
 	_, _ = r.Writer.Write(p[:length])
+	_, _ = fmt.Fprintf(r.Writer, SniffSeparator)
 	return length, readError
 }
