@@ -6,13 +6,13 @@ init-order:
   - ...
 drivers: # This field is optional.
   DRIVER_NAME: /PATH/TO/PLASMA/SCRIPT
-listeners:
-  LISTENER_NAME:
+services:
+  SERVICE_NAME:
     log: /PATH/TO/FILE/TO/DATA
     sniff:
       incoming: /PATH/TO/FILE/WITH/INCOMING/TRAFFIC
       outgoing: /PATH/TO/FILE/WITH/OUTGOING/TRAFFIC
-    config:
+    listener:
       # Mandatory by all types of listeners
       type: basic | master | slave
       network: tcp | unix
@@ -40,10 +40,15 @@ listeners:
 
     protocol: # Used only when type is basic | master
       # Mandatory
-      type: socks5|http|reverse-raw|reverse-http|forward|translate|http-hosts
+      type: socks5|http|reverse-raw|reverse-http|forward|translate
 
       # Only for socks5 and http
       authentication: DRIVE_NAME # Ignore to no auth
+
+      # Mandatory by forward
+      dial-tls:
+        trust: true|false
+        certificate: /PATH/TO/TLS/PEM:/PATH/TO/TLS/KEY
 
       # Mandatory by forward and translate
       target-network: tcp | unix
@@ -58,6 +63,11 @@ listeners:
       # Mandatory for reverse-raw
       raw-hosts:
         NAME:
+          tls: # Do not set to use raw sockets
+            trust: true | false
+            certificates:
+              - /PATH/TO/TLS/PEM:/PATH/TO/TLS/KEY
+              - ...
           network: tcp | unix
           address: HOST:PORT | /PATH/TO/UNIX/SOCK
 
@@ -71,7 +81,15 @@ listeners:
             - KEY:VALUE
           pool: # Load balancing pool
             NAME:
-              url: URL
+              websocket-read-buffer-size: NUMERIC # Ignore both buffer size settings to not forward websocket traffic
+              websocket-write-buffer-size: NUMERIC # Ignore both buffer size settings to not forward websocket traffic
+              tls: # Do not set to use raw sockets
+                trust: true | false
+                certificates:
+                  - /PATH/TO/TLS/PEM:/PATH/TO/TLS/KEY
+                  - ...
+              scheme: http | https | ws | wss # This is used only for websocket connections 
+              uri: URI
               network: tcp | unix
               address: HOST:PORT | /PATH/TO/UNIX/SOCK
 ```

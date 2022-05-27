@@ -1,54 +1,77 @@
 package main
 
-import reverse2 "github.com/shoriwe/fullproxy/v3/internal/proxy/servers/reverse"
+type (
+	YAML struct {
+		InitOrder []string           `yaml:"init-order"`
+		Drivers   map[string]string  `yaml:"drivers"`
+		Services  map[string]Service `yaml:"services"`
+	}
 
-type ListenerConfig struct {
-	Type    string   `yaml:"type"`
-	Network string   `yaml:"network"`
-	Address string   `yaml:"address"`
-	TLS     []string `yaml:"tls"`
+	Service struct {
+		Log   string `yaml:"log"`
+		Sniff struct {
+			Incoming string `yaml:"incoming"`
+			Outgoing string `yaml:"outgoing"`
+		} `yaml:"sniff"`
+		Listener Listener `yaml:"listener"`
+		Protocol Protocol `yaml:"protocol"`
+	}
+
+	Listener struct {
+		Type          string   `yaml:"type"`
+		Network       string   `yaml:"network"`
+		Address       string   `yaml:"address"`
+		TLS           []string `yaml:"tls"`
+		Filters       Filters  `yaml:"filters"`
+		MasterNetwork string   `yaml:"master-network"`
+		MasterAddress string   `yaml:"master-address"`
+		MasterTLS     []string `yaml:"master-tls"`
+		SlaveTrust    bool     `yaml:"slave-trust"`
+	}
+
 	Filters struct {
 		Inbound  string `yaml:"inbound"`
 		Outbound string `yaml:"outbound"`
 		Listen   string `yaml:"listen"`
 		Accept   string `yaml:"accept"`
-	} `yaml:"filters"`
-	MasterNetwork string   `yaml:"master-network"`
-	MasterAddress string   `yaml:"master-address"`
-	MasterTLS     []string `yaml:"master-tls"`
-	SlaveTrust    bool     `yaml:"slave-trust"`
-}
+	}
 
-type ProtocolConfig struct {
-	Type           string                    `yaml:"type"`
-	Authentication string                    `yaml:"authentication"`
-	TargetNetwork  string                    `yaml:"target-network"`
-	TargetAddress  string                    `yaml:"target-address"`
-	ProxyNetwork   string                    `yaml:"proxy-network"`
-	ProxyAddress   string                    `yaml:"proxy-address"`
-	Translation    string                    `yaml:"translation"`
-	Credentials    string                    `yaml:"credentials"`
-	RawHosts       map[string]*reverse2.Host `yaml:"raw-hosts"`
-	HTTPHosts      map[string]struct {
-		Path            string                    `yaml:"path"`
-		ResponseHeaders map[string]string         `yaml:"response-headers"`
-		RequestHeaders  map[string]string         `yaml:"request-headers"`
-		Pool            map[string]*reverse2.Host `yaml:"pool"`
-	} `yaml:"http-hosts"`
-}
+	Protocol struct {
+		Type           string           `yaml:"type"`
+		Authentication string           `yaml:"authentication"`
+		DialTLS        *DialTLS         `yaml:"dial-tls"`
+		TargetNetwork  string           `yaml:"target-network"`
+		TargetAddress  string           `yaml:"target-address"`
+		ProxyNetwork   string           `yaml:"proxy-network"`
+		ProxyAddress   string           `yaml:"proxy-address"`
+		Translation    string           `yaml:"translation"`
+		Credentials    string           `yaml:"credentials"`
+		RawHosts       map[string]*Host `yaml:"raw-hosts"`
+		HTTPHosts      map[string]struct {
+			URI             string            `yaml:"uri"`
+			ResponseHeaders map[string]string `yaml:"response-headers"`
+			RequestHeaders  map[string]string `yaml:"request-headers"`
+			Pool            map[string]*Host  `yaml:"pool"`
+		} `yaml:"http-hosts"`
+	}
 
-type Listener struct {
-	Log   string `yaml:"log"`
-	Sniff struct {
-		Incoming string `yaml:"incoming"`
-		Outgoing string `yaml:"outgoing"`
-	} `yaml:"sniff"`
-	Config   ListenerConfig `yaml:"config"`
-	Protocol ProtocolConfig `yaml:"protocol"`
-}
+	DialTLS struct {
+		Trust       bool   `yaml:"trust"`
+		Certificate string `yaml:"certificate"`
+	}
 
-type ConfigFile struct {
-	InitOrder []string            `yaml:"init-order"`
-	Drivers   map[string]string   `yaml:"drivers"`
-	Listeners map[string]Listener `yaml:"listeners"`
-}
+	Host struct {
+		WebsocketReadBufferSize  int            `yaml:"websocket-read-buffer-size"`
+		WebsocketWriteBufferSize int            `yaml:"websocket-write-buffer-size"`
+		Scheme                   string         `yaml:"scheme"`
+		URI                      string         `yaml:"uri"`
+		Network                  string         `yaml:"network"`
+		Address                  string         `yaml:"address"`
+		TLSConfig                *HostTLSConfig `yaml:"tls-config"`
+	}
+
+	HostTLSConfig struct {
+		Trust        bool     `yaml:"trust"`
+		Certificates []string `yaml:"certificates"`
+	}
+)

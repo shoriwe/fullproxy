@@ -17,7 +17,6 @@ Available commands:
 - forward:		Starts a port forward proxy server.
 - translate:	Translate a proxy protocol to another to proxy protocol.
 - reverse:		Starts a raw reverse proxy.
-- hosts:		Starts a HTTP Host header based proxy.
 - config:		Start serving the server configured in the targeted yaml file.`
 )
 
@@ -45,8 +44,6 @@ func main() {
 		translate()
 	case "reverse":
 		reverse()
-	case "hosts":
-		hosts()
 	case "config":
 		config()
 	default:

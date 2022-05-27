@@ -12,7 +12,11 @@ var (
 	//go:embed docs/yaml.md
 	yamlMarkdown string
 	//go:embed docs/scripting.md
-	scriptingMarkdown string
+	scriptingMarkdown        string
+	KeyPemError              = errors.New("expected pem:key in tls list")
+	UnknownListenerTypeError = "unknown listener type %s"
+	UnknownDriverError       = "unknown driver %s"
+	UnknownProtocolError     = "unknown protocol %s"
 )
 
 type hostsSlice struct {

@@ -24,7 +24,6 @@ Available commands:
 - forward:		Starts a port forward proxy server.
 - translate:	Translate a proxy protocol to another to proxy protocol.
 - reverse:		Starts a raw reverse proxy.
-- hosts:		Starts a HTTP Host header based proxy.
 - config:		Start serving the server configured in the targeted yaml file.
 ```
 
@@ -150,28 +149,6 @@ Arguments:
 
 -h, --help: 	Show this help message.
 --pool:			List of targets used by the load balancer.
---listen="":	Address to listen.
---master="":	Listen address for master/slave communication.
-```
-
-## HTTP Hosts
-
-The `hosts` command permits the users to start quickly an HTTP hosts proxy server.
-
-Command help looks like:
-
-```shell
-fullproxy hosts --help
-```
-
-Expected output:
-
-```
-Usage: fullproxy hosts [ARGUMENTS]
-
-Arguments:
-
--h, --help: 	Show this help message.
 --listen="":	Address to listen.
 --master="":	Listen address for master/slave communication.
 ```

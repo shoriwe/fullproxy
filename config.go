@@ -3,12 +3,10 @@ package main
 import (
 	"crypto/tls"
 	_ "embed"
-	"errors"
 	"fmt"
 	"github.com/shoriwe/fullproxy/v3/internal/listeners"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	http2 "github.com/shoriwe/fullproxy/v3/internal/proxy/servers/http"
-	http_hosts "github.com/shoriwe/fullproxy/v3/internal/proxy/servers/http-hosts"
 	port_forward "github.com/shoriwe/fullproxy/v3/internal/proxy/servers/port-forward"
 	reverse2 "github.com/shoriwe/fullproxy/v3/internal/proxy/servers/reverse"
 	socks52 "github.com/shoriwe/fullproxy/v3/internal/proxy/servers/socks5"
@@ -26,105 +24,167 @@ type runner struct {
 	drivers map[string]*Driver
 }
 
-func (r *runner) serveListener(
-	listenerName string,
-	c Listener,
-	errorChan chan error,
-) {
-	logger := &log.Logger{}
-	logger.SetOutput(os.Stderr)
-	if c.Config.Type == "slave" {
-		slaveListener, newSlaveError := listeners.NewSlave(
-			c.Config.MasterNetwork,
-			c.Config.MasterAddress,
-			&tls.Config{
-				InsecureSkipVerify: c.Config.SlaveTrust,
-			},
-		)
-		if newSlaveError != nil {
-			errorChan <- newSlaveError
-			return
-		}
-		log.Println(listenerName, "Started")
-		errorChan <- slaveListener.Serve()
-		return
-	}
-
-	// Prepare listener
+func (r *runner) listenerConfig(listener Listener) (l listeners.Listener, err error) {
 	var (
-		l                listeners.Listener
-		listenError      error
-		protocol         servers.Protocol
-		newProtocolError error
-		tlsConfig        *tls.Config = nil
-		masterTLSConfig  *tls.Config = nil
+		tlsConfig, masterTLSConfig *tls.Config
 	)
-	if c.Config.TLS != nil {
+	if listener.TLS != nil {
 		tlsConfig = &tls.Config{}
-		for _, keyPem := range c.Config.TLS {
+		for _, keyPem := range listener.TLS {
 			split := strings.Split(keyPem, ":")
 			if len(split) != 2 {
-				errorChan <- errors.New("expected key:pem in tls list")
-				return
+				return nil, KeyPemError
 			}
 			cert, certError := tls.LoadX509KeyPair(split[0], split[1])
 			if certError != nil {
-				errorChan <- certError
-				return
+				return nil, certError
 			}
 			tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 		}
 	}
-	if c.Config.MasterTLS != nil {
-		masterTLSConfig = &tls.Config{}
-		for _, keyPem := range c.Config.MasterTLS {
-			split := strings.Split(keyPem, ":")
-			if len(split) != 2 {
-				errorChan <- errors.New("expected key:pem in tls list")
-				return
-			}
-			cert, certError := tls.LoadX509KeyPair(split[0], split[1])
-			if certError != nil {
-				errorChan <- certError
-				return
-			}
-			masterTLSConfig.Certificates = append(masterTLSConfig.Certificates, cert)
-		}
-	}
-	switch c.Config.Type {
+	switch listener.Type {
 	case "basic":
-		l, listenError = listeners.NewBindListener(c.Config.Network, c.Config.Address, tlsConfig)
+		return listeners.NewBindListener(listener.Network, listener.Address, tlsConfig)
 	case "master":
-		l, listenError = listeners.NewMaster(
-			c.Config.Network,
-			c.Config.Address,
+		if listener.MasterTLS != nil {
+			masterTLSConfig = &tls.Config{}
+			for _, keyPem := range listener.MasterTLS {
+				split := strings.Split(keyPem, ":")
+				if len(split) != 2 {
+					return nil, KeyPemError
+				}
+				cert, certError := tls.LoadX509KeyPair(split[0], split[1])
+				if certError != nil {
+					return nil, certError
+				}
+				masterTLSConfig.Certificates = append(masterTLSConfig.Certificates, cert)
+			}
+		}
+		return listeners.NewMaster(
+			listener.Network,
+			listener.Address,
 			tlsConfig,
-			c.Config.MasterNetwork,
-			c.Config.MasterAddress,
+			listener.MasterNetwork,
+			listener.MasterAddress,
 			masterTLSConfig,
 		)
+	case "slave":
+		return listeners.NewSlave(
+			listener.MasterNetwork,
+			listener.MasterAddress,
+			&tls.Config{
+				InsecureSkipVerify: listener.SlaveTrust,
+			},
+		)
 	default:
-		errorChan <- fmt.Errorf("unknown listener type of name %s", c.Config.Type)
-		return
+		return nil, fmt.Errorf(UnknownListenerTypeError, listener.Type)
 	}
-	if listenError != nil {
-		errorChan <- listenError
-		return
+}
+
+func (r *runner) socks5Config(p Protocol) (servers.Protocol, error) {
+	var auth servers.AuthenticationMethod
+	if p.Authentication != "" {
+		driver, found := r.drivers[p.Authentication]
+		if !found {
+			return nil, fmt.Errorf(UnknownDriverError, p.Authentication)
+		}
+		auth = driver.Auth
 	}
-	var (
-		httpReverseHosts = map[string]*reverse2.Target{}
-		rawReverseHosts  []*reverse2.Host
+	return socks52.NewSocks5(auth), nil
+}
+
+func (r *runner) httpConfig(p Protocol) (servers.Protocol, error) {
+	var auth servers.AuthenticationMethod
+	if p.Authentication != "" {
+		driver, found := r.drivers[p.Authentication]
+		if !found {
+			return nil, fmt.Errorf(UnknownDriverError, p.Authentication)
+		}
+		auth = driver.Auth
+	}
+	return http2.NewHTTP(auth), nil
+}
+
+func (r *runner) forwardConfig(p Protocol) (servers.Protocol, error) {
+	var dialTlsConfig *tls.Config
+	if p.DialTLS != nil {
+		var certificates []tls.Certificate
+		split := strings.Split(p.DialTLS.Certificate, ":")
+		if len(split) != 2 {
+			return nil, KeyPemError
+		}
+		cert, loadError := tls.LoadX509KeyPair(split[0], split[1])
+		if loadError != nil {
+			return nil, loadError
+		}
+		certificates = append(certificates, cert)
+		dialTlsConfig = &tls.Config{
+			InsecureSkipVerify: p.DialTLS.Trust,
+			Certificates:       certificates,
+		}
+	}
+	return port_forward.NewForward(
+		p.TargetNetwork,
+		p.TargetAddress,
+		dialTlsConfig,
+	), nil
+}
+
+func (r *runner) translateConfig(p Protocol) (servers.Protocol, error) {
+	var userInfo *url.Userinfo = nil
+	split := strings.Split(p.Credentials, ":")
+	if len(split) == 2 {
+		userInfo = url.UserPassword(split[0], split[1])
+	}
+	return pf_to_socks5.NewForwardToSocks5(
+		p.ProxyNetwork,
+		p.ProxyAddress,
+		userInfo,
+		p.TargetNetwork,
+		p.TargetAddress,
 	)
-	for _, h := range c.Protocol.RawHosts {
-		rawReverseHosts = append(rawReverseHosts, h)
+}
+
+func (r *runner) parseHost(h *Host) (*reverse2.Host, error) {
+	hh := &reverse2.Host{
+		WebsocketReadBufferSize:  h.WebsocketReadBufferSize,
+		WebsocketWriteBufferSize: h.WebsocketWriteBufferSize,
+		Scheme:                   h.Scheme,
+		URI:                      h.URI,
+		Network:                  h.Network,
+		Address:                  h.Address,
+		TLSConfig:                nil,
 	}
-	for hostname, t := range c.Protocol.HTTPHosts {
+	if h.TLSConfig != nil {
+		var certificates []tls.Certificate
+		for _, pair := range h.TLSConfig.Certificates {
+			split := strings.Split(pair, ":")
+			if len(split) != 2 {
+				return nil, KeyPemError
+			}
+			cert, loadError := tls.LoadX509KeyPair(split[0], split[1])
+			if loadError != nil {
+				return nil, loadError
+			}
+			certificates = append(certificates, cert)
+		}
+		hh.TLSConfig = &tls.Config{
+			InsecureSkipVerify: h.TLSConfig.Trust,
+			Certificates:       certificates,
+		}
+	}
+	return hh, nil
+}
+
+func (r *runner) loadReverseHTTPHosts(p Protocol) (map[string]*reverse2.Target, error) {
+	httpReverseHosts := map[string]*reverse2.Target{}
+	for hostname, t := range p.HTTPHosts {
 		tt := &reverse2.Target{
 			RequestHeader:  http3.Header{},
 			ResponseHeader: http3.Header{},
-			Path:           t.Path,
-			CurrentTarget:  0,
-			Targets:        nil,
+			URI:            t.URI,
+			CurrentHost:    0,
+			Hosts:          nil,
 		}
 		for key, value := range t.RequestHeaders {
 			tt.RequestHeader[key] = []string{value}
@@ -132,81 +192,120 @@ func (r *runner) serveListener(
 		for key, value := range t.ResponseHeaders {
 			tt.ResponseHeader[key] = []string{value}
 		}
-		for _, h := range t.Pool {
-			tt.Targets = append(tt.Targets, h)
+		for _, rawHost := range t.Pool {
+			parsedHost, parseError := r.parseHost(rawHost)
+			if parseError != nil {
+				return nil, parseError
+			}
+			tt.Hosts = append(tt.Hosts, parsedHost)
 		}
 		httpReverseHosts[hostname] = tt
 	}
-	// Prepare protocol
-	switch c.Protocol.Type {
-	case "socks5":
-		var auth servers.AuthenticationMethod
-		if c.Protocol.Authentication != "" {
-			driver, found := r.drivers[c.Protocol.Authentication]
-			if !found {
-				errorChan <- fmt.Errorf("unknown driver %s", c.Protocol.Authentication)
-			}
-			auth = driver.Auth
+	return httpReverseHosts, nil
+}
+
+func (r *runner) loadReverseRawHosts(p Protocol) (rawReverseHosts []*reverse2.Host, err error) {
+	for _, rawHost := range p.RawHosts {
+		parsedHost, parseError := r.parseHost(rawHost)
+		if parseError != nil {
+			return nil, parseError
 		}
-		protocol = socks52.NewSocks5(auth)
-	case "http":
-		var auth servers.AuthenticationMethod
-		if c.Protocol.Authentication != "" {
-			driver, found := r.drivers[c.Protocol.Authentication]
-			if !found {
-				errorChan <- fmt.Errorf("unknown driver %s", c.Protocol.Authentication)
-			}
-			auth = driver.Auth
-		}
-		protocol = http2.NewHTTP(auth)
-	case "forward":
-		protocol = port_forward.NewForward(
-			c.Protocol.TargetNetwork,
-			c.Protocol.TargetAddress,
-		)
-	case "translate":
-		var userInfo *url.Userinfo = nil
-		split := strings.Split(c.Protocol.Credentials, ":")
-		if len(split) == 2 {
-			userInfo = url.UserPassword(split[0], split[1])
-		}
-		protocol, newProtocolError = pf_to_socks5.NewForwardToSocks5(
-			c.Protocol.ProxyNetwork,
-			c.Protocol.ProxyAddress,
-			userInfo,
-			c.Protocol.TargetNetwork,
-			c.Protocol.TargetAddress,
-		)
-	case "http-hosts":
-		protocol = http_hosts.NewHosts()
-	case "reverse-http":
-		protocol = reverse2.NewHTTP(httpReverseHosts)
-	case "reverse-raw":
-		protocol = reverse2.NewRaw(rawReverseHosts)
+		rawReverseHosts = append(rawReverseHosts, parsedHost)
 	}
-	if newProtocolError != nil {
-		errorChan <- newProtocolError
-		return
+	return rawReverseHosts, nil
+}
+
+func (r *runner) loadSniffers(incoming, outgoing string) (i io.WriteCloser, o io.WriteCloser, err error) {
+	if incoming != "" {
+		i, err = os.Create(incoming)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
+	if outgoing != "" {
+		o, err = os.Create(outgoing)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	return i, o, nil
+}
+
+func (r *runner) loadFilters(filters Filters) listeners.Filters {
 	listenerFilter := &filter{}
-	if f, found := r.drivers[c.Config.Filters.Inbound]; found {
+	if f, found := r.drivers[filters.Inbound]; found {
 		listenerFilter.inbound = f.inbound
 	}
-	if f, found := r.drivers[c.Config.Filters.Outbound]; found {
+	if f, found := r.drivers[filters.Outbound]; found {
 		listenerFilter.outbound = f.outbound
 	}
-	if f, found := r.drivers[c.Config.Filters.Listen]; found {
+	if f, found := r.drivers[filters.Listen]; found {
 		listenerFilter.listen = f.listen
 	}
-	if f, found := r.drivers[c.Config.Filters.Accept]; found {
+	if f, found := r.drivers[filters.Accept]; found {
 		listenerFilter.accept = f.accept
 	}
-	l.SetFilters(listenerFilter)
+	return listenerFilter
+}
+
+func (r *runner) serveListener(
+	listenerName string,
+	service Service,
+	errorChan chan error,
+) {
+	logger := &log.Logger{}
+	logger.SetOutput(os.Stderr)
+
+	// Prepare listener
+	listener, listenerConfigError := r.listenerConfig(service.Listener)
+	if listenerConfigError != nil {
+		errorChan <- listenerConfigError
+		return
+	}
+	if slaveListener, ok := listener.(*listeners.Slave); ok {
+		errorChan <- slaveListener.Serve()
+		return
+	}
+
 	var (
-		logFunc listeners.LogFunc = nil
+		protocol            servers.Protocol
+		protocolConfigError error
 	)
-	if c.Log != "" {
-		f, createError := os.Create(c.Log)
+	// Prepare protocol
+	switch service.Protocol.Type {
+	case "socks5":
+		protocol, protocolConfigError = r.socks5Config(service.Protocol)
+	case "http":
+		protocol, protocolConfigError = r.httpConfig(service.Protocol)
+	case "forward":
+		protocol, protocolConfigError = r.forwardConfig(service.Protocol)
+	case "translate":
+		protocol, protocolConfigError = r.translateConfig(service.Protocol)
+	case "reverse-http":
+		reverseHTTPHosts, reverseHTTPHostsError := r.loadReverseHTTPHosts(service.Protocol)
+		if reverseHTTPHostsError != nil {
+			errorChan <- reverseHTTPHostsError
+			return
+		}
+		protocol = reverse2.NewHTTP(reverseHTTPHosts)
+	case "reverse-raw":
+		reverseRawHosts, reverseRawHostsError := r.loadReverseRawHosts(service.Protocol)
+		if reverseRawHostsError != nil {
+			errorChan <- reverseRawHostsError
+			return
+		}
+		protocol = reverse2.NewRaw(reverseRawHosts)
+	default:
+		protocolConfigError = fmt.Errorf(UnknownProtocolError, service.Protocol.Type)
+	}
+	if protocolConfigError != nil {
+		errorChan <- protocolConfigError
+		return
+	}
+	listener.SetFilters(r.loadFilters(service.Listener.Filters))
+	var logFunc listeners.LogFunc = nil
+	if service.Log != "" {
+		f, createError := os.Create(service.Log)
 		if createError != nil {
 			errorChan <- createError
 			return
@@ -217,37 +316,23 @@ func (r *runner) serveListener(
 			logger.Print(args...)
 		}
 	}
-	var (
-		incoming, outgoing io.WriteCloser
-		createError        error
-	)
-	if c.Sniff.Incoming != "" {
-		incoming, createError = os.Create(c.Sniff.Incoming)
-		if createError != nil {
-			errorChan <- createError
-			return
-		}
-		defer incoming.Close()
-	}
-	if c.Sniff.Outgoing != "" {
-		outgoing, createError = os.Create(c.Sniff.Outgoing)
-		if createError != nil {
-			errorChan <- createError
-			return
-		}
-		defer outgoing.Close()
+	incoming, outgoing, snifferConfigError := r.loadSniffers(service.Sniff.Incoming, service.Sniff.Outgoing)
+	if snifferConfigError != nil {
+		errorChan <- snifferConfigError
+		return
 	}
 	protocol.SetSniffers(incoming, outgoing)
+
 	log.Println(listenerName, "Started")
 	switch protocol.(type) {
 	case servers.HTTPHandler:
-		errorChan <- listeners.ServeHTTPHandler(l, protocol.(servers.HTTPHandler), logFunc)
+		errorChan <- listeners.ServeHTTPHandler(listener, protocol.(servers.HTTPHandler), logFunc)
 	default:
-		errorChan <- listeners.Serve(l, protocol, logFunc)
+		errorChan <- listeners.Serve(listener, protocol, logFunc)
 	}
 }
 
-func (r *runner) startConfig(c ConfigFile) {
+func (r *runner) startConfig(c YAML) {
 	var (
 		err error
 	)
@@ -264,7 +349,7 @@ func (r *runner) startConfig(c ConfigFile) {
 	serveError := make(chan error, 1)
 	if c.InitOrder != nil {
 		for _, listenerName := range c.InitOrder {
-			listener, found := c.Listeners[listenerName]
+			listener, found := c.Services[listenerName]
 			if !found {
 				printAndExit(fmt.Sprintf("listener with name %s never set", listenerName), 1)
 			}
@@ -272,7 +357,7 @@ func (r *runner) startConfig(c ConfigFile) {
 			go r.serveListener(listenerName, listener, serveError)
 		}
 	} else {
-		for listenerName, listener := range c.Listeners {
+		for listenerName, listener := range c.Services {
 			log.Println("-", listenerName)
 			go r.serveListener(listenerName, listener, serveError)
 		}
@@ -290,7 +375,7 @@ func config() {
 	if readError != nil {
 		printAndExit(readError.Error(), 1)
 	}
-	var c ConfigFile
+	var c YAML
 	unmarshalError := yaml.Unmarshal(configContents, &c)
 	if unmarshalError != nil {
 		printAndExit(unmarshalError.Error(), 1)

@@ -14,6 +14,26 @@ type Slave struct {
 	Config       *tls.Config
 }
 
+func (slave *Slave) Init() error {
+	panic("this should not be called")
+}
+
+func (slave *Slave) Filter() Filters {
+	panic("this should not be called")
+}
+
+func (slave *Slave) SetFilters(filters Filters) {
+	panic("this should not be called")
+}
+
+func (slave *Slave) Dial(networkType, address string) (net.Conn, error) {
+	panic("this should not be called")
+}
+
+func (slave *Slave) Listen(networkType, address string) (net.Listener, error) {
+	panic("this should not be called")
+}
+
 func (slave *Slave) Accept() (net.Conn, error) {
 	var (
 		clientConnection net.Conn
