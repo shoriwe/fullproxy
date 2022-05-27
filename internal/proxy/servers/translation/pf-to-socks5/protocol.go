@@ -81,6 +81,11 @@ func (forwardToSocks5 *ForwardToSocks5) Handle(clientConnection net.Conn) error 
 	}
 	defer targetConnection.Close()
 	return common.ForwardTraffic(
-		clientConnection, targetConnection,
-		forwardToSocks5.IncomingSniffer, forwardToSocks5.OutgoingSniffer)
+		clientConnection,
+		&common.Sniffer{
+			WriteSniffer: forwardToSocks5.OutgoingSniffer,
+			ReadSniffer:  forwardToSocks5.IncomingSniffer,
+			Connection:   targetConnection,
+		},
+	)
 }

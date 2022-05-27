@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"github.com/shoriwe/fullproxy/v3/internal/listeners"
 	socks52 "github.com/shoriwe/fullproxy/v3/internal/proxy/clients/socks5"
 	proxy2 "github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
@@ -26,6 +27,8 @@ var (
 )
 
 const (
+	ClientMessage    = "hello from client"
+	ServerMessage    = "hello from server"
 	testUrl          = "http://127.0.0.1:8080/big"
 	testUrlIPv6      = "http://[::1]:8080/big"
 	networkType      = "tcp"
@@ -235,6 +238,18 @@ func NewMasterSlave(protocol proxy2.Protocol, filters listeners.Filters) (net.Li
 	return masterPipe.(*listeners.Master).ProxyListener, masterPipe.(*listeners.Master).C2Listener
 }
 
+var (
+	upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+)
+
+type wsMessage struct {
+	Succeed bool
+	MSG     string
+}
+
 func StartIPv4HTTPServer(t *testing.T) net.Listener {
 	httpListener, listenError := net.Listen(networkType, httpAddress)
 	if listenError != nil {
@@ -244,6 +259,30 @@ func StartIPv4HTTPServer(t *testing.T) net.Listener {
 	server.HandleFunc("/big",
 		func(writer http.ResponseWriter, request *http.Request) {
 			_, _ = writer.Write(bytes.Repeat([]byte{'A'}, DefaultChunkSize))
+		},
+	)
+	server.HandleFunc("/ws",
+		func(writer http.ResponseWriter, request *http.Request) {
+			if !websocket.IsWebSocketUpgrade(request) {
+				return
+			}
+			connection, upgradeError := upgrader.Upgrade(writer, request, nil)
+			if upgradeError != nil {
+				t.Fatal(upgradeError)
+			}
+			var msg wsMessage
+			readError := connection.ReadJSON(&msg)
+			if readError != nil {
+				t.Fatal(readError)
+			}
+			if msg.MSG != ClientMessage {
+				t.Fatal(msg.MSG)
+			}
+			msg.MSG = ServerMessage
+			writeError := connection.WriteJSON(msg)
+			if writeError != nil {
+				t.Fatal(writeError)
+			}
 		},
 	)
 	go http.Serve(httpListener, server)
@@ -268,8 +307,11 @@ func StartIPv6HTTPServer(t *testing.T) net.Listener {
 }
 
 func GetRequestRaw(url string) uint {
-	_, e := http.Get(url)
+	response, e := http.Get(url)
 	if e != nil {
+		return FailedRequest
+	}
+	if response.StatusCode != http.StatusOK {
 		return FailedRequest
 	}
 	return Success

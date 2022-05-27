@@ -2,9 +2,11 @@ package test
 
 import (
 	"bytes"
+	"github.com/gorilla/websocket"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers/reverse"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 )
 
@@ -14,14 +16,13 @@ func TestRawReverseProxy(t *testing.T) {
 	defer httpServer.Close()
 	reverseProxy := NewBindPipe(reverse.NewRaw([]*reverse.Host{
 		{
-			Url:     "http://127.0.0.1:8080",
 			Network: "tcp",
 			Address: "127.0.0.1:8080",
 		},
 	}), nil)
 	defer reverseProxy.Close()
 
-	result := GetRequestRaw("http://127.0.0.1:9050")
+	result := GetRequestRaw("http://127.0.0.1:9050/big")
 	if result != Success {
 		t.Fatal("Failed request")
 	}
@@ -33,7 +34,6 @@ func TestMultipleRequestRawReverseProxy(t *testing.T) {
 	defer httpServer.Close()
 	reverseProxy := NewBindPipe(reverse.NewRaw([]*reverse.Host{
 		{
-			Url:     "http://127.0.0.1:8080",
 			Network: "tcp",
 			Address: "127.0.0.1:8080",
 		},
@@ -56,12 +56,10 @@ func TestMultipleRequestPoolRawReverseProxy(t *testing.T) {
 	reverseProxy := NewBindPipe(
 		reverse.NewRaw([]*reverse.Host{
 			{
-				Url:     "http://127.0.0.1:8080",
 				Network: "tcp",
 				Address: "127.0.0.1:8080",
 			},
 			{
-				Url:     "http://127.0.0.1:8081",
 				Network: "tcp",
 				Address: "127.0.0.1:8081",
 			},
@@ -83,12 +81,14 @@ func TestHTTPReverseProxy(t *testing.T) {
 		map[string]*reverse.Target{
 			"127.0.0.1:9050": {
 				RequestHeader: http.Header{},
-				Path:          "/",
-				Targets: []*reverse.Host{
+				URI:           "/",
+				Hosts: []*reverse.Host{
 					{
-						Url:     "http://127.0.0.1:8080",
-						Network: "tcp",
-						Address: "127.0.0.1:8080",
+						Scheme:    "http",
+						URI:       "/",
+						Network:   "tcp",
+						Address:   "127.0.0.1:8080",
+						TLSConfig: nil,
 					},
 				},
 			},
@@ -121,12 +121,14 @@ func TestMultipleRequestHTTPReverseProxy(t *testing.T) {
 			"127.0.0.1:9050": {
 				RequestHeader:  http.Header{},
 				ResponseHeader: http.Header{},
-				Path:           "/",
-				Targets: []*reverse.Host{
+				URI:            "/",
+				Hosts: []*reverse.Host{
 					{
-						Url:     "http://127.0.0.1:8080",
-						Network: "tcp",
-						Address: "127.0.0.1:8080",
+						Scheme:    "http",
+						URI:       "/",
+						Network:   "tcp",
+						Address:   "127.0.0.1:8080",
+						TLSConfig: nil,
 					},
 				},
 			},
@@ -163,18 +165,22 @@ func TestMultipleRequestPoolHTTPReverseProxy(t *testing.T) {
 				"127.0.0.1:9050": {
 					RequestHeader:  http.Header{},
 					ResponseHeader: http.Header{},
-					Path:           "/",
-					CurrentTarget:  0,
-					Targets: []*reverse.Host{
+					URI:            "/",
+					CurrentHost:    0,
+					Hosts: []*reverse.Host{
 						{
-							Url:     "http://127.0.0.1:8080",
-							Network: "tcp",
-							Address: "127.0.0.1:8080",
+							Scheme:    "http",
+							URI:       "/",
+							Network:   "tcp",
+							Address:   "127.0.0.1:8080",
+							TLSConfig: nil,
 						},
 						{
-							Url:     "http://127.0.0.1:8081",
-							Network: "tcp",
-							Address: "127.0.0.1:8081",
+							Scheme:    "http",
+							URI:       "/",
+							Network:   "tcp",
+							Address:   "127.0.0.1:8081",
+							TLSConfig: nil,
 						},
 					},
 				},
@@ -224,12 +230,14 @@ func TestHTTPReversePathBasedProxy(t *testing.T) {
 			"127.0.0.1:9050": {
 				RequestHeader:  http.Header{},
 				ResponseHeader: http.Header{},
-				Path:           "/app",
-				Targets: []*reverse.Host{
+				URI:            "/app",
+				Hosts: []*reverse.Host{
 					{
-						Url:     "http://127.0.0.1:8080",
-						Network: "tcp",
-						Address: "127.0.0.1:8080",
+						Scheme:    "http",
+						URI:       "/",
+						Network:   "tcp",
+						Address:   "127.0.0.1:8080",
+						TLSConfig: nil,
 					},
 				},
 			},
@@ -264,12 +272,14 @@ func TestHTTPReverseInjectHeadersProxy(t *testing.T) {
 				ResponseHeader: http.Header{
 					"Name": []string{"sulcud"},
 				},
-				Path: "/app",
-				Targets: []*reverse.Host{
+				URI: "/app",
+				Hosts: []*reverse.Host{
 					{
-						Url:     "http://127.0.0.1:8080",
-						Network: "tcp",
-						Address: "127.0.0.1:8080",
+						Scheme:    "http",
+						URI:       "/",
+						Network:   "tcp",
+						Address:   "127.0.0.1:8080",
+						TLSConfig: nil,
 					},
 				},
 			},
@@ -294,5 +304,56 @@ func TestHTTPReverseInjectHeadersProxy(t *testing.T) {
 
 	if response.Header.Get("Name") != "sulcud" {
 		t.Fatal("invalid Name header")
+	}
+}
+
+func TestHTTPReverseWebSocket(t *testing.T) {
+	defer http.DefaultClient.CloseIdleConnections()
+	httpServer := StartIPv4HTTPServer(t)
+	defer httpServer.Close()
+	h := reverse.NewHTTP(
+		map[string]*reverse.Target{
+			"127.0.0.1:9050": {
+				RequestHeader:  http.Header{},
+				ResponseHeader: http.Header{},
+				URI:            "/",
+				Hosts: []*reverse.Host{
+					{
+						WebsocketReadBufferSize:  1024,
+						WebsocketWriteBufferSize: 1024,
+						Scheme:                   "http",
+						URI:                      "/",
+						Network:                  "tcp",
+						Address:                  "127.0.0.1:8080",
+						TLSConfig:                nil,
+					},
+				},
+			},
+		},
+	)
+	h.SetSniffers(os.Stdout, os.Stdout)
+	reverseProxy := NewBindHandler(h, nil)
+	defer reverseProxy.Close()
+
+	connection, _, dialError := websocket.DefaultDialer.Dial("ws://127.0.0.1:9050/ws", nil)
+
+	if dialError != nil {
+		t.Fatal(dialError)
+	}
+	defer connection.Close()
+	msg := wsMessage{
+		Succeed: true,
+		MSG:     ClientMessage,
+	}
+	writeError := connection.WriteJSON(msg)
+	if writeError != nil {
+		t.Fatal(writeError)
+	}
+	readError := connection.ReadJSON(&msg)
+	if readError != nil {
+		t.Fatal(readError)
+	}
+	if msg.MSG != ServerMessage {
+		t.Fatal(msg.MSG)
 	}
 }

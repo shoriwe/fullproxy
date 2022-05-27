@@ -1,6 +1,7 @@
 package port_forward
 
 import (
+	"crypto/tls"
 	"github.com/shoriwe/fullproxy/v3/internal/common"
 	"github.com/shoriwe/fullproxy/v3/internal/proxy/servers"
 	"io"
@@ -13,6 +14,7 @@ type Forward struct {
 	DialFunc                         servers.DialFunc
 	ListenAddress                    *net.TCPAddr
 	IncomingSniffer, OutgoingSniffer io.Writer
+	DialTLSConfig                    *tls.Config
 }
 
 func (f *Forward) SetSniffers(incoming, outgoing io.Writer) {
@@ -40,12 +42,23 @@ func (f *Forward) Handle(clientConnection net.Conn) error {
 	if connectionError != nil {
 		return connectionError
 	}
-	return common.ForwardTraffic(clientConnection, targetConnection, f.IncomingSniffer, f.OutgoingSniffer)
+	if f.DialTLSConfig != nil {
+		targetConnection = tls.Client(targetConnection, f.DialTLSConfig)
+	}
+	return common.ForwardTraffic(
+		clientConnection,
+		&common.Sniffer{
+			WriteSniffer: f.OutgoingSniffer,
+			ReadSniffer:  f.IncomingSniffer,
+			Connection:   targetConnection,
+		},
+	)
 }
 
-func NewForward(targetNetwork, targetAddress string) servers.Protocol {
+func NewForward(targetNetwork, targetAddress string, dialTLSConfig *tls.Config) servers.Protocol {
 	return &Forward{
 		TargetNetwork: targetNetwork,
 		TargetAddress: targetAddress,
+		DialTLSConfig: dialTLSConfig,
 	}
 }

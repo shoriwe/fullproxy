@@ -43,5 +43,12 @@ func (socks5 *Socks5) Connect(context *Context) error {
 	})
 
 	// Forward traffic
-	return common.ForwardTraffic(context.ClientConnection, targetConnection, socks5.IncomingSniffer, socks5.OutgoingSniffer)
+	return common.ForwardTraffic(
+		context.ClientConnection,
+		&common.Sniffer{
+			WriteSniffer: socks5.OutgoingSniffer,
+			ReadSniffer:  socks5.IncomingSniffer,
+			Connection:   targetConnection,
+		},
+	)
 }
