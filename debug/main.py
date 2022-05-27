@@ -15,7 +15,8 @@ def test_http_with_http_no_auth():
         proxies={
             "http": "http://127.0.0.1:8080",
             "https": "http://127.0.0.1:8080"
-        },verify=False
+        },verify=False,
+        headers={"Host": "localhost:8000"}
     )
     print(r.text)
 	

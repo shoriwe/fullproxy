@@ -98,10 +98,10 @@ Usage: fullproxy forward [ARGUMENTS]
 
 Arguments:
 
--h, --help: 	Show this help message.
---listen="":	Address to listen.
---master="":	Listen address for master/slave communication.
---target="":	Target address to redirect the traffic.
+-dial-tls:      Dial connection will use TLS
+-listen string: Address to listen for clients. Argument URL structure is 'network://host:port'
+-master string: Listen address for master/slave communication. Argument URL structure is 'network://host:port'
+-target string: Target forward address. Argument URL structure is 'network://host:port'
 ```
 
 ## Translate

@@ -92,14 +92,20 @@ services:
           uri: /
           pool:
             8001:
-              url: http://127.0.0.1:8001/name.txt
+              websocket-read-buffer-size: 1024
+              websocket-write-buffer-size: 1024
+              scheme: http
+              uri: /name.txt
               network: tcp
               address: 127.0.0.1:8001
         localhost:8000:
           uri: /
           pool:
             8002:
-              url: http://127.0.0.1:8002/name.txt
+              websocket-read-buffer-size: 1024
+              websocket-write-buffer-size: 1024
+              scheme: http
+              uri: /name.txt
               network: tcp
               address: 127.0.0.1:8002
   reverse-raw:

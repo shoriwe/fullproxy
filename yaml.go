@@ -37,22 +37,24 @@ type (
 	}
 
 	Protocol struct {
-		Type           string           `yaml:"type"`
-		Authentication string           `yaml:"authentication"`
-		DialTLS        *DialTLS         `yaml:"dial-tls"`
-		TargetNetwork  string           `yaml:"target-network"`
-		TargetAddress  string           `yaml:"target-address"`
-		ProxyNetwork   string           `yaml:"proxy-network"`
-		ProxyAddress   string           `yaml:"proxy-address"`
-		Translation    string           `yaml:"translation"`
-		Credentials    string           `yaml:"credentials"`
-		RawHosts       map[string]*Host `yaml:"raw-hosts"`
-		HTTPHosts      map[string]struct {
-			URI             string            `yaml:"uri"`
-			ResponseHeaders map[string]string `yaml:"response-headers"`
-			RequestHeaders  map[string]string `yaml:"request-headers"`
-			Pool            map[string]*Host  `yaml:"pool"`
-		} `yaml:"http-hosts"`
+		Type           string             `yaml:"type"`
+		Authentication string             `yaml:"authentication"`
+		DialTLS        *DialTLS           `yaml:"dial-tls"`
+		TargetNetwork  string             `yaml:"target-network"`
+		TargetAddress  string             `yaml:"target-address"`
+		ProxyNetwork   string             `yaml:"proxy-network"`
+		ProxyAddress   string             `yaml:"proxy-address"`
+		Translation    string             `yaml:"translation"`
+		Credentials    string             `yaml:"credentials"`
+		RawHosts       map[string]*Host   `yaml:"raw-hosts"`
+		HTTPHosts      map[string]*Target `yaml:"http-hosts"`
+	}
+
+	Target struct {
+		URI             string            `yaml:"uri"`
+		ResponseHeaders map[string]string `yaml:"response-headers"`
+		RequestHeaders  map[string]string `yaml:"request-headers"`
+		Pool            map[string]*Host  `yaml:"pool"`
 	}
 
 	DialTLS struct {
@@ -67,7 +69,7 @@ type (
 		URI                      string         `yaml:"uri"`
 		Network                  string         `yaml:"network"`
 		Address                  string         `yaml:"address"`
-		TLSConfig                *HostTLSConfig `yaml:"tls-config"`
+		TLSConfig                *HostTLSConfig `yaml:"tls"`
 	}
 
 	HostTLSConfig struct {

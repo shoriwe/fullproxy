@@ -135,7 +135,6 @@ func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		for key, values := range target.ResponseHeader {
 			clientResponseHeader[key] = values
 		}
-		// TODO: Do something to config this
 		upgrader := &websocket.Upgrader{
 			ReadBufferSize:  host.WebsocketReadBufferSize,
 			WriteBufferSize: host.WebsocketWriteBufferSize,
@@ -164,7 +163,6 @@ func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	}
 	defer serverConnection.Close()
 	if host.TLSConfig != nil {
-		// TODO: Control this to trust in foreign certificate
 		serverConnection = tls.Client(serverConnection, host.TLSConfig)
 	}
 	server := &common.Sniffer{

@@ -49,7 +49,6 @@ func (r *Raw) Handle(conn net.Conn) error {
 		return connectionError
 	}
 	if host.TLSConfig != nil {
-		// TODO: Do something to control tls config
 		targetConnection = tls.Client(targetConnection, host.TLSConfig)
 	}
 	return common.ForwardTraffic(
