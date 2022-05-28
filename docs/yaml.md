@@ -74,7 +74,7 @@ services:
       # Mandatory for reverse-http
       http-hosts:
         HOSTNAME:
-          path: /wanted/uri
+          uri: /wanted/uri
           response-headers: # Headers to in inject in the response to the client
             - KEY:VALUE
           request-headers: # Headers to in inject in the request to the server
