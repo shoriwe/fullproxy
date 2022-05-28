@@ -1,8 +1,7 @@
 package reverse
 
 import (
-	"bufio"
-	"crypto/tls"
+	"context"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/shoriwe/fullproxy/v3/internal/common"
@@ -26,7 +25,6 @@ type (
 	HTTP struct {
 		Targets                          map[string]*Target
 		Dial                             servers.DialFunc
-		WebSocketDialer                  *websocket.Dialer
 		IncomingSniffer, OutgoingSniffer io.Writer
 	}
 )
@@ -60,9 +58,6 @@ func (H *HTTP) Handle(_ net.Conn) error {
 
 func (H *HTTP) SetDial(dialFunc servers.DialFunc) {
 	H.Dial = dialFunc
-	H.WebSocketDialer = &websocket.Dialer{
-		NetDial: dialFunc,
-	}
 }
 
 func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -88,6 +83,7 @@ func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		// TODO: Do something with the error
 		return
 	}
+	defer request.Body.Close()
 	newRequest.Header = request.Header.Clone()
 	// Inject Headers in request
 	for key, values := range target.RequestHeader {
@@ -115,7 +111,13 @@ func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		newRequest.Header.Del("Sec-Websocket-Key")
 		newRequest.Header.Del("Sec-Websocket-Version")
 		newRequest.Header.Del("Sec-Websocket-Extensions")
-		targetConnection, response, dialError := H.WebSocketDialer.Dial(
+		dialer := &websocket.Dialer{
+			NetDial: func(_, _ string) (net.Conn, error) {
+				return H.Dial(host.Network, host.Address)
+			},
+			TLSClientConfig: host.TLSConfig,
+		}
+		targetConnection, response, dialError := dialer.Dial(
 			u.String(),
 			newRequest.Header,
 		)
@@ -157,39 +159,56 @@ func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 	// Prepare client
-	serverConnection, connectionError := H.Dial(host.Network, host.Address)
-	if connectionError != nil {
+	client := http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return H.Dial(host.Network, host.Address)
+			},
+			TLSClientConfig: host.TLSConfig,
+		},
+		CheckRedirect: nil,
+		Jar:           nil,
+		Timeout:       0,
+	}
+	newRequest.Body = &common.RequestSniffer{
+		HeaderDone: false,
+		Writer:     H.OutgoingSniffer,
+		Request:    request,
+	}
+	response, requestError := client.Do(newRequest)
+	if requestError != nil {
 		// TODO: Do something with the error
 		return
 	}
-	defer serverConnection.Close()
-	if host.TLSConfig != nil {
-		serverConnection = tls.Client(serverConnection, host.TLSConfig)
+	defer response.Body.Close()
+	newResponse := &http.Response{
+		Status:     response.Status,
+		StatusCode: response.StatusCode,
+		Proto:      response.Proto,
+		ProtoMajor: response.ProtoMajor,
+		ProtoMinor: response.ProtoMinor,
+		Header:     response.Header.Clone(),
+		Body: &common.ResponseSniffer{
+			HeaderDone: false,
+			Writer:     H.IncomingSniffer,
+			Response:   response,
+		},
+		ContentLength:    response.ContentLength,
+		TransferEncoding: response.TransferEncoding,
+		Close:            response.Close,
+		Uncompressed:     response.Uncompressed,
+		Trailer:          response.Trailer.Clone(),
+		Request:          response.Request,
+		TLS:              response.TLS,
 	}
-	server := &common.Sniffer{
-		WriteSniffer: H.OutgoingSniffer,
-		ReadSniffer:  H.IncomingSniffer,
-		Connection:   serverConnection,
+	for key, values := range newResponse.Header {
+		writer.Header()[key] = values
 	}
-	// Send request to server
-	sendRequestError := newRequest.Write(server)
-	if sendRequestError != nil {
-		// TODO: Do something with the error
-		return
-	}
-	// Receive server response
-	serverResponse, readResponseError := http.ReadResponse(bufio.NewReader(server), newRequest)
-	if readResponseError != nil {
-		// TODO: Do something with the error
-		return
-	}
-	defer serverResponse.Body.Close()
-	// Inject response headers
 	for key, values := range target.ResponseHeader {
 		writer.Header()[key] = values
 	}
-	writer.WriteHeader(serverResponse.StatusCode)
-	_, copyError := io.Copy(writer, serverResponse.Body)
+	writer.WriteHeader(newResponse.StatusCode)
+	_, copyError := io.Copy(writer, newResponse.Body)
 	if copyError != nil {
 		// TODO: Do something with the error
 		return
