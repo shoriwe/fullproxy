@@ -93,6 +93,7 @@ func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	for key, values := range target.RequestHeader {
 		newRequest.Header[key] = values
 	}
+	newRequest.Host = newRequest.Header.Get("Host")
 	// Check websocket
 	if websocket.IsWebSocketUpgrade(newRequest) {
 		if H.OutgoingSniffer != nil {

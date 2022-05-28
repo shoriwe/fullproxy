@@ -178,28 +178,28 @@ func (r *runner) parseHost(h *Host) (*reverse2.Host, error) {
 
 func (r *runner) loadReverseHTTPHosts(p Protocol) (map[string]*reverse2.Target, error) {
 	httpReverseHosts := map[string]*reverse2.Target{}
-	for hostname, t := range p.HTTPHosts {
-		tt := &reverse2.Target{
+	for hostname, rawTarget := range p.HTTPHosts {
+		target := &reverse2.Target{
 			RequestHeader:  http3.Header{},
 			ResponseHeader: http3.Header{},
-			URI:            t.URI,
+			URI:            rawTarget.URI,
 			CurrentHost:    0,
 			Hosts:          nil,
 		}
-		for key, value := range t.RequestHeaders {
-			tt.RequestHeader[key] = []string{value}
+		for key, value := range rawTarget.RequestHeaders {
+			target.RequestHeader[key] = []string{value}
 		}
-		for key, value := range t.ResponseHeaders {
-			tt.ResponseHeader[key] = []string{value}
+		for key, value := range rawTarget.ResponseHeaders {
+			target.ResponseHeader[key] = []string{value}
 		}
-		for _, rawHost := range t.Pool {
+		for _, rawHost := range rawTarget.Pool {
 			parsedHost, parseError := r.parseHost(rawHost)
 			if parseError != nil {
 				return nil, parseError
 			}
-			tt.Hosts = append(tt.Hosts, parsedHost)
+			target.Hosts = append(target.Hosts, parsedHost)
 		}
-		httpReverseHosts[hostname] = tt
+		httpReverseHosts[hostname] = target
 	}
 	return httpReverseHosts, nil
 }
