@@ -167,8 +167,8 @@ func (H *HTTP) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		serverConnection = tls.Client(serverConnection, host.TLSConfig)
 	}
 	server := &common.Sniffer{
-		WriteSniffer: H.IncomingSniffer,
-		ReadSniffer:  H.OutgoingSniffer,
+		WriteSniffer: H.OutgoingSniffer,
+		ReadSniffer:  H.IncomingSniffer,
 		Connection:   serverConnection,
 	}
 	// Send request to server
