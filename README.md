@@ -76,7 +76,7 @@ Usage of translate:
 fullproxy socks5 -listen tcp://0.0.0.0:9050 -master tcp://192.168.1.33:9051
 ```
 
-- Master machine
+- Slave machine
 
 ```shell
 fullproxy slave -master tcp://192.168.1.33:9051
