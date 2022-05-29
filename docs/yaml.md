@@ -76,9 +76,9 @@ services:
         HOSTNAME:
           uri: /wanted/uri
           response-headers: # Headers to in inject in the response to the client
-            - KEY:VALUE
+            KEY: VALUE
           request-headers: # Headers to in inject in the request to the server
-            - KEY:VALUE
+            KEY: VALUE
           pool: # Load balancing pool
             NAME:
               websocket-read-buffer-size: NUMERIC # Ignore both buffer size settings to not forward websocket traffic

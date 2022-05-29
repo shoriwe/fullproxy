@@ -34,7 +34,9 @@ To obtain the help of any command, you should execute it without arguments or wi
 The slave command connects to master to forward traffic.
 
 ```shell
-Usage: fullproxy slave MASTER_ADDRESS
+Usage of translate:
+  -master string
+        Address of master server. Argument URL structure is 'network://host:port'
 ```
 
 ## SOCKS5
@@ -50,13 +52,11 @@ fullproxy socks5 --help
 Expected output:
 
 ```
-Usage: fullproxy socks5 [ARGUMENTS]
-
-Arguments:
-
--h, --help: 	Show this help message.
---listen="":	Address to listen.
---master="":	Listen address for master/slave communication.
+Usage of socks5:
+  -listen string
+        Address to listen for clients. Argument URL structure is 'network://host:port'
+  -master string
+        Listen address for master/slave communication. Argument URL structure is 'network://host:port'
 ```
 
 ## HTTP
@@ -72,13 +72,11 @@ fullproxy http --help
 Expected output:
 
 ```
-Usage: fullproxy http [ARGUMENTS]
-
-Arguments:
-
--h, --help: 	Show this help message.
---listen="":	Address to listen.
---master="":	Listen address for master/slave communication.
+Usage of http:
+  -listen string
+        Address to listen for clients. Argument URL structure is 'network://host:port'
+  -master string
+        Listen address for master/slave communication. Argument URL structure is 'network://host:port'
 ```
 
 ## Port Forward
@@ -94,14 +92,15 @@ fullproxy forward --help
 Expected output:
 
 ```
-Usage: fullproxy forward [ARGUMENTS]
-
-Arguments:
-
--dial-tls:      Dial connection will use TLS
--listen string: Address to listen for clients. Argument URL structure is 'network://host:port'
--master string: Listen address for master/slave communication. Argument URL structure is 'network://host:port'
--target string: Target forward address. Argument URL structure is 'network://host:port'
+Usage of forward:
+  -dial-tls
+        Dial connection will use TLS
+  -listen string
+        Address to listen for clients. Argument URL structure is 'network://host:port'
+  -master string
+        Listen address for master/slave communication. Argument URL structure is 'network://host:port'
+  -target string
+        Target forward address. Argument URL structure is 'network://host:port'
 ```
 
 ## Translate
@@ -117,17 +116,15 @@ fullproxy translate --help
 Expected output:
 
 ```
-Usage: fullproxy translate [ARGUMENTS]
-
-Arguments:
-
--h, --help: 			Show this help message.
---listen="":			Address to listen.
---source=""				Address to the source proxy.
---source-protocol="":	Proxy protocol to used by clients.
---target="":			Target proxy address.
---target-protocol="":	Proxy protocol been used by target.
---master="":			Listen address for master/slave communication.
+Usage of translate:
+  -listen string
+        Address to listen for clients. Argument URL structure is 'network://host:port'
+  -master string
+        Listen address for master/slave communication. Argument URL structure is 'network://host:port'
+  -source string
+        Address of the source proxy. Argument URL structure is 'network://host:port/protocol'
+  -target string
+        Address of target proxy. Argument URL structure is 'network://host:port/protocol'
 ```
 
 ## Reverse
@@ -143,14 +140,13 @@ fullproxy reverse --help
 Expected output:
 
 ```
-Usage: fullproxy reverse [ARGUMENTS]
-
-Arguments:
-
--h, --help: 	Show this help message.
---pool:			List of targets used by the load balancer.
---listen="":	Address to listen.
---master="":	Listen address for master/slave communication.
+Usage of reverse:
+  -add value
+        Add target to the pool load balancer
+  -listen string
+        Address to listen for clients. Argument URL structure is 'network://host:port'
+  -master string
+        Listen address for master/slave communication. Argument URL structure is 'network://host:port'
 ```
 
 ## Config
@@ -160,12 +156,12 @@ The `config` command starts all the proxy server specified in a YAML file. See `
 Command help looks like:
 
 ```shell
-fullproxy config --help
+fullproxy config
 ```
 
 Expected output:
 
 ```
-Usage: fullproxy config PATH_TO_YAML_FILE
+Usage: fullproxy config YAML_CONFIG
 ```
 
