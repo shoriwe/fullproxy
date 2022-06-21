@@ -3,7 +3,7 @@
 ![build](https://img.shields.io/badge/build-passing-green)
 [![made-with-Go](https://img.shields.io/badge/Made%20with-Go-1f425f.svg)](http://golang.org)
 [![GitHub go.mod Go version of a Go module](https://img.shields.io/github/go-mod/go-version/gomods/athens.svg)](https://github.com/shoriwe/fullproxy)
-[![Go Report Card](https://goreportcard.com/badge/github.com/shoriwe/fullproxy)](https://goreportcard.com/report/github.com/shoriwe/fullproxy)
+[![Go Report Card](https://goreportcard.com/badge/github.com/shoriwe/fullproxy/v3)](https://goreportcard.com/report/github.com/shoriwe/fullproxy/v3)
 [![Release](https://img.shields.io/github/release/shoriwe/fullproxy.svg?style=flat-square)](https://github.com/shoriwe/fullproxy/releases/latest)
 
 **fullproxy** is a `listen port` and `master/slave` based proxy toolkit.
