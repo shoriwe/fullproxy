@@ -366,6 +366,7 @@ fullproxy config sample-config/configs/sample.yaml
 - [Proxying](docs/proxy.md)
 - [Filters](docs/filters.md)
 - [Plasma programming language](https://shoriwe.github.io/plasma/index.html)
+- [pkg.go.dev](https://pkg.go.dev/github.com/shoriwe/fullproxy/v3)
 
 ## Installation
 
