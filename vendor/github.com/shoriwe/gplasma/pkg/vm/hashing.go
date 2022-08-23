@@ -1,7 +1,0 @@
-package vm
-
-const (
-	XXPrime1 uint64 = 11400714785074694791
-	XXPrime2 uint64 = 14029467366897019727
-	XXPrime5 uint64 = 2870177450012600261
-)

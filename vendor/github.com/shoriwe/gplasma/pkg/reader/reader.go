@@ -10,13 +10,19 @@ type Reader interface {
 	Redo()
 	HasNext() bool
 	Index() int
+	Line() int
 	Char() rune
 }
 
 type StringReader struct {
 	content []rune
 	index   int
+	line    int
 	length  int
+}
+
+func (s *StringReader) Line() int {
+	return s.line
 }
 
 func (s *StringReader) Next() {
@@ -36,19 +42,24 @@ func (s *StringReader) Index() int {
 }
 
 func (s *StringReader) Char() rune {
-	return s.content[s.index]
+	character := s.content[s.index]
+	if character == '\n' {
+		s.line++
+	}
+	return character
 }
 
-func NewStringReader(code string) *StringReader {
+func NewStringReader(code string) Reader {
 	runeCode := []rune(code)
 	return &StringReader{
 		content: runeCode,
+		line:    1,
 		index:   0,
 		length:  len(runeCode),
 	}
 }
 
-func NewStringReaderFromFile(file io.ReadCloser) *StringReader {
+func NewStringReaderFromFile(file io.ReadCloser) Reader {
 	defer file.Close()
 	content, readingError := io.ReadAll(file)
 	if readingError != nil {

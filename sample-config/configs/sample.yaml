@@ -20,8 +20,8 @@ services:
       network: tcp
       address: 127.0.0.1:9050
       filters:
-        #inbound: filter
-        #outbound: filter
+        # inbound: filter
+        outbound: filter
         listen: filter
         accept: filter
     protocol:

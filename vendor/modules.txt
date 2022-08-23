@@ -1,26 +1,37 @@
 # github.com/elazarl/goproxy v0.0.0-20210801061803-8e322dfb79c4
 ## explicit
+# github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2
+## explicit
 # github.com/gorilla/websocket v1.5.0
-## explicit
+## explicit; go 1.12
 github.com/gorilla/websocket
-# github.com/shoriwe/gplasma v0.0.0-20220517214355-8a4aa6af9004
-## explicit
-github.com/shoriwe/gplasma
-github.com/shoriwe/gplasma/pkg/compiler/ast
-github.com/shoriwe/gplasma/pkg/compiler/lexer
-github.com/shoriwe/gplasma/pkg/compiler/parser
-github.com/shoriwe/gplasma/pkg/errors
+# github.com/shoriwe/gplasma v1.0.2
+## explicit; go 1.18
+github.com/shoriwe/gplasma/pkg/ast
+github.com/shoriwe/gplasma/pkg/ast2
+github.com/shoriwe/gplasma/pkg/ast3
+github.com/shoriwe/gplasma/pkg/bytecode/assembler
+github.com/shoriwe/gplasma/pkg/bytecode/opcodes
+github.com/shoriwe/gplasma/pkg/common
+github.com/shoriwe/gplasma/pkg/common/magic-functions
+github.com/shoriwe/gplasma/pkg/common/special-symbols
+github.com/shoriwe/gplasma/pkg/compiler
+github.com/shoriwe/gplasma/pkg/lexer
+github.com/shoriwe/gplasma/pkg/parser
+github.com/shoriwe/gplasma/pkg/passes/checks
+github.com/shoriwe/gplasma/pkg/passes/simplification
+github.com/shoriwe/gplasma/pkg/passes/transformations-1
 github.com/shoriwe/gplasma/pkg/reader
-github.com/shoriwe/gplasma/pkg/tools
 github.com/shoriwe/gplasma/pkg/vm
 # golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
-## explicit
+## explicit; go 1.17
 golang.org/x/crypto/sha3
 # golang.org/x/net v0.0.0-20210908191846-a5e095526f91
-## explicit
+## explicit; go 1.17
 golang.org/x/net/internal/socks
 golang.org/x/net/proxy
 # golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1
+## explicit; go 1.17
 golang.org/x/sys/cpu
 # gopkg.in/elazarl/goproxy.v1 v1.0.0-20180725130230-947c36da3153
 ## explicit

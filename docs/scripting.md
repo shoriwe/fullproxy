@@ -4,7 +4,7 @@ This document describe the interfaces used in `fullproxy` driver development.
 
 ## Authentication functions
 
-Functions intended for authentication will be loaded using `SetAuth(function)`, functions should expect two string
+Functions intended for authentication will be loaded using `set_auth(function)`, functions should expect two string
 arguments, specifically corresponding to username and password, authentication succeed will be evaluated by the return
 values `True` in case of success or `False` in case of failure, notice if the function call raises an error it will be
 also considered an auth failure.
@@ -19,17 +19,17 @@ def basic_login(username, password)
     return False
 end
 
-SetAuth(basic_login)
+set_auth(basic_login)
 ```
 
 ## Filtering functions
 
 Function intended to filter incoming, outgoing, listens and accepts can be loaded in drivers using:
 
-- `SetInbound(function)`
-- `SetOutbound(function)`
-- `SetListen(function)`
-- `SetAccept(function)`
+- `set_inbound(function)`
+- `set_outbound(function)`
+- `set_listen(function)`
+- `set_accept(function)`
 
 This functions are expected to receive a string value containing the `HOST:PORT` value of the connection. Allowing the
 connection will be evaluated by the return values `True` in case of success or `False` in case of failure, notice if the
@@ -47,8 +47,8 @@ def no_localhost(address)
     return True
 end
 
-SetInbound(no_localhost)
-SetOutbound(no_localhost)
-SetListen(no_localhost)
-SetAccept(no_localhost)
+set_inbound(no_localhost)
+set_outbound(no_localhost)
+set_listen(no_localhost)
+set_accept(no_localhost)
 ```

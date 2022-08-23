@@ -1,13 +1,19 @@
 package vm
 
-func (p *Plasma) NewFunction(context *Context, isBuiltIn bool, parentSymbols *SymbolTable, callable Callable) *Value {
-	function := p.NewValue(context, isBuiltIn, FunctionName, nil, parentSymbols)
-	function.BuiltInTypeId = FunctionId
-	function.Callable = callable
-	function.SetOnDemandSymbol(Self,
-		func() *Value {
-			return function
-		},
-	)
+func (plasma *Plasma) functionClass() *Value {
+	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
+	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
+		return plasma.NewBuiltInFunction(
+			plasma.rootSymbols,
+			func(argument ...*Value) (*Value, error) {
+				return plasma.none, nil
+			}), nil
+	}))
+	return class
+}
+
+func (plasma *Plasma) NewBuiltInFunction(parent *Symbols, callback Callback) *Value {
+	function := plasma.NewValue(parent, BuiltInFunctionId, plasma.function)
+	function.SetAny(callback)
 	return function
 }
