@@ -1,51 +1,52 @@
 package vm
 
-type Context struct {
-	ObjectStack *ObjectStack
-	SymbolStack *SymbolStack
-	LastObject  *Value
-	LastState   uint8
+import (
+	"github.com/shoriwe/gplasma/pkg/common"
+)
+
+type (
+	contextCode struct {
+		bytecode []byte
+		rip      int64
+		onExit   *common.ListStack[[]byte]
+	}
+	context struct {
+		result         chan *Value
+		err            chan error
+		stop           chan struct{}
+		code           *common.ListStack[*contextCode]
+		stack          *common.ListStack[*Value]
+		register       *Value
+		currentSymbols *Symbols
+	}
+)
+
+func (ctx *context) hasNext() bool {
+	for ctx.code.HasNext() {
+		ctxCode := ctx.code.Peek()
+		if ctxCode.rip >= int64(len(ctxCode.bytecode)) {
+			ctx.popCode()
+			continue
+		}
+		return true
+	}
+	return false
 }
 
-func (c *Context) PushObject(object *Value) {
-	c.ObjectStack.Push(object)
-}
-func (c *Context) PeekObject() *Value {
-	return c.ObjectStack.Peek()
-}
-
-func (c *Context) PopObject() *Value {
-	return c.ObjectStack.Pop()
-}
-
-func (c *Context) PushSymbolTable(table *SymbolTable) {
-	c.SymbolStack.Push(table)
-}
-
-func (c *Context) PopSymbolTable() *SymbolTable {
-	return c.SymbolStack.Pop()
-}
-
-func (c *Context) PeekSymbolTable() *SymbolTable {
-	return c.SymbolStack.Peek()
-}
-
-func (c *Context) ReturnState() {
-	c.LastState = ReturnState
-}
-
-func (c *Context) BreakState() {
-	c.LastState = BreakState
-}
-
-func (c *Context) RedoState() {
-	c.LastState = RedoState
-}
-
-func (c *Context) ContinueState() {
-	c.LastState = ContinueState
-}
-
-func (c *Context) NoState() {
-	c.LastState = NoState
+func (plasma *Plasma) newContext(bytecode []byte) *context {
+	codeStack := &common.ListStack[*contextCode]{}
+	codeStack.Push(&contextCode{
+		bytecode: bytecode,
+		rip:      0,
+		onExit:   &common.ListStack[[]byte]{},
+	})
+	return &context{
+		result:         nil,
+		err:            nil,
+		stop:           nil,
+		code:           codeStack,
+		stack:          &common.ListStack[*Value]{},
+		register:       nil,
+		currentSymbols: plasma.rootSymbols,
+	}
 }

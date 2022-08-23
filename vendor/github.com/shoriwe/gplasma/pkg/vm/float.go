@@ -1,627 +1,330 @@
 package vm
 
 import (
-	"fmt"
+	"encoding/binary"
+	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
 	"math"
 )
 
-func (p *Plasma) NewFloat(context *Context, isBuiltIn bool, value float64) *Value {
-	float_ := p.NewValue(context, isBuiltIn, FloatName, nil, context.PeekSymbolTable())
-	float_.BuiltInTypeId = FloatId
-	float_.Float = value
-	p.FloatInitialize(isBuiltIn)(context, float_)
-	float_.SetOnDemandSymbol(Self,
-		func() *Value {
-			return float_
-		},
-	)
-	return float_
+func (plasma *Plasma) floatClass() *Value {
+	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
+	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
+		return plasma.NewFloat(argument[0].Float()), nil
+	}))
+	return class
 }
 
-func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(context *Context, object *Value) *Value {
-		object.SetOnDemandSymbol(Negative,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewFloat(context, false,
-								-self.Float,
-							), true
-						},
+/*
+NewFloat magic function:
+Positive:           __positive__
+Negative:           __negative__
+NegateBits:         __negate_bits__
+Equal:             __equal__
+NotEqual:           __not_equal__
+GreaterThan:        __greater_than__
+GreaterOrEqualThan: __greater_or_equal_than__
+LessThan:           __less_than__
+LessOrEqualThan:    __less_or_equal_than__
+BitwiseOr:          __bitwise_or__
+BitwiseXor:         __bitwise_xor__
+BitwiseAnd:         __bitwise_and__
+BitwiseLeft:        __bitwise_left__
+BitwiseRight:       __bitwise_right__
+Add:                __add__
+Sub:                __sub__
+Mul:                __mul__
+Div:                __div__
+FloorDiv:           __floor_div__
+Modulus:            __mod__
+PowerOf:            __pow__
+Bool:               __bool__
+String             	__string__
+Int                	__int__
+Float              	__float__
+Copy:               __copy__
+BigEndian			big_endian
+LittleEndian		little_endian
+FromBig				from_big
+FromLittle			from_little
+*/
+func (plasma *Plasma) NewFloat(f float64) *Value {
+	result := plasma.NewValue(plasma.rootSymbols, FloatId, plasma.float)
+	result.SetAny(f)
+	result.Set(magic_functions.Positive, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return result, nil
+		},
+	))
+	result.Set(magic_functions.Negative, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewFloat(-result.Float()), nil
+		},
+	))
+	result.Set(magic_functions.NegateBits, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewFloat(math.Float64frombits(^math.Float64bits(result.Float()))), nil
+		},
+	))
+	result.Set(magic_functions.Equal, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewBool(result.Equal(argument[0])), nil
+			}
+			return plasma.false, nil
+		},
+	))
+	result.Set(magic_functions.NotEqual, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewBool(!result.Equal(argument[0])), nil
+			}
+			return plasma.true, nil
+		},
+	))
+	result.Set(magic_functions.GreaterThan, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewBool(result.Float() > argument[0].Float()), nil
+			}
+			return nil, NotComparable
+		},
+	))
+	result.Set(magic_functions.GreaterOrEqualThan, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewBool(result.Float() >= argument[0].Float()), nil
+			}
+			return nil, NotComparable
+		},
+	))
+	result.Set(magic_functions.LessThan, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewBool(result.Float() < argument[0].Float()), nil
+			}
+			return nil, NotComparable
+		},
+	))
+	result.Set(magic_functions.LessOrEqualThan, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewBool(result.Float() <= argument[0].Float()), nil
+			}
+			return nil, NotComparable
+		},
+	))
+	result.Set(magic_functions.BitwiseOr, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewFloat(
+					math.Float64frombits(
+						math.Float64bits(result.Float()) | math.Float64bits(argument[0].Float()),
 					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Add,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							switch right.BuiltInTypeId {
-							case IntegerId:
-								return p.NewFloat(context, false,
-									self.Float+float64(right.Integer),
-								), true
-							case FloatId:
-								return p.NewFloat(context, false,
-									self.Float+right.Float,
-								), true
-							default:
-								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
-							}
-						},
+				), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.BitwiseXor, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewFloat(
+					math.Float64frombits(
+						math.Float64bits(result.Float()) ^ math.Float64bits(argument[0].Float()),
 					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightAdd,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							switch left.BuiltInTypeId {
-							case IntegerId:
-								return p.NewFloat(context, false,
-									float64(left.Integer)+self.Float,
-								), true
-							case FloatId:
-								return p.NewFloat(context, false,
-									left.Float+self.Float,
-								), true
-							default:
-								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
-							}
-						},
+				), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.BitwiseAnd, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewFloat(
+					math.Float64frombits(
+						math.Float64bits(result.Float()) & math.Float64bits(argument[0].Float()),
 					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Sub,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							switch right.BuiltInTypeId {
-							case IntegerId:
-								return p.NewFloat(context, false,
-									self.Float-float64(right.Integer),
-								), true
-							case FloatId:
-								return p.NewFloat(context, false,
-									self.Float-right.Float,
-								), true
-							default:
-								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
-							}
-						},
+				), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.BitwiseLeft, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewFloat(
+					math.Float64frombits(
+						math.Float64bits(result.Float()) << math.Float64bits(argument[0].Float()),
 					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightSub,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							switch left.BuiltInTypeId {
-							case IntegerId:
-								return p.NewFloat(context, false,
-									float64(left.Integer)-self.Float,
-								), true
-							case FloatId:
-								return p.NewFloat(context, false,
-									left.Float-self.Float,
-								), true
-							default:
-								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
-							}
-						},
+				), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.BitwiseRight, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewFloat(
+					math.Float64frombits(
+						math.Float64bits(result.Float()) >> math.Float64bits(argument[0].Float()),
 					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Mul,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							switch right.BuiltInTypeId {
-							case IntegerId:
-								return p.NewFloat(context, false,
-									self.Float*float64(right.Integer),
-								), true
-							case FloatId:
-								return p.NewFloat(context, false,
-									self.Float*right.Float,
-								), true
-							default:
-								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightMul,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							switch left.BuiltInTypeId {
-							case IntegerId:
-								return p.NewFloat(context, false,
-									float64(left.Integer)*self.Float,
-								), true
-							case FloatId:
-								return p.NewFloat(context, false,
-									left.Float*self.Float,
-								), true
-							default:
-								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Div,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							switch right.BuiltInTypeId {
-							case IntegerId:
-								return p.NewFloat(context, false,
-									self.Float/float64(right.Integer),
-								), true
-							case FloatId:
-								return p.NewFloat(context, false,
-									self.Float/right.Float,
-								), true
-							default:
-								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightDiv,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							switch left.BuiltInTypeId {
-							case IntegerId:
-								return p.NewFloat(context, false,
-									float64(left.Integer)/self.Float,
-								), true
-							case FloatId:
-								return p.NewFloat(context, false,
-									left.Float/self.Float,
-								), true
-							default:
-								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Mod,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							switch right.BuiltInTypeId {
-							case IntegerId:
-								return p.NewFloat(context, false,
-									math.Mod(self.Float, float64(right.Integer)),
-								), true
-							case FloatId:
-								return p.NewFloat(context, false,
-									math.Mod(self.Float, right.Float),
-								), true
-							default:
-								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightMod,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							switch left.BuiltInTypeId {
-							case IntegerId:
-								return p.NewFloat(context, false,
-									math.Mod(float64(left.Integer), self.Float),
-								), true
-							case FloatId:
-								return p.NewFloat(context, false,
-									math.Mod(left.Float, self.Float),
-								), true
-							default:
-								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Pow,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							switch right.BuiltInTypeId {
-							case IntegerId:
-								return p.NewFloat(context, false,
-									math.Pow(
-										self.Float,
-										float64(right.Integer),
-									),
-								), true
-							case FloatId:
-								return p.NewFloat(context, false,
-									math.Pow(
-										self.Float,
-										right.Float,
-									),
-								), true
-							default:
-								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightPow,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							switch left.BuiltInTypeId {
-							case IntegerId:
-								return p.NewFloat(context, false,
-									math.Pow(
-										float64(left.Integer),
-										self.Float,
-									),
-								), true
-							case FloatId:
-								return p.NewFloat(context, false,
-									math.Pow(
-										float64(left.Integer),
-										self.Float,
-									),
-								), true
-							default:
-								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-
-		object.SetOnDemandSymbol(Equals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							switch right.BuiltInTypeId {
-							case IntegerId:
-								return p.InterpretAsBool(self.Float == float64(right.Integer)), true
-							case FloatId:
-								return p.InterpretAsBool(self.Float == right.Float), true
-							default:
-								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightEquals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							switch left.BuiltInTypeId {
-							case IntegerId:
-								return p.InterpretAsBool(float64(left.Integer) == self.Float), true
-							case FloatId:
-								return p.InterpretAsBool(left.Float == self.Float), true
-							default:
-								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(NotEquals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							switch right.BuiltInTypeId {
-							case IntegerId:
-								return p.InterpretAsBool(self.Float != float64(right.Integer)), true
-							case FloatId:
-								return p.InterpretAsBool(self.Float != right.Float), true
-							default:
-								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightNotEquals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							switch left.BuiltInTypeId {
-							case IntegerId:
-								return p.InterpretAsBool(float64(left.Integer) != self.Float), true
-							case FloatId:
-								return p.InterpretAsBool(left.Float != self.Float), true
-							default:
-								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(GreaterThan,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							switch right.BuiltInTypeId {
-							case IntegerId:
-								return p.InterpretAsBool(self.Float > float64(right.Integer)), true
-							case FloatId:
-								return p.InterpretAsBool(self.Float > right.Float), true
-							default:
-								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightGreaterThan,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							switch left.BuiltInTypeId {
-							case IntegerId:
-								return p.InterpretAsBool(float64(left.Integer) > self.Float), true
-							case FloatId:
-								return p.InterpretAsBool(left.Float > self.Float), true
-							default:
-								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(LessThan,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							switch right.BuiltInTypeId {
-							case IntegerId:
-								return p.InterpretAsBool(self.Float < float64(right.Integer)), true
-							case FloatId:
-								return p.InterpretAsBool(self.Float < right.Float), true
-							default:
-								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightLessThan,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							switch left.BuiltInTypeId {
-							case IntegerId:
-								return p.InterpretAsBool(float64(left.Integer) < self.Float), true
-							case FloatId:
-								return p.InterpretAsBool(left.Float < self.Float), true
-							default:
-								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(GreaterThanOrEqual,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							switch right.BuiltInTypeId {
-							case IntegerId:
-								return p.InterpretAsBool(self.Float >= float64(right.Integer)), true
-							case FloatId:
-								return p.InterpretAsBool(self.Float >= right.Float), true
-							default:
-								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightGreaterThanOrEqual,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							switch left.BuiltInTypeId {
-							case IntegerId:
-								return p.InterpretAsBool(float64(left.Integer) >= self.Float), true
-							case FloatId:
-								return p.InterpretAsBool(left.Float >= self.Float), true
-							default:
-								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(LessThanOrEqual,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							switch right.BuiltInTypeId {
-							case IntegerId:
-								return p.InterpretAsBool(self.Float <= float64(right.Integer)), true
-							case FloatId:
-								return p.InterpretAsBool(self.Float <= right.Float), true
-							default:
-								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightLessThanOrEqual,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							switch left.BuiltInTypeId {
-							case IntegerId:
-								return p.InterpretAsBool(float64(left.Integer) <= self.Float), true
-							case FloatId:
-								return p.InterpretAsBool(left.Float <= self.Float), true
-							default:
-								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
-							}
-						},
-					),
-				)
-			},
-		)
-
-		object.SetOnDemandSymbol(Hash,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							if self.GetHash() == 0 {
-								floatHash := p.HashString(fmt.Sprintf("%f-%s", self.Float, FloatName))
-								self.SetHash(floatHash)
-							}
-							return p.NewInteger(context, false, self.GetHash()), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Copy,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewFloat(context, false, self.Float), true
-						},
-					),
-				)
-			},
-		)
-
-		object.SetOnDemandSymbol(ToInteger,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewInteger(context, false, int64(self.Float)), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToFloat,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewFloat(context, false, self.Float), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToString,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewString(context, false, fmt.Sprint(self.Float)), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToBool,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.InterpretAsBool(self.Float != 0), true
-						},
-					),
-				)
-			},
-		)
-		return nil
-	}
+				), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.Add, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewFloat(result.Float() + argument[0].Float()), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.Sub, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewFloat(result.Float() - argument[0].Float()), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.Mul, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewFloat(result.Float() * argument[0].Float()), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.Div, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewFloat(result.Float() / argument[0].Float()), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.FloorDiv, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewInt(int64(result.Float() / argument[0].Float())), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.Modulus, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewFloat(math.Mod(result.Float(), argument[0].Float())), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.PowerOf, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId, FloatId:
+				return plasma.NewFloat(math.Pow(result.Float(), argument[0].Float())), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.Bool, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewBool(result.Bool()), nil
+		},
+	))
+	result.Set(magic_functions.String, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewString([]byte(result.String())), nil
+		},
+	))
+	result.Set(magic_functions.Int, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewInt(result.Int()), nil
+		},
+	))
+	result.Set(magic_functions.Float, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return result, nil
+		},
+	))
+	result.Set(magic_functions.Copy, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewFloat(result.Float()), nil
+		},
+	))
+	result.Set(magic_functions.BigEndian, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			b := make([]byte, 8)
+			binary.BigEndian.PutUint64(b, math.Float64bits(result.Float()))
+			return plasma.NewBytes(b), nil
+		},
+	))
+	result.Set(magic_functions.LittleEndian, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			b := make([]byte, 8)
+			binary.LittleEndian.PutUint64(b, math.Float64bits(result.Float()))
+			return plasma.NewBytes(b), nil
+		},
+	))
+	result.Set(magic_functions.FromBig, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewFloat(math.Float64frombits(binary.BigEndian.Uint64(argument[0].GetBytes()))), nil
+		},
+	))
+	result.Set(magic_functions.FromLittle, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewFloat(math.Float64frombits(binary.LittleEndian.Uint64(argument[0].GetBytes()))), nil
+		},
+	))
+	return result
 }

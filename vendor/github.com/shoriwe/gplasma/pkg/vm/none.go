@@ -1,69 +1,36 @@
 package vm
 
-func (p *Plasma) GetNone() *Value {
-	return p.ForceMasterGetAny(None)
+import magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
+
+func (plasma *Plasma) noneClass() *Value {
+	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
+	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
+		return plasma.NewNone(), nil
+	}))
+	return class
 }
 
-func (p *Plasma) NewNone(context *Context, isBuiltIn bool, parent *SymbolTable) *Value {
-	result := p.NewValue(context, isBuiltIn, NoneName, nil, parent)
-	result.BuiltInTypeId = NoneId
-	p.NoneInitialize(isBuiltIn)(context, result)
-	result.SetOnDemandSymbol(Self,
-		func() *Value {
-			return result
-		},
-	)
-	return result
-}
-
-func (p *Plasma) NoneInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(context *Context, object *Value) *Value {
-		object.SetOnDemandSymbol(Equals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(_ *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							return p.InterpretAsBool(right.IsTypeById(NoneId)), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(NotEquals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(_ *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							return p.InterpretAsBool(left.IsTypeById(NoneId)), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToString,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(_ *Value, _ ...*Value) (*Value, bool) {
-							return p.NewString(context, false, "None"), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToBool,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(_ *Value, _ ...*Value) (*Value, bool) {
-							return p.GetFalse(), true
-						},
-					),
-				)
-			},
-		)
-		return nil
+/*
+NewNone magic function:
+Bool                __bool__
+String              __string__
+*/
+func (plasma *Plasma) NewNone() *Value {
+	if plasma.none != nil {
+		return plasma.none
 	}
+	result := plasma.NewValue(plasma.rootSymbols, NoneId, plasma.noneType)
+	result.Set(magic_functions.Bool, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.false, nil
+		},
+	))
+	result.Set(magic_functions.String, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewString([]byte(result.String())), nil
+		},
+	))
+	return result
 }

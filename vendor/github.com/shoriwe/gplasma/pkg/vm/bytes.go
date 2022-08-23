@@ -2,312 +2,238 @@ package vm
 
 import (
 	"bytes"
-	"encoding/binary"
+	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
 )
 
-func (p *Plasma) NewBytes(context *Context, isBuiltIn bool, content []uint8) *Value {
-	bytes_ := p.NewValue(context, isBuiltIn, BytesName, nil, context.PeekSymbolTable())
-	bytes_.BuiltInTypeId = BytesId
-	bytes_.Bytes = content
-	p.BytesInitialize(isBuiltIn)(context, bytes_)
-	bytes_.SetOnDemandSymbol(Self,
-		func() *Value {
-			return bytes_
-		},
-	)
-	return bytes_
+func (plasma *Plasma) bytesClass() *Value {
+	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
+	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
+		return plasma.NewBytes(argument[0].Contents()), nil
+	}))
+	return class
 }
 
-func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(context *Context, object *Value) *Value {
-		object.SetOnDemandSymbol(Length,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							return p.NewInteger(context, false, int64(len(self.Bytes))), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Add,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							if !right.IsTypeById(BytesId) {
-								return p.NewInvalidTypeError(context, right.TypeName(), BytesName), false
-							}
-							var newContent []uint8
-							copy(newContent, self.Bytes)
-							newContent = append(newContent, right.Bytes...)
-							return p.NewBytes(context, false, newContent), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightAdd,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							if !left.IsTypeById(BytesId) {
-								return p.NewInvalidTypeError(context, left.TypeName(), BytesName), false
-							}
-							var newContent []uint8
-							copy(newContent, left.Bytes)
-							newContent = append(newContent, self.Bytes...)
-							return p.NewBytes(context, false, newContent), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Mul,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							if !right.IsTypeById(BytesId) {
-								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName), false
-							}
-							return p.NewBytes(context, false, bytes.Repeat(self.Bytes, int(right.Integer))), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightMul,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							if !left.IsTypeById(IntegerId) {
-								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName), false
-							}
-							return p.NewBytes(context, false, bytes.Repeat(left.Bytes, int(self.Integer))), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Equals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							if !right.IsTypeById(BytesId) {
-								return p.GetFalse(), true
-							}
-							if len(self.Bytes) != len(right.Bytes) {
-								return p.GetFalse(), true
-							}
-							return p.InterpretAsBool(bytes.Compare(self.Bytes, right.Bytes) == 0), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightEquals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							if !left.IsTypeById(BytesId) {
-								return p.GetFalse(), true
-							}
-							if len(left.Bytes) != len(self.Bytes) {
-								return p.GetFalse(), true
-							}
-							return p.InterpretAsBool(bytes.Compare(left.Bytes, self.Bytes) == 0), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(NotEquals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							if !right.IsTypeById(BytesId) {
-								return p.GetFalse(), true
-							}
-							if len(self.Bytes) != len(right.Bytes) {
-								return p.GetFalse(), true
-							}
-							return p.InterpretAsBool(bytes.Compare(self.Bytes, right.Bytes) != 0), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightNotEquals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							if !left.IsTypeById(BytesId) {
-								return p.GetFalse(), true
-							}
-							if len(left.Bytes) != len(self.Bytes) {
-								return p.GetFalse(), true
-							}
-							return p.InterpretAsBool(bytes.Compare(left.Bytes, self.Bytes) != 0), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Hash,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							selfHash := p.HashBytes(append(self.Bytes, []byte("Bytes")...))
-							return p.NewInteger(context, false, selfHash), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Copy,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							var newBytes []uint8
-							copy(newBytes, self.Bytes)
-							return p.NewBytes(context, false, newBytes), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Index,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							return p.BytesIndex(context, self, arguments[0])
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Iter,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.BytesIterator(context, self)
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToInteger,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewInteger(context, false,
-								int64(binary.BigEndian.Uint32(self.Bytes)),
-							), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToString,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewString(context, false, string(self.Bytes)), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToBool,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.InterpretAsBool(len(self.Bytes) != 0), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToArray,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.BytesToContent(context, self, ArrayId)
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToTuple,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.BytesToContent(context, self, TupleId)
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Replace,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							if !arguments[0].IsTypeById(BytesId) {
-								return p.NewInvalidTypeError(context, arguments[0].GetClass(p).Name, BytesName), false
-							}
-							var subBytes []*Value
-							for _, s := range bytes.Split(self.Bytes, arguments[0].Bytes) {
-								subBytes = append(subBytes, p.NewBytes(context, false, s))
-							}
-							return p.NewArray(context, false, subBytes), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Replace,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 2,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							if !arguments[0].IsTypeById(BytesId) {
-								return p.NewInvalidTypeError(context, arguments[0].GetClass(p).Name, BytesName), false
-							}
-							if !arguments[1].IsTypeById(BytesId) {
-								return p.NewInvalidTypeError(context, arguments[1].GetClass(p).Name, BytesName), false
-							}
-							return p.NewBytes(context, false, bytes.ReplaceAll(self.Bytes, arguments[0].Bytes, arguments[1].Bytes)), true
-						},
-					),
-				)
-			},
-		)
-		return nil
-	}
+/*
+NewBytes magic function:
+Equal              __equal__
+NotEqual            __not_equal__
+Add                 __add__
+Mul                 __mul__
+Length              __len__
+Bool                __bool__
+String              __string__
+Bytes               __bytes__
+Array               __array__
+Tuple               __tuple__
+Get                 __get__
+Copy                __copy__
+Iter                __iter__
+Join				join
+Split				split
+Upper				upper
+Lower				lower
+Count				count
+Index				Index
+*/
+func (plasma *Plasma) NewBytes(contents []byte) *Value {
+	result := plasma.NewValue(plasma.rootSymbols, BytesId, plasma.bytes)
+	result.SetAny(contents)
+	result.Set(magic_functions.In, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case BytesId:
+				return plasma.NewBool(bytes.Contains(result.GetBytes(), argument[0].GetBytes())), nil
+			case IntId:
+				i := argument[0].GetInt64()
+				for _, b := range result.GetBytes() {
+					if int64(b) == i {
+						return plasma.true, nil
+					}
+				}
+				return plasma.false, nil
+			}
+			return plasma.false, nil
+		},
+	))
+	result.Set(magic_functions.Equal, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewBool(result.Equal(argument[0])), nil
+		},
+	))
+	result.Set(magic_functions.NotEqual, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewBool(!result.Equal(argument[0])), nil
+		},
+	))
+	result.Set(magic_functions.Add, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case BytesId:
+				s := result.GetBytes()
+				otherS := argument[0].GetBytes()
+				newString := make([]byte, 0, len(s)+len(otherS))
+				newString = append(newString, s...)
+				newString = append(newString, otherS...)
+				return plasma.NewBytes(newString), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.Mul, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId:
+				s := result.GetBytes()
+				times := argument[0].GetInt64()
+				return plasma.NewBytes(bytes.Repeat(s, int(times))), nil
+			}
+			return nil, NotOperable
+		},
+	))
+	result.Set(magic_functions.Length, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewInt(int64(len(result.GetBytes()))), nil
+		},
+	))
+	result.Set(magic_functions.Bool, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewBool(len(result.GetBytes()) > 0), nil
+		},
+	))
+	result.Set(magic_functions.String, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewString(result.GetBytes()), nil
+		},
+	))
+	result.Set(magic_functions.Bytes, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return result, nil
+		},
+	))
+	result.Set(magic_functions.Array, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			s := result.GetBytes()
+			values := make([]*Value, 0, len(s))
+			for _, b := range s {
+				values = append(values, plasma.NewInt(int64(b)))
+			}
+			return plasma.NewArray(values), nil
+		},
+	))
+	result.Set(magic_functions.Tuple, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			s := result.GetBytes()
+			values := make([]*Value, 0, len(s))
+			for _, b := range s {
+				values = append(values, plasma.NewInt(int64(b)))
+			}
+			return plasma.NewTuple(values), nil
+		},
+	))
+	result.Set(magic_functions.Get, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case IntId:
+				s := result.GetBytes()
+				index := argument[0].GetInt64()
+				return plasma.NewInt(int64(s[index])), nil
+			case TupleId:
+				s := result.GetBytes()
+				values := argument[0].GetValues()
+				startIndex := values[0].GetInt64()
+				endIndex := values[1].GetInt64()
+				return plasma.NewBytes(s[startIndex:endIndex]), nil
+			}
+			return nil, NotIndexable
+		},
+	))
+	result.Set(magic_functions.Copy, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			s := result.GetBytes()
+			newS := make([]byte, len(s))
+			copy(newS, s)
+			return plasma.NewBytes(newS), nil
+		},
+	))
+	result.Set(magic_functions.Iter, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			iter := plasma.NewValue(result.vtable, ValueId, plasma.value)
+			iter.SetAny(int64(0))
+			iter.Set(magic_functions.HasNext, plasma.NewBuiltInFunction(iter.vtable,
+				func(argument ...*Value) (*Value, error) {
+					return plasma.NewBool(iter.GetInt64() < int64(len(result.GetBytes()))), nil
+				},
+			))
+			iter.Set(magic_functions.Next, plasma.NewBuiltInFunction(iter.vtable,
+				func(argument ...*Value) (*Value, error) {
+					currentBytes := result.GetBytes()
+					index := iter.GetInt64()
+					iter.SetAny(index + 1)
+					if index < int64(len(currentBytes)) {
+						return plasma.NewBytes([]byte{currentBytes[index]}), nil
+					}
+					return plasma.none, nil
+				},
+			))
+			return iter, nil
+		},
+	))
+	result.Set(magic_functions.Join, plasma.NewBuiltInFunction(result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			values := argument[0].Values()
+			valuesBytes := make([][]byte, 0, len(values))
+			for _, value := range values {
+				valuesBytes = append(valuesBytes, []byte(value.String()))
+			}
+			return plasma.NewBytes(bytes.Join(valuesBytes, []byte(result.String()))), nil
+		},
+	))
+	result.Set(magic_functions.Split, plasma.NewBuiltInFunction(result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			sep := argument[0].String()
+			splitted := bytes.Split(result.GetBytes(), []byte(sep))
+			values := make([]*Value, 0, len(splitted))
+			for _, b := range splitted {
+				values = append(values, plasma.NewBytes(b))
+			}
+			return plasma.NewTuple(values), nil
+		},
+	))
+	result.Set(magic_functions.Upper, plasma.NewBuiltInFunction(result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewBytes(bytes.ToUpper(result.GetBytes())), nil
+		},
+	))
+	result.Set(magic_functions.Lower, plasma.NewBuiltInFunction(result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewBytes(bytes.ToLower(result.GetBytes())), nil
+		},
+	))
+	result.Set(magic_functions.Count, plasma.NewBuiltInFunction(result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			sep := argument[0].String()
+			return plasma.NewInt(int64(bytes.Count(result.GetBytes(), []byte(sep)))), nil
+		},
+	))
+	result.Set(magic_functions.Index, plasma.NewBuiltInFunction(result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			sep := argument[0].String()
+			return plasma.NewInt(int64(bytes.Index(result.GetBytes(), []byte(sep)))), nil
+		},
+	))
+	return result
 }

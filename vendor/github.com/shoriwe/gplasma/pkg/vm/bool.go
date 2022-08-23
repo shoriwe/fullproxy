@@ -1,184 +1,105 @@
 package vm
 
-func (p *Plasma) QuickGetBool(context *Context, value *Value) (bool, *Value) {
-	if value.BuiltInTypeId == BoolId {
-		return value.Bool, nil
-	}
-	valueToBool, getError := value.Get(p, context, ToBool)
-	if getError != nil {
-		return false, getError
-	}
-	valueBool, success := p.CallFunction(context, valueToBool)
-	if !success {
-		return false, valueBool
-	}
-	if !valueBool.IsTypeById(BoolId) {
-		return false, p.NewInvalidTypeError(context, value.TypeName(), BoolName)
-	}
-	return valueBool.Bool, nil
+import magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
+
+func (plasma *Plasma) boolClass() *Value {
+	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
+	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
+		return plasma.NewBool(argument[0].Bool()), nil
+	}))
+	return class
 }
 
-func (p *Plasma) NewBool(context *Context, isBuiltIn bool, value bool) *Value {
-	bool_ := p.NewValue(context, isBuiltIn, BoolName, nil, context.PeekSymbolTable())
-	bool_.BuiltInTypeId = BoolId
-	bool_.Bool = value
-	p.BoolInitialize(isBuiltIn)(context, bool_)
-	bool_.SetOnDemandSymbol(Self,
-		func() *Value {
-			return bool_
+/*
+NewBool magic function:
+Not                 __not__
+And                 __and__
+Or                  __or__
+Xor                 __xor__
+Equal              __equal__
+NotEqual            __not_equal__
+Bool                __bool__
+String              __string__
+Int                 __int__
+Float               __float__
+Bytes               __bytes__
+Copy                __copy__
+*/
+func (plasma *Plasma) NewBool(b bool) *Value {
+	if b && plasma.true != nil {
+		return plasma.true
+	} else if !b && plasma.false != nil {
+		return plasma.false
+	}
+	result := plasma.NewValue(plasma.rootSymbols, BoolId, plasma.bool)
+	result.SetAny(b)
+	result.Set(magic_functions.Not, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewBool(!result.GetBool()), nil
 		},
-	)
-	return bool_
-}
-
-func (p *Plasma) GetFalse() *Value {
-	return p.ForceMasterGetAny(FalseName)
-}
-
-func (p *Plasma) GetTrue() *Value {
-	return p.ForceMasterGetAny(TrueName)
-}
-
-func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(context *Context, object *Value) *Value {
-		object.SetOnDemandSymbol(Equals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							if !right.IsTypeById(BoolId) {
-								return p.GetFalse(), true
-							}
-							return p.InterpretAsBool(self.Bool == right.Bool), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightEquals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							if !left.IsTypeById(BoolId) {
-								return p.GetFalse(), true
-							}
-							return p.InterpretAsBool(left.Bool == self.Bool), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(NotEquals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							right := arguments[0]
-							if right.BuiltInTypeId != BoolId {
-								return p.GetFalse(), true
-							}
-							return p.InterpretAsBool(self.Bool != right.Bool), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(RightNotEquals,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							left := arguments[0]
-							if left.BuiltInTypeId != BoolId {
-								return p.GetFalse(), true
-							}
-							return p.InterpretAsBool(left.Bool != self.Bool), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Copy,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.InterpretAsBool(self.Bool), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(Hash,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							if self.Bool {
-								return p.NewInteger(context, false, 1), true
-							}
-							return p.NewInteger(context, false, 0), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToInteger,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							if self.Bool {
-								return p.NewInteger(context, false, 1), true
-							}
-							return p.NewInteger(context, false, 0), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToFloat,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							if self.Bool {
-								return p.NewFloat(context, false, 1), true
-							}
-							return p.NewFloat(context, false, 0), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToString,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							if self.Bool {
-								return p.NewString(context, false, TrueName), true
-							}
-							return p.NewString(context, false, FalseName), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(ToBool,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.InterpretAsBool(self.Bool), true
-						},
-					),
-				)
-			},
-		)
-		return nil
-	}
+	))
+	result.Set(magic_functions.Equal, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case BoolId:
+				return plasma.NewBool(result.GetBool() == argument[0].GetBool()), nil
+			}
+			return plasma.false, nil
+		},
+	))
+	result.Set(magic_functions.NotEqual, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case BoolId:
+				return plasma.NewBool(result.GetBool() != argument[0].GetBool()), nil
+			}
+			return plasma.true, nil
+		},
+	))
+	result.Set(magic_functions.Bool, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return result, nil
+		},
+	))
+	result.Set(magic_functions.String, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewString([]byte(result.String())), nil
+		},
+	))
+	result.Set(magic_functions.Int, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			if result.GetBool() {
+				return plasma.NewInt(1), nil
+			}
+			return plasma.NewInt(0), nil
+		},
+	))
+	result.Set(magic_functions.Float, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			if result.GetBool() {
+				return plasma.NewFloat(1), nil
+			}
+			return plasma.NewFloat(0), nil
+		},
+	))
+	result.Set(magic_functions.Bytes, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewBytes([]byte(result.String())), nil
+		},
+	))
+	result.Set(magic_functions.Copy, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return result, nil
+		},
+	))
+	return result
 }
