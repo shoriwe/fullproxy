@@ -7,7 +7,7 @@ def no_localhost(address)
     return True
 end
 
-SetInbound(no_localhost)
-SetOutbound(no_localhost)
-SetListen(no_localhost)
-SetAccept(no_localhost)
+set_inbound(no_localhost)
+set_outbound(no_localhost)
+set_listen(no_localhost)
+set_accept(no_localhost)

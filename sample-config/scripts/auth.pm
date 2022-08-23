@@ -5,4 +5,4 @@ def basic_login(username, password)
     return False
 end
 
-SetAuth(basic_login)
+set_auth(basic_login)

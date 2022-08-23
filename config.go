@@ -234,16 +234,16 @@ func (r *runner) loadSniffers(incoming, outgoing string) (i io.WriteCloser, o io
 func (r *runner) loadFilters(filters Filters) listeners.Filters {
 	listenerFilter := &filter{}
 	if f, found := r.drivers[filters.Inbound]; found {
-		listenerFilter.inbound = f.inbound
+		listenerFilter.inbound = f.Inbound
 	}
 	if f, found := r.drivers[filters.Outbound]; found {
-		listenerFilter.outbound = f.outbound
+		listenerFilter.outbound = f.Outbound
 	}
 	if f, found := r.drivers[filters.Listen]; found {
-		listenerFilter.listen = f.listen
+		listenerFilter.listen = f.Listen
 	}
 	if f, found := r.drivers[filters.Accept]; found {
-		listenerFilter.accept = f.accept
+		listenerFilter.accept = f.Accept
 	}
 	return listenerFilter
 }
@@ -338,8 +338,8 @@ func (r *runner) startConfig(c YAML) {
 	)
 	log.Print("Loading drivers")
 	r.drivers = map[string]*Driver{}
-	for name, script := range c.Drivers {
-		r.drivers[name], err = loadDriver(script)
+	for name, scriptCode := range c.Drivers {
+		r.drivers[name], err = r.loadDriver(scriptCode)
 		if err != nil {
 			printAndExit(err.Error(), 1)
 		}

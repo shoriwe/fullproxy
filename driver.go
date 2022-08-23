@@ -2,10 +2,10 @@ package main
 
 import (
 	"errors"
-	"github.com/shoriwe/gplasma"
+	"github.com/shoriwe/gplasma/pkg/ast3"
+	"github.com/shoriwe/gplasma/pkg/bytecode/assembler"
 	"github.com/shoriwe/gplasma/pkg/vm"
 	"os"
-	"sync"
 )
 
 var (
@@ -15,6 +15,124 @@ var (
 	permissionDeniedListen   = errors.New("permission denied for listen address")
 	permissionDeniedAccept   = errors.New("permission denied for accepted client")
 )
+
+func authScript(username, password []byte) []byte {
+	bytecode, _ := assembler.Assemble(
+		ast3.Program{
+			ast3.Call{
+				Function: &ast3.Selector{
+					X: &ast3.Identifier{
+						Symbol: "-driver",
+					},
+					Identifier: &ast3.Identifier{
+						Symbol: "-auth",
+					},
+				},
+				Arguments: []ast3.Expression{
+					&ast3.String{
+						Contents: username,
+					},
+					&ast3.String{
+						Contents: password,
+					},
+				},
+			},
+		},
+	)
+	return bytecode
+}
+
+func inboundScript(address []byte) []byte {
+	bytecode, _ := assembler.Assemble(
+		ast3.Program{
+			ast3.Call{
+				Function: &ast3.Selector{
+					X: &ast3.Identifier{
+						Symbol: "-driver",
+					},
+					Identifier: &ast3.Identifier{
+						Symbol: "-inbound",
+					},
+				},
+				Arguments: []ast3.Expression{
+					&ast3.String{
+						Contents: address,
+					},
+				},
+			},
+		},
+	)
+	return bytecode
+}
+
+func outboundScript(address []byte) []byte {
+	bytecode, _ := assembler.Assemble(
+		ast3.Program{
+			ast3.Call{
+				Function: &ast3.Selector{
+					X: &ast3.Identifier{
+						Symbol: "-driver",
+					},
+					Identifier: &ast3.Identifier{
+						Symbol: "-outbound",
+					},
+				},
+				Arguments: []ast3.Expression{
+					&ast3.String{
+						Contents: address,
+					},
+				},
+			},
+		},
+	)
+	return bytecode
+}
+
+func listenScript(address []byte) []byte {
+	bytecode, _ := assembler.Assemble(
+		ast3.Program{
+			ast3.Call{
+				Function: &ast3.Selector{
+					X: &ast3.Identifier{
+						Symbol: "-driver",
+					},
+					Identifier: &ast3.Identifier{
+						Symbol: "-listen",
+					},
+				},
+				Arguments: []ast3.Expression{
+					&ast3.String{
+						Contents: address,
+					},
+				},
+			},
+		},
+	)
+	return bytecode
+}
+
+func acceptScript(address []byte) []byte {
+	bytecode, _ := assembler.Assemble(
+		ast3.Program{
+			ast3.Call{
+				Function: &ast3.Selector{
+					X: &ast3.Identifier{
+						Symbol: "-driver",
+					},
+					Identifier: &ast3.Identifier{
+						Symbol: "-accept",
+					},
+				},
+				Arguments: []ast3.Expression{
+					&ast3.String{
+						Contents: address,
+					},
+				},
+			},
+		},
+	)
+	return bytecode
+}
 
 type filter struct {
 	inbound  func(string) error
@@ -52,204 +170,150 @@ func (f *filter) Accept(address string) error {
 }
 
 type Driver struct {
-	mutex    *sync.Mutex
-	auth     func(string, string) error
-	inbound  func(string) error
-	outbound func(string) error
-	listen   func(string) error
-	accept   func(string) error
+	plasma *vm.Plasma
 }
 
 func (d *Driver) Auth(username, password []byte) error {
-	if d.auth == nil {
-		return nil
+	bytecode := authScript(username, password)
+	resultChannel, errorChannel, _ := d.plasma.Execute(bytecode)
+	if err := <-errorChannel; err != nil {
+		return err
 	}
-	return d.auth(string(username), string(password))
+	result := <-resultChannel
+	if !result.Bool() {
+		return authenticationFailed
+	}
+	return nil
 }
 
 func (d *Driver) Inbound(address string) error {
-	if d.inbound == nil {
-		return nil
+	bytecode := inboundScript([]byte(address))
+	resultChannel, errorChannel, _ := d.plasma.Execute(bytecode)
+	if err := <-errorChannel; err != nil {
+		return err
 	}
-	return d.inbound(address)
+	result := <-resultChannel
+	if !result.Bool() {
+		return permissionDeniedInbound
+	}
+	return nil
 }
 
 func (d *Driver) Outbound(address string) error {
-	if d.outbound == nil {
-		return nil
+	bytecode := outboundScript([]byte(address))
+	resultChannel, errorChannel, _ := d.plasma.Execute(bytecode)
+	if err := <-errorChannel; err != nil {
+		return err
 	}
-	return d.outbound(address)
+	result := <-resultChannel
+	if !result.Bool() {
+		return permissionDeniedOutbound
+	}
+	return nil
 }
 
 func (d *Driver) Listen(address string) error {
-	if d.listen == nil {
-		return nil
+	bytecode := listenScript([]byte(address))
+	resultChannel, errorChannel, _ := d.plasma.Execute(bytecode)
+	if err := <-errorChannel; err != nil {
+		return err
 	}
-	return d.listen(address)
+	result := <-resultChannel
+	if !result.Bool() {
+		return permissionDeniedListen
+	}
+	return nil
 }
 
 func (d *Driver) Accept(address string) error {
-	if d.accept == nil {
-		return nil
+	bytecode := acceptScript([]byte(address))
+	resultChannel, errorChannel, _ := d.plasma.Execute(bytecode)
+	if err := <-errorChannel; err != nil {
+		return err
 	}
-	return d.accept(address)
+	result := <-resultChannel
+	if !result.Bool() {
+		return permissionDeniedAccept
+	}
+	return nil
 }
 
-func interpretAsString(v *vm.Value, ctx *vm.Context, p *vm.Plasma) string {
-	if v.IsTypeById(vm.StringId) {
-		return v.String
-	}
-	toString, getToStringException := v.Get(p, ctx, "ToString")
-	if getToStringException != nil {
-		return "Failed to get ToString of object"
-	}
-	result, succeed := p.CallFunction(ctx, toString)
-	if !succeed {
-		return "Failed to call ToString"
-	}
-	return result.String
-}
-
-func (d *Driver) feature() vm.Feature {
-	return vm.Feature{
-		"SetAuth": func(context *vm.Context, plasma *vm.Plasma) *vm.Value {
-			return plasma.NewFunction(
-				context, true, context.PeekSymbolTable(),
-				vm.NewBuiltInFunction(1,
-					func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
-						d.auth = func(username string, password string) error {
-							d.mutex.Lock()
-							defer d.mutex.Unlock()
-							result, succeed := plasma.CallFunction(context, arguments[0],
-								plasma.NewString(context, false, username),
-								plasma.NewString(context, false, password),
-							)
-							if !succeed {
-								return errors.New(interpretAsString(result, context, plasma))
-							}
-							if result.Bool {
-								return nil
-							}
-							return authenticationFailed
-						}
-						return plasma.GetNone(), true
-					},
-				),
-			)
-		},
-		"SetInbound": func(context *vm.Context, plasma *vm.Plasma) *vm.Value {
-			return plasma.NewFunction(
-				context, true, context.PeekSymbolTable(),
-				vm.NewBuiltInFunction(1,
-					func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
-						d.inbound = func(address string) error {
-							d.mutex.Lock()
-							defer d.mutex.Unlock()
-							result, succeed := plasma.CallFunction(context, arguments[0],
-								plasma.NewString(context, false, address),
-							)
-							if !succeed {
-								return errors.New(interpretAsString(result, context, plasma))
-							}
-							if result.Bool {
-								return nil
-							}
-							return permissionDeniedInbound
-						}
-						return plasma.GetNone(), true
-					},
-				),
-			)
-		},
-		"SetOutbound": func(context *vm.Context, plasma *vm.Plasma) *vm.Value {
-			return plasma.NewFunction(
-				context, true, context.PeekSymbolTable(),
-				vm.NewBuiltInFunction(1,
-					func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
-						d.outbound = func(address string) error {
-							d.mutex.Lock()
-							defer d.mutex.Unlock()
-							result, succeed := plasma.CallFunction(context, arguments[0],
-								plasma.NewString(context, false, address),
-							)
-							if !succeed {
-								return errors.New(interpretAsString(result, context, plasma))
-							}
-							if result.Bool {
-								return nil
-							}
-							return permissionDeniedOutbound
-						}
-						return plasma.GetNone(), true
-					},
-				),
-			)
-		},
-		"SetListen": func(context *vm.Context, plasma *vm.Plasma) *vm.Value {
-			return plasma.NewFunction(
-				context, true, context.PeekSymbolTable(),
-				vm.NewBuiltInFunction(1,
-					func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
-						d.listen = func(address string) error {
-							d.mutex.Lock()
-							defer d.mutex.Unlock()
-							result, succeed := plasma.CallFunction(context, arguments[0],
-								plasma.NewString(context, false, address),
-							)
-							if !succeed {
-								return errors.New(interpretAsString(result, context, plasma))
-							}
-							if result.Bool {
-								return nil
-							}
-							return permissionDeniedListen
-						}
-						return plasma.GetNone(), true
-					},
-				),
-			)
-		},
-		"SetAccept": func(context *vm.Context, plasma *vm.Plasma) *vm.Value {
-			return plasma.NewFunction(
-				context, true, context.PeekSymbolTable(),
-				vm.NewBuiltInFunction(1,
-					func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
-						d.accept = func(address string) error {
-							d.mutex.Lock()
-							defer d.mutex.Unlock()
-							result, succeed := plasma.CallFunction(context, arguments[0],
-								plasma.NewString(context, false, address),
-							)
-							if !succeed {
-								return errors.New(interpretAsString(result, context, plasma))
-							}
-							if result.Bool {
-								return nil
-							}
-							return permissionDeniedAccept
-						}
-						return plasma.GetNone(), true
-					},
-				),
-			)
-		},
-	}
-}
-
-func loadDriver(script string) (*Driver, error) {
+func (r *runner) loadDriver(script string) (*Driver, error) {
 	d := &Driver{
-		mutex: &sync.Mutex{},
+		plasma: initializeVM(),
 	}
-	v := gplasma.NewVirtualMachine()
-	v.LoadFeature(d.feature())
+	// Setup the names used by the script
+	_, errorChannel, _ := d.plasma.ExecuteString(script)
+	//
 
-	scriptContents, readError := os.ReadFile(script)
-	if readError != nil {
-		return nil, readError
-	}
-	_, succeed := v.ExecuteMain(string(scriptContents))
-	if !succeed {
+	if err := <-errorChannel; err != nil {
 		return nil, errors.New("driver script execution error")
 	}
 	return d, nil
+}
+
+func initializeVM() *vm.Plasma {
+	plasma := vm.NewVM(os.Stdin, os.Stdout, os.Stderr)
+	plasma.Load("-driver", func(_ *vm.Plasma) *vm.Value { return plasma.None() })
+	plasma.Load("set_auth",
+		func(p *vm.Plasma) *vm.Value {
+			return p.NewBuiltInFunction(
+				p.Symbols(),
+				func(argument ...*vm.Value) (*vm.Value, error) {
+					driver, _ := p.Symbols().Get("-driver")
+					driver.Set("-auth", argument[0])
+					return p.None(), nil
+				},
+			)
+		},
+	)
+	plasma.Load("set_inbound",
+		func(p *vm.Plasma) *vm.Value {
+			return p.NewBuiltInFunction(
+				p.Symbols(),
+				func(argument ...*vm.Value) (*vm.Value, error) {
+					driver, _ := p.Symbols().Get("-driver")
+					driver.Set("-inbound", argument[0])
+					return p.None(), nil
+				},
+			)
+		},
+	)
+	plasma.Load("set_outbound",
+		func(p *vm.Plasma) *vm.Value {
+			return p.NewBuiltInFunction(
+				p.Symbols(),
+				func(argument ...*vm.Value) (*vm.Value, error) {
+					driver, _ := p.Symbols().Get("-driver")
+					driver.Set("-outbound", argument[0])
+					return p.None(), nil
+				},
+			)
+		},
+	)
+	plasma.Load("set_listen",
+		func(p *vm.Plasma) *vm.Value {
+			return p.NewBuiltInFunction(
+				p.Symbols(),
+				func(argument ...*vm.Value) (*vm.Value, error) {
+					driver, _ := p.Symbols().Get("-driver")
+					driver.Set("-listen", argument[0])
+					return p.None(), nil
+				},
+			)
+		},
+	)
+	plasma.Load("set_accept",
+		func(p *vm.Plasma) *vm.Value {
+			return p.NewBuiltInFunction(
+				p.Symbols(),
+				func(argument ...*vm.Value) (*vm.Value, error) {
+					driver, _ := p.Symbols().Get("-driver")
+					driver.Set("-accept", argument[0])
+					return p.None(), nil
+				},
+			)
+		},
+	)
+	return plasma
 }
