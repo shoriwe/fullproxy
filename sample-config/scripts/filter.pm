@@ -1,10 +1,10 @@
 def no_localhost(address)
     if "127.0.0.1" in address
-        return False
+        return false
     elif "localhost" in address
         return false
     end
-    return True
+    return true
 end
 
 set_inbound(no_localhost)

@@ -7,6 +7,8 @@ github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/rogpeppe/go-charset v0.0.0-20180617210344-2471d30d28b4/go.mod h1:qgYeAmZ5ZIpBWTGllZSQnw97Dj+woV0toclVaRGI8pc=
 github.com/shoriwe/gplasma v1.0.1 h1:q4peogYDCTSWrSKWNP8+OLvmDWMdEeS7wsT3hF69EOc=
 github.com/shoriwe/gplasma v1.0.1/go.mod h1:f9gs3jQQMWvY+XCbKe1oB7xpiJSuU5FjKQvP9aNs2Ko=
+github.com/shoriwe/gplasma v1.0.2 h1:M3+Q6WzYjxVwoCpq6mZWpufLV42SB88ViSFnzC3h4QE=
+github.com/shoriwe/gplasma v1.0.2/go.mod h1:f9gs3jQQMWvY+XCbKe1oB7xpiJSuU5FjKQvP9aNs2Ko=
 golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 h1:HWj/xjIHfjYU5nVXpTM0s39J9CbLn7Cc5a7IC5rwsMQ=
 golang.org/x/crypto v0.0.0-20210817164053-32db794688a5/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/net v0.0.0-20210908191846-a5e095526f91 h1:E8wdt+zBjoxD3MA65wEc3pl25BsTi7tbkpwc4ANThjc=

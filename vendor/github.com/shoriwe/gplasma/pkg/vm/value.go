@@ -151,7 +151,7 @@ func (value *Value) Get(symbol string) (*Value, error) {
 	defer value.mutex.Unlock()
 	onDemand, found := value.onDemand[symbol]
 	if !found {
-		return nil, SymbolNotFoundError
+		return nil, fmt.Errorf(SymbolNotFoundError, symbol)
 	}
 	result = onDemand(value)
 	value.vtable.Set(symbol, result)

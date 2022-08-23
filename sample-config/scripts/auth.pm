@@ -1,8 +1,8 @@
 def basic_login(username, password)
     if username == "sulcud" and password == "password"
-        return True
+        return true
     end
-    return False
+    return false
 end
 
 set_auth(basic_login)

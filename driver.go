@@ -19,7 +19,7 @@ var (
 func authScript(username, password []byte) []byte {
 	bytecode, _ := assembler.Assemble(
 		ast3.Program{
-			ast3.Call{
+			&ast3.Call{
 				Function: &ast3.Selector{
 					X: &ast3.Identifier{
 						Symbol: "-driver",
@@ -45,7 +45,7 @@ func authScript(username, password []byte) []byte {
 func inboundScript(address []byte) []byte {
 	bytecode, _ := assembler.Assemble(
 		ast3.Program{
-			ast3.Call{
+			&ast3.Call{
 				Function: &ast3.Selector{
 					X: &ast3.Identifier{
 						Symbol: "-driver",
@@ -68,7 +68,7 @@ func inboundScript(address []byte) []byte {
 func outboundScript(address []byte) []byte {
 	bytecode, _ := assembler.Assemble(
 		ast3.Program{
-			ast3.Call{
+			&ast3.Call{
 				Function: &ast3.Selector{
 					X: &ast3.Identifier{
 						Symbol: "-driver",
@@ -91,7 +91,7 @@ func outboundScript(address []byte) []byte {
 func listenScript(address []byte) []byte {
 	bytecode, _ := assembler.Assemble(
 		ast3.Program{
-			ast3.Call{
+			&ast3.Call{
 				Function: &ast3.Selector{
 					X: &ast3.Identifier{
 						Symbol: "-driver",
@@ -114,7 +114,7 @@ func listenScript(address []byte) []byte {
 func acceptScript(address []byte) []byte {
 	bytecode, _ := assembler.Assemble(
 		ast3.Program{
-			ast3.Call{
+			&ast3.Call{
 				Function: &ast3.Selector{
 					X: &ast3.Identifier{
 						Symbol: "-driver",
@@ -238,23 +238,27 @@ func (d *Driver) Accept(address string) error {
 	return nil
 }
 
-func (r *runner) loadDriver(script string) (*Driver, error) {
+func (r *runner) loadDriver(scriptPath string) (*Driver, error) {
+	scriptContents, readError := os.ReadFile(scriptPath)
+	if readError != nil {
+		return nil, readError
+	}
 	d := &Driver{
 		plasma: initializeVM(),
 	}
 	// Setup the names used by the script
-	_, errorChannel, _ := d.plasma.ExecuteString(script)
+	_, errorChannel, _ := d.plasma.ExecuteString(string(scriptContents))
 	//
 
 	if err := <-errorChannel; err != nil {
-		return nil, errors.New("driver script execution error")
+		return nil, err
 	}
 	return d, nil
 }
 
 func initializeVM() *vm.Plasma {
 	plasma := vm.NewVM(os.Stdin, os.Stdout, os.Stderr)
-	plasma.Load("-driver", func(_ *vm.Plasma) *vm.Value { return plasma.None() })
+	plasma.Load("-driver", func(_ *vm.Plasma) *vm.Value { return plasma.Value() })
 	plasma.Load("set_auth",
 		func(p *vm.Plasma) *vm.Value {
 			return p.NewBuiltInFunction(

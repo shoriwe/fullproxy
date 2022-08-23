@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/gorilla/websocket v1.5.0
-	github.com/shoriwe/gplasma v1.0.1
+	github.com/shoriwe/gplasma v1.0.2
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/net v0.0.0-20210908191846-a5e095526f91
 	gopkg.in/elazarl/goproxy.v1 v1.0.0-20180725130230-947c36da3153

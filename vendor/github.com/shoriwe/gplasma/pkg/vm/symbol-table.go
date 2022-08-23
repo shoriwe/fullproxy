@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	SymbolNotFoundError = fmt.Errorf("symbol not found")
+	SymbolNotFoundError = "symbol not found: %s"
 )
 
 type (
@@ -50,7 +50,7 @@ func (symbols *Symbols) Get(name string) (*Value, error) {
 			return value, nil
 		}
 	}
-	return nil, SymbolNotFoundError
+	return nil, fmt.Errorf(SymbolNotFoundError, name)
 }
 
 func (symbols *Symbols) Del(name string) error {
@@ -58,7 +58,7 @@ func (symbols *Symbols) Del(name string) error {
 	defer symbols.mutex.Unlock()
 	_, found := symbols.values[name]
 	if !found {
-		return SymbolNotFoundError
+		return fmt.Errorf(SymbolNotFoundError, name)
 	}
 	delete(symbols.values, name)
 	return nil
