@@ -1,6 +1,6 @@
 # fullproxy
 
-![build](https://img.shields.io/badge/build-passing-green)
+[![Build](https://github.com/shoriwe/fullproxy/actions/workflows/build.yml/badge.svg)](https://github.com/shoriwe/fullproxy/actions/workflows/build.yml)
 [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/avelino/awesome-go)
 [![made-with-Go](https://img.shields.io/badge/Made%20with-Go-1f425f.svg)](http://golang.org)
 [![GitHub go.mod Go version of a Go module](https://img.shields.io/github/go-mod/go-version/gomods/athens.svg)](https://github.com/shoriwe/fullproxy)
