@@ -1,7 +1,8 @@
-package listeners
+package reverse
 
 import (
-	"crypto/tls"
+	"encoding/gob"
+	"fmt"
 	"net"
 
 	"github.com/hashicorp/yamux"
@@ -24,27 +25,44 @@ func (m *Master) init() error {
 	return err
 }
 
-func (m *Master) Accept() (net.Conn, error) {
-	session, sErr := m.cSession.Open()
+func (m *Master) Dial(_, addr string) (net.Conn, error) {
+	stream, sErr := m.cSession.Open()
 	if sErr != nil {
 		return nil, sErr
 	}
-	ses
+	eErr := gob.NewEncoder(stream).Encode(addr)
+	if eErr != nil {
+		stream.Close()
+		return nil, eErr
+	}
+	var response Response
+	dErr := gob.NewDecoder(stream).Decode(&response)
+	if dErr != nil {
+		stream.Close()
+		return nil, dErr
+	}
+	if response.Succeed {
+		return stream, nil
+	}
+	stream.Close()
+	return nil, fmt.Errorf(response.Message)
 }
 
-func NewMaster(addr, cAddr string, cConfig *tls.Config) (net.Listener, error) {
-	l, lErr := net.Listen("tcp", addr)
-	if lErr != nil {
-		return nil, lErr
-	}
-	cl, clErr := tls.Listen("tcp", cAddr, cConfig)
-	if clErr != nil {
-		return nil, clErr
-	}
+func (m *Master) Accept() (net.Conn, error) {
+	return m.listener.Accept()
+}
+
+func (m *Master) Close() {
+	m.listener.Close()
+	m.cConn.Close()
+	m.cListener.Close()
+}
+
+func NewMaster(listener, controlListener net.Listener) (*Master, error) {
 	m := &Master{
-		listener:  l,
-		cListener: cl,
+		listener:  listener,
+		cListener: controlListener,
 	}
-	m.init()
-	return m, nil
+	iErr := m.init()
+	return m, iErr
 }
