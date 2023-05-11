@@ -1,7 +1,4 @@
 .idea/*
-build/*
-tests/*
-debug/venv/*
-debug/.idea/*
-logs/*.log
-logs/*.sniff
+coverage
+coverage.txt
+coverage.html
