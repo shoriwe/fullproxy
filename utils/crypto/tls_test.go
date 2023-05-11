@@ -18,6 +18,7 @@ func TestDefaultTLSConfig(t *testing.T) {
 		l = tls.NewListener(l, DefaultTLSConfig())
 		go func() {
 			conn := network.Dial(l.Addr().String())
+			defer conn.Close()
 			conn = tls.Client(conn, DefaultTLSConfig())
 			_, wErr := conn.Write([]byte(testMessage))
 			assert.Nil(tt, wErr)
@@ -25,6 +26,7 @@ func TestDefaultTLSConfig(t *testing.T) {
 		}()
 		conn, aErr := l.Accept()
 		assert.Nil(tt, aErr)
+		defer conn.Close()
 		buffer := make([]byte, len(testMessage))
 		_, rErr := conn.Read(buffer)
 		assert.Nil(tt, rErr)
