@@ -12,17 +12,23 @@ type Listener struct {
 }
 
 func (l *Listener) Listen() (net.Listener, error) {
-	ls, lErr := net.Listen(l.Network, l.Address)
-	if lErr != nil {
-		return nil, lErr
-	}
 	if l.TLS == nil {
-		return ls, nil
+		return net.Listen(l.Network, l.Address)
 	}
 	config, cErr := l.TLS.Config()
 	if cErr != nil {
-		ls.Close()
 		return nil, cErr
 	}
-	return tls.NewListener(ls, config), nil
+	return tls.Listen(l.Network, l.Address, config)
+}
+
+func (l *Listener) Dial() (net.Conn, error) {
+	if l.TLS == nil {
+		return net.Dial(l.Network, l.Address)
+	}
+	config, cErr := l.TLS.Config()
+	if cErr != nil {
+		return nil, cErr
+	}
+	return tls.Dial(l.Network, l.Address, config)
 }
