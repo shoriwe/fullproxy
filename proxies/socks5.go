@@ -13,6 +13,14 @@ type Socks5 struct {
 	AuthMethods []socks5.Authenticator
 }
 
+func (s *Socks5) Addr() net.Addr {
+	return s.Listener.Addr()
+}
+
+func (s *Socks5) Close() {
+	s.Listener.Close()
+}
+
 func (s *Socks5) Serve() error {
 	server := socks5.NewServer(
 		socks5.WithDial(func(ctx context.Context, network, addr string) (net.Conn, error) {
