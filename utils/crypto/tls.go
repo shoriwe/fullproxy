@@ -16,8 +16,12 @@ func DefaultTLSConfig() *tls.Config {
 	if err != nil {
 		log.Panicf("Failed to generate private key: %v", err)
 	}
+	sN, sNErr := rand.Int(rand.Reader, big.NewInt(0xFF_FF_FF_FF_FF_FF_FF))
+	if sNErr != nil {
+		log.Panicf("invalid serial number %v", sNErr)
+	}
 	template := &x509.Certificate{
-		SerialNumber:          big.NewInt(1),
+		SerialNumber:          sN,
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(120, 0, 0),
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
