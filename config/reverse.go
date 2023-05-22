@@ -1,8 +1,6 @@
 package config
 
 import (
-	"net"
-
 	"github.com/shoriwe/fullproxy/v3/reverse"
 )
 
@@ -11,12 +9,12 @@ type Reverse struct {
 	Controller Listener  `yaml:"controller"`
 }
 
-func (r *Reverse) Master() (net.Listener, error) {
+func (r *Reverse) Master() (*reverse.Master, error) {
 	l, lErr := r.Listener.Listen()
 	if lErr != nil {
 		return nil, lErr
 	}
-	cl, clErr := r.Listener.Listen()
+	cl, clErr := r.Controller.Listen()
 	if clErr != nil {
 		l.Close()
 		return nil, clErr
