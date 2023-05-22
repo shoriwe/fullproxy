@@ -9,7 +9,7 @@ import (
 )
 
 type Master struct {
-	listener  net.Listener
+	net.Listener
 	cListener net.Listener   // Control listener
 	cConn     net.Conn       // Control connection
 	cSession  *yamux.Session // Control session
@@ -49,18 +49,19 @@ func (m *Master) Dial(_, addr string) (net.Conn, error) {
 }
 
 func (m *Master) Accept() (net.Conn, error) {
-	return m.listener.Accept()
+	return m.Listener.Accept()
 }
 
-func (m *Master) Close() {
-	m.listener.Close()
+func (m *Master) Close() error {
+	m.Listener.Close()
 	m.cConn.Close()
 	m.cListener.Close()
+	return nil
 }
 
 func NewMaster(listener, controlListener net.Listener) (*Master, error) {
 	m := &Master{
-		listener:  listener,
+		Listener:  listener,
 		cListener: controlListener,
 	}
 	iErr := m.init()
