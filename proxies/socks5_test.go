@@ -11,6 +11,17 @@ import (
 	"golang.org/x/net/proxy"
 )
 
+func TestSocks5_Addr(t *testing.T) {
+	l := network.ListenAny()
+	defer l.Close()
+	s := Socks5{
+		Listener: l,
+		Dial:     net.Dial,
+	}
+	defer s.Close()
+	assert.NotNil(t, s.Addr())
+}
+
 func TestSocks5_Listener(t *testing.T) {
 	l := network.ListenAny()
 	defer l.Close()
