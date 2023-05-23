@@ -48,7 +48,7 @@ func TestMaster_Accept(t *testing.T) {
 			slave, err := NewSlave(slaveConn)
 			assert.Nil(tt, err)
 			defer slave.Close()
-			slave.Handle()
+			go slave.Handle()
 			<-doneChan
 		}()
 		master, mErr := NewMaster(listener, controlListener)
@@ -90,7 +90,7 @@ func TestMaster_Dial(t *testing.T) {
 			slave, err := NewSlave(slaveConn)
 			assert.Nil(tt, err)
 			defer slave.Close()
-			slave.Handle()
+			go slave.Handle()
 			<-doneChan
 		}()
 		master, mErr := NewMaster(listener, controlListener)
