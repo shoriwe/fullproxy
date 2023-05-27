@@ -3,8 +3,9 @@ package reverse
 type Action byte
 
 const (
-	Accept Action = 1 + iota
+	Accept Action = iota
 	Dial
+	Invalid
 )
 
 type Request struct {
