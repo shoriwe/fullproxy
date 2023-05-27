@@ -2,72 +2,78 @@ package reverse
 
 import (
 	"encoding/gob"
-	"fmt"
 	"net"
 
 	"github.com/hashicorp/yamux"
 )
 
 type Master struct {
-	net.Listener
-	cListener net.Listener   // Control listener
-	cConn     net.Conn       // Control connection
-	cSession  *yamux.Session // Control session
+	Data        net.Listener
+	Control     net.Listener   // Control listener
+	Slave       net.Conn       // Slave connection
+	cSession    *yamux.Session // Control session
+	initialized bool
 }
 
-func (m *Master) init() error {
-	var err error
-	m.cConn, err = m.cListener.Accept()
-	if err != nil {
-		return err
+func (m *Master) init() (err error) {
+	if !m.initialized {
+		m.Slave, err = m.Control.Accept()
+		if err == nil {
+			m.cSession, err = yamux.Client(m.Slave, yamux.DefaultConfig())
+			m.initialized = err == nil
+		}
 	}
-	m.cSession, err = yamux.Client(m.cConn, yamux.DefaultConfig())
 	return err
 }
 
-func (m *Master) Dial(network, addr string) (net.Conn, error) {
-	stream, sErr := m.cSession.Open()
-	if sErr != nil {
-		return nil, sErr
+func (m *Master) handle(req *Request) (conn net.Conn, err error) {
+	defer func() {
+		if err != nil && conn != nil {
+			conn.Close()
+		}
+	}()
+	err = m.init()
+	if err == nil {
+		conn, err = m.cSession.Open()
+		if err == nil {
+			err = gob.NewEncoder(conn).Encode(req)
+			if err == nil {
+				var response Response
+				err = gob.NewDecoder(conn).Decode(&response)
+				if err == nil {
+					err = response.Message
+				}
+			}
+		}
 	}
-	eErr := gob.NewEncoder(stream).Encode(Request{
+	return conn, err
+}
+
+func (m *Master) SlaveAccept() (net.Conn, error) {
+	req := Request{
+		Action: Accept,
+	}
+	return m.handle(&req)
+}
+
+func (m *Master) SlaveDial(network, addr string) (net.Conn, error) {
+	req := Request{
 		Action:  Dial,
 		Network: network,
 		Address: addr,
-	})
-	if eErr != nil {
-		stream.Close()
-		return nil, eErr
 	}
-	var response Response
-	dErr := gob.NewDecoder(stream).Decode(&response)
-	if dErr != nil {
-		stream.Close()
-		return nil, dErr
-	}
-	if response.Succeed {
-		return stream, nil
-	}
-	stream.Close()
-	return nil, fmt.Errorf(response.Message)
+	return m.handle(&req)
 }
 
 func (m *Master) Accept() (net.Conn, error) {
-	return m.Listener.Accept()
+	return m.Data.Accept()
 }
 
 func (m *Master) Close() error {
-	m.Listener.Close()
-	m.cConn.Close()
-	m.cListener.Close()
-	return nil
-}
-
-func NewMaster(listener, controlListener net.Listener) (*Master, error) {
-	m := &Master{
-		Listener:  listener,
-		cListener: controlListener,
+	m.Data.Close()
+	m.Control.Close()
+	if m.Slave != nil {
+		m.Slave.Close()
 	}
-	iErr := m.init()
-	return m, iErr
+	return nil
 }

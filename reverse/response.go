@@ -15,16 +15,15 @@ type Request struct {
 
 type Response struct {
 	Succeed bool
-	Message string
+	Message error
 }
 
 func FailResponse(err error) Response {
-	return Response{Succeed: false, Message: err.Error()}
+	return Response{Succeed: false, Message: err}
 }
 
 var (
 	SucceedResponse = Response{
 		Succeed: true,
-		Message: "Succeed",
 	}
 )

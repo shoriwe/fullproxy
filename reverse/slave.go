@@ -12,17 +12,15 @@ import (
 type Slave struct {
 	initialized bool
 	Listener    net.Listener   // Optional listener
-	Control     net.Conn       // Control channel
+	Master      net.Conn       // Master connection
 	Data        *yamux.Session // Data channel
 }
 
-func (s *Slave) init() error {
-	if s.initialized {
-		return nil
+func (s *Slave) init() (err error) {
+	if !s.initialized {
+		s.Data, err = yamux.Server(s.Master, yamux.DefaultConfig())
+		s.initialized = err == nil
 	}
-	var err error
-	s.Data, err = yamux.Server(s.Control, yamux.DefaultConfig())
-	s.initialized = true
 	return err
 }
 
@@ -80,5 +78,5 @@ func (s *Slave) Serve() error {
 	}
 }
 func (s *Slave) Close() {
-	s.Control.Close()
+	s.Master.Close()
 }
