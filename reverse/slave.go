@@ -2,6 +2,7 @@ package reverse
 
 import (
 	"encoding/gob"
+	"fmt"
 	"io"
 	"net"
 
@@ -9,53 +10,75 @@ import (
 )
 
 type Slave struct {
-	cConn    net.Conn       // Control connection
-	cSession *yamux.Session // Control session
+	initialized bool
+	Listener    net.Listener   // Optional listener
+	Control     net.Conn       // Control channel
+	Data        *yamux.Session // Data channel
 }
 
 func (s *Slave) init() error {
+	if s.initialized {
+		return nil
+	}
 	var err error
-	s.cSession, err = yamux.Server(s.cConn, yamux.DefaultConfig())
+	s.Data, err = yamux.Server(s.Control, yamux.DefaultConfig())
+	s.initialized = true
 	return err
+}
+
+func (s *Slave) handleAccept(stream net.Conn, req *Request) {
+	target, aErr := s.Listener.Accept()
+	if aErr == nil {
+		defer target.Close()
+		gob.NewEncoder(stream).Encode(SucceedResponse)
+		go io.Copy(stream, target)
+		io.Copy(target, stream)
+		return
+	}
+	gob.NewEncoder(stream).Encode(FailResponse(aErr))
+}
+
+func (s *Slave) handleDial(stream net.Conn, req *Request) {
+	target, dialErr := net.Dial(req.Network, req.Address)
+	if dialErr == nil {
+		defer target.Close()
+		gob.NewEncoder(stream).Encode(SucceedResponse)
+		go io.Copy(stream, target)
+		io.Copy(target, stream)
+		return
+	}
+	gob.NewEncoder(stream).Encode(FailResponse(dialErr))
 }
 
 func (s *Slave) Handle(stream net.Conn) {
 	defer stream.Close()
-	var addr string
-	dErr := gob.NewDecoder(stream).Decode(&addr)
-	if dErr != nil {
-		return // TODO: Log error?
+	var req Request
+	gob.NewDecoder(stream).Decode(&req)
+	switch req.Action {
+	case Accept:
+		s.handleAccept(stream, &req)
+		return
+	case Dial:
+		s.handleDial(stream, &req)
+		return
+	default:
+		gob.NewEncoder(stream).Encode(FailResponse(fmt.Errorf("invalid action")))
+		return
 	}
-	target, dialErr := net.Dial("tcp", addr)
-	if dialErr != nil {
-		gob.NewEncoder(stream).Encode(Response{Succeed: false, Message: dialErr.Error()})
-		return // TODO: Log error?
-	}
-	defer target.Close()
-	eErr := gob.NewEncoder(stream).Encode(Response{Succeed: true, Message: "Succeed"})
-	if eErr != nil {
-		return // TODO: Log error?
-	}
-	go io.Copy(stream, target)
-	io.Copy(target, stream) // TODO: Log error?
 }
 
-func (s *Slave) Serve() {
+func (s *Slave) Serve() error {
+	iErr := s.init()
+	if iErr != nil {
+		return iErr
+	}
 	for {
-		stream, err := s.cSession.Accept()
+		stream, err := s.Data.Accept()
 		if err == nil {
 			go s.Handle(stream)
 		}
 	}
 }
 func (s *Slave) Close() {
-	s.cConn.Close()
-}
-
-func NewSlave(conn net.Conn) (*Slave, error) {
-	s := &Slave{
-		cConn: conn,
-	}
-	iErr := s.init()
-	return s, iErr
+	s.Control.Close()
 }

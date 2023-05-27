@@ -25,12 +25,16 @@ func (m *Master) init() error {
 	return err
 }
 
-func (m *Master) Dial(_, addr string) (net.Conn, error) {
+func (m *Master) Dial(network, addr string) (net.Conn, error) {
 	stream, sErr := m.cSession.Open()
 	if sErr != nil {
 		return nil, sErr
 	}
-	eErr := gob.NewEncoder(stream).Encode(addr)
+	eErr := gob.NewEncoder(stream).Encode(Request{
+		Action:  Dial,
+		Network: network,
+		Address: addr,
+	})
 	if eErr != nil {
 		stream.Close()
 		return nil, eErr

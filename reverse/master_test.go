@@ -22,9 +22,9 @@ func TestNewMaster(t *testing.T) {
 		doneChan := make(chan struct{}, 1)
 		defer close(doneChan)
 		go func() {
-			slave, err := NewSlave(slaveConn)
-			assert.Nil(tt, err)
+			slave := &Slave{Control: slaveConn}
 			defer slave.Close()
+			go slave.Serve()
 			<-doneChan
 		}()
 		master, mErr := NewMaster(listener, controlListener)
@@ -45,8 +45,7 @@ func TestMaster_Accept(t *testing.T) {
 		doneChan := make(chan struct{}, 2)
 		defer close(doneChan)
 		go func() {
-			slave, err := NewSlave(slaveConn)
-			assert.Nil(tt, err)
+			slave := &Slave{Control: slaveConn}
 			defer slave.Close()
 			go slave.Serve()
 			<-doneChan
@@ -87,8 +86,7 @@ func TestMaster_Dial(t *testing.T) {
 			<-doneChan
 		}()
 		go func() {
-			slave, err := NewSlave(slaveConn)
-			assert.Nil(tt, err)
+			slave := &Slave{Control: slaveConn}
 			defer slave.Close()
 			go slave.Serve()
 			<-doneChan
