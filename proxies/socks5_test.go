@@ -50,23 +50,26 @@ func TestSocks5_Listener(t *testing.T) {
 }
 
 func TestSocks5_Reverse(t *testing.T) {
-	listener := network.ListenAny()
-	defer listener.Close()
-	controlListener := network.ListenAny()
-	defer controlListener.Close()
-	slaveConn := network.Dial(controlListener.Addr().String())
-	defer slaveConn.Close()
+	data := network.ListenAny()
+	defer data.Close()
+	control := network.ListenAny()
+	defer control.Close()
+	master := network.Dial(control.Addr().String())
+	defer master.Close()
 	doneChan := make(chan struct{}, 1)
 	defer close(doneChan)
 	go func() {
-		slave, err := reverse.NewSlave(slaveConn)
-		assert.Nil(t, err)
-		defer slave.Close()
-		go slave.Serve()
+		s := &reverse.Slave{
+			Master: master,
+		}
+		defer s.Close()
+		go s.Serve()
 		<-doneChan
 	}()
-	master, mErr := reverse.NewMaster(listener, controlListener)
-	assert.Nil(t, mErr)
+	m := &reverse.Master{
+		Data:    data,
+		Control: control,
+	}
 	service := network.ListenAny()
 	defer service.Close()
 	msg := []byte("HELLO")
@@ -77,11 +80,11 @@ func TestSocks5_Reverse(t *testing.T) {
 		assert.Nil(t, wErr)
 	}()
 	s := Socks5{
-		Listener: master,
-		Dial:     master.Dial,
+		Listener: m,
+		Dial:     m.SlaveDial,
 	}
 	go s.Serve()
-	dialer, sErr := proxy.SOCKS5(listener.Addr().Network(), listener.Addr().String(), nil, nil)
+	dialer, sErr := proxy.SOCKS5(data.Addr().Network(), data.Addr().String(), nil, nil)
 	assert.Nil(t, sErr)
 	conn, dErr := dialer.Dial(service.Addr().Network(), service.Addr().String())
 	assert.Nil(t, dErr)

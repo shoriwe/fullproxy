@@ -69,6 +69,10 @@ func (m *Master) Accept() (net.Conn, error) {
 	return m.Data.Accept()
 }
 
+func (m *Master) Addr() net.Addr {
+	return m.Data.Addr()
+}
+
 func (m *Master) Close() error {
 	m.Data.Close()
 	m.Control.Close()
