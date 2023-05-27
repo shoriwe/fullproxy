@@ -87,7 +87,7 @@ func TestMaster_Accept(t *testing.T) {
 	})
 }
 
-func TestMaster_Dial(t *testing.T) {
+func TestMaster_SlaveDial(t *testing.T) {
 	t.Run("Succeed", func(tt *testing.T) {
 		data := network.ListenAny()
 		defer data.Close()
