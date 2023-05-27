@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/shoriwe/fullproxy/v3/proxies"
+	"github.com/things-go/go-socks5"
 )
 
 const (
@@ -44,9 +45,16 @@ func (p *Proxy) Create() (proxies.Proxy, error) {
 	var proxy proxies.Proxy
 	switch p.Protocol {
 	case Socks5:
+		var authMethods []socks5.Authenticator
+		if p.Credentials != nil {
+			authMethods = append(authMethods, socks5.UserPassAuthenticator{
+				Credentials: socks5.StaticCredentials(p.Credentials),
+			})
+		}
 		proxy = &proxies.Socks5{
-			Listener: l,
-			Dial:     dial,
+			Listener:    l,
+			Dial:        dial,
+			AuthMethods: authMethods,
 		}
 	default:
 		l.Close()
