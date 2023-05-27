@@ -46,7 +46,7 @@ func TestProxy_Create(t *testing.T) {
 			slave, sErr := r.Slave()
 			assert.Nil(tt, sErr)
 			defer slave.Close()
-			go slave.Handle()
+			go slave.Serve()
 			<-doneCh
 		}()
 		proxy, pErr := p.Create()

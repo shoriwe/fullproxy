@@ -19,7 +19,7 @@ func (s *Slave) init() error {
 	return err
 }
 
-func (s *Slave) handle(stream net.Conn) {
+func (s *Slave) Handle(stream net.Conn) {
 	defer stream.Close()
 	var addr string
 	dErr := gob.NewDecoder(stream).Decode(&addr)
@@ -40,11 +40,11 @@ func (s *Slave) handle(stream net.Conn) {
 	io.Copy(target, stream) // TODO: Log error?
 }
 
-func (s *Slave) Handle() {
+func (s *Slave) Serve() {
 	for {
 		stream, err := s.cSession.Accept()
 		if err == nil {
-			go s.handle(stream)
+			go s.Handle(stream)
 		}
 	}
 }

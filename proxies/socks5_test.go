@@ -62,7 +62,7 @@ func TestSocks5_Reverse(t *testing.T) {
 		slave, err := reverse.NewSlave(slaveConn)
 		assert.Nil(t, err)
 		defer slave.Close()
-		go slave.Handle()
+		go slave.Serve()
 		<-doneChan
 	}()
 	master, mErr := reverse.NewMaster(listener, controlListener)
