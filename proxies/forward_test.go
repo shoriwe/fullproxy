@@ -14,10 +14,10 @@ func TestBasicLocalForward(t *testing.T) {
 	service := network.ListenAny()
 	defer service.Close()
 	f := Forward{
-		Network: service.Addr().Network(),
-		Address: service.Addr().String(),
-		Accept:  listener.Accept,
-		Dial:    net.Dial,
+		Network:  service.Addr().Network(),
+		Address:  service.Addr().String(),
+		Listener: listener,
+		Dial:     net.Dial,
 	}
 	defer f.Close()
 	doneChan := make(chan struct{}, 1)

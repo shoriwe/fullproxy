@@ -6,10 +6,10 @@ import (
 )
 
 type Forward struct {
-	Network string
-	Address string
-	Accept  func() (net.Conn, error)
-	Dial    func(network, address string) (net.Conn, error)
+	Network  string
+	Address  string
+	Listener net.Listener
+	Dial     func(network, address string) (net.Conn, error)
 }
 
 func (f *Forward) Handle(client net.Conn) {
@@ -22,11 +22,13 @@ func (f *Forward) Handle(client net.Conn) {
 	}
 }
 
-func (f *Forward) Close() {}
+func (f *Forward) Close() {
+	f.Listener.Close()
+}
 
 func (f *Forward) Serve() {
 	for {
-		client, aErr := f.Accept()
+		client, aErr := f.Listener.Accept()
 		if aErr == nil {
 			go f.Handle(client)
 		}
