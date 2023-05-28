@@ -51,6 +51,17 @@ func TestMaster_init(t *testing.T) {
 	})
 }
 
+func TestMaster_Addr(t *testing.T) {
+	data := network.ListenAny()
+	defer data.Close()
+	control := network.ListenAny()
+	defer control.Close()
+	m := &Master{
+		Data:    data,
+		Control: control,
+	}
+	assert.NotNil(t, m.Addr())
+}
 func TestMaster_Accept(t *testing.T) {
 	t.Run("Succeed", func(tt *testing.T) {
 		data := network.ListenAny()
