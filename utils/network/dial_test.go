@@ -1,6 +1,7 @@
 package network
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,4 +30,14 @@ func TestDial(t *testing.T) {
 
 func TestNopClose(t *testing.T) {
 	assert.Nil(t, NopClose())
+}
+
+func TestCloseOnError(t *testing.T) {
+	listener := ListenAny()
+	defer listener.Close()
+	go listener.Accept()
+	conn := Dial(listener.Addr().String())
+	defer conn.Close()
+	err := fmt.Errorf("an error")
+	CloseOnError(&err, conn)
 }

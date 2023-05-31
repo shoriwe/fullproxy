@@ -17,3 +17,9 @@ func Dial(addr string) net.Conn {
 	}
 	return conn
 }
+
+func CloseOnError(err *error, conn net.Conn) {
+	if *err != nil && conn != nil {
+		conn.Close()
+	}
+}

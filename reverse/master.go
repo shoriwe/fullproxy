@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/hashicorp/yamux"
+	"github.com/shoriwe/fullproxy/v3/utils/network"
 )
 
 type Master struct {
@@ -27,11 +28,7 @@ func (m *Master) init() (err error) {
 }
 
 func (m *Master) handle(req *Request) (conn net.Conn, err error) {
-	defer func() {
-		if err != nil && conn != nil {
-			conn.Close()
-		}
-	}()
+	defer network.CloseOnError(&err, conn)
 	err = m.init()
 	if err == nil {
 		conn, err = m.cSession.Open()
