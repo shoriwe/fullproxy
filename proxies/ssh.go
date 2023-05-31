@@ -5,6 +5,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/shoriwe/fullproxy/v3/utils/network"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -12,7 +13,7 @@ type SSH struct {
 	Network  string
 	Address  string
 	Listener net.Listener
-	Dial     func(network, addr string) (net.Conn, error)
+	Dial     network.DialFunc
 	Client   *ssh.Client
 }
 

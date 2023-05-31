@@ -5,12 +5,13 @@ import (
 	"net/http"
 
 	"github.com/elazarl/goproxy"
+	"github.com/shoriwe/fullproxy/v3/utils/network"
 )
 
 type HTTP struct {
 	Listener net.Listener
 	// TODO: Authentication configuration
-	Dial func(network, addr string) (net.Conn, error)
+	Dial network.DialFunc
 }
 
 func (h *HTTP) Close() {

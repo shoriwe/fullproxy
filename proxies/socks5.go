@@ -4,12 +4,13 @@ import (
 	"context"
 	"net"
 
+	"github.com/shoriwe/fullproxy/v3/utils/network"
 	"github.com/things-go/go-socks5"
 )
 
 type Socks5 struct {
 	Listener    net.Listener
-	Dial        func(network, addr string) (net.Conn, error)
+	Dial        network.DialFunc
 	AuthMethods []socks5.Authenticator
 }
 
