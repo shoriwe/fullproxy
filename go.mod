@@ -8,7 +8,8 @@ require (
 	github.com/hashicorp/yamux v0.1.1
 	github.com/stretchr/testify v1.8.2
 	github.com/things-go/go-socks5 v0.0.3
-	golang.org/x/net v0.7.0
+	golang.org/x/crypto v0.9.0
+	golang.org/x/net v0.10.0
 )
 
 require (
@@ -37,7 +38,7 @@ require (
 	github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0 // indirect
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

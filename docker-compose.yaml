@@ -5,6 +5,15 @@ networks:
     external: false
 
 services:
+  echo:
+    image: hashicorp/http-echo:latest
+    container_name: fullproxy-http-echo
+    restart: unless-stopped
+    networks:
+      - fullproxy
+    ports:
+      - "127.0.0.1:8000:80"
+    command: ["-listen", ":80", "-text", "ECHO"]
   sshd:
     image: panubo/sshd:latest
     container_name: fullproxy-sshd
