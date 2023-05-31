@@ -26,3 +26,7 @@ func TestDial(t *testing.T) {
 		defer conn.Close()
 	})
 }
+
+func TestNopClose(t *testing.T) {
+	assert.Nil(t, NopClose())
+}

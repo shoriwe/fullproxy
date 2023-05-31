@@ -3,8 +3,8 @@ package proxies
 import (
 	"io"
 	"net"
-	"time"
 
+	"github.com/shoriwe/fullproxy/v3/sshd"
 	"github.com/shoriwe/fullproxy/v3/utils/network"
 	"golang.org/x/crypto/ssh"
 )
@@ -15,20 +15,6 @@ type SSH struct {
 	Listener net.Listener
 	Dial     network.DialFunc
 	Client   *ssh.Client
-}
-
-func (s *SSH) keepAlive() {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			_, _, err := s.Client.SendRequest("keepalive@golang.org", true, nil)
-			if err != nil {
-				return
-			}
-		}
-	}
 }
 
 func (s *SSH) Handle(client net.Conn) {
@@ -51,7 +37,7 @@ func (s *SSH) Addr() net.Addr {
 }
 
 func (s *SSH) Serve() error {
-	go s.keepAlive()
+	go sshd.KeepAlive(s.Client)
 	for {
 		client, err := s.Listener.Accept()
 		if err == nil {
