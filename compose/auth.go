@@ -19,6 +19,7 @@ func (a *Auth) SSHClientConfig() (config *ssh.ClientConfig, err error) {
 	}
 	if err == nil {
 		config = new(ssh.ClientConfig)
+		config.HostKeyCallback = ssh.InsecureIgnoreHostKey() // TODO: FIXME: This should be configured by user
 		config.User = *a.Username
 		if a.Password != nil {
 			config.Auth = append(config.Auth, ssh.Password(*a.Password))
