@@ -96,11 +96,8 @@ func TestKnot_Compile_SSH(t *testing.T) {
 			Type:    KnotSSH,
 			Network: "tcp",
 			Address: "127.0.0.1:0",
-			Auth: &Auth{
-				Username: new(string),
-			},
+			Auth:    &Auth{},
 		}
-		*knot.Auth.Username = "sulcud"
 		_, err := knot.Compile()
 		assert.NotNil(t, err)
 	})

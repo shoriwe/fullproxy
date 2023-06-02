@@ -50,11 +50,14 @@ func (k *Knot) Compile() (circuit.Knot, error) {
 			return nil, fmt.Errorf("no auth provided for SSH")
 		}
 		config, err := k.Auth.SSHClientConfig()
+		if err != nil {
+			return nil, err
+		}
 		return &circuit.SSH{
 			Network: k.Network,
 			Address: k.Address,
 			Config:  *config,
-		}, err
+		}, nil
 	default:
 		return nil, fmt.Errorf("unknown knot %s; available knots are %s", k.Type, AvailableKnots)
 	}
