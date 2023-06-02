@@ -27,11 +27,11 @@ func (s *SSH) Next(dial network.DialFunc) (closeFunc network.CloseFunc, newDial 
 		defer network.CloseOnError(&err, conn)
 		sshConn, newChannel, requests, err = ssh.NewClientConn(conn, "", &s.Config)
 		if err == nil {
-			go sshd.KeepAlive(client)
 			closeFunc = func() error {
 				return conn.Close()
 			}
 			client = ssh.NewClient(sshConn, newChannel, requests)
+			go sshd.KeepAlive(client)
 			newDial = client.Dial
 		}
 	}
