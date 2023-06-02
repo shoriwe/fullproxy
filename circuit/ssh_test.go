@@ -13,7 +13,7 @@ func TestSSH_Next(t *testing.T) {
 	t.Run("Basic", func(tt *testing.T) {
 		s := &SSH{
 			Network: "tcp",
-			Address: "127.0.0.1:2222",
+			Address: "localhost:2222",
 			Config:  *sshd.DefaultClientConfig(),
 		}
 		closeFunc, dial, err := s.Next(net.Dial)

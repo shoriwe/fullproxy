@@ -27,7 +27,7 @@ func TestSocks5_Next(t *testing.T) {
 		closeFunc, dial, err := s.Next(net.Dial)
 		assert.Nil(tt, err)
 		defer closeFunc()
-		expect := newExpect(tt, "http://127.0.0.1:8000", dial)
+		expect := newExpect(tt, "http://localhost:8000", dial)
 		expect.GET("/").Expect().Status(http.StatusOK).Body().Contains("ECHO")
 	})
 }

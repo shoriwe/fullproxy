@@ -39,7 +39,7 @@ Example:
 
 ```ruby
 def no_localhost(address)
-    if "127.0.0.1" in address
+    if "localhost" in address
         return False
     elif "localhost" in address
         return false

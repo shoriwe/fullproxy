@@ -10,7 +10,7 @@ func TestKnot_Compile_INVALID(t *testing.T) {
 	knot := Knot{
 		Type:    "INVALID",
 		Network: "tcp",
-		Address: "127.0.0.1:0",
+		Address: "localhost:0",
 	}
 	_, err := knot.Compile()
 	assert.NotNil(t, err)
@@ -20,7 +20,7 @@ func TestKnot_Compile_Forward(t *testing.T) {
 	knot := Knot{
 		Type:    KnotForward,
 		Network: "tcp",
-		Address: "127.0.0.1:0",
+		Address: "localhost:0",
 	}
 	_, err := knot.Compile()
 	assert.Nil(t, err)
@@ -31,7 +31,7 @@ func TestKnot_Compile_Socks5(t *testing.T) {
 		knot := Knot{
 			Type:    KnotSocks5,
 			Network: "tcp",
-			Address: "127.0.0.1:0",
+			Address: "localhost:0",
 		}
 		_, err := knot.Compile()
 		assert.Nil(t, err)
@@ -40,7 +40,7 @@ func TestKnot_Compile_Socks5(t *testing.T) {
 		knot := Knot{
 			Type:    KnotSocks5,
 			Network: "tcp",
-			Address: "127.0.0.1:0",
+			Address: "localhost:0",
 			Auth: &Auth{
 				Username: new(string),
 				Password: new(string),
@@ -55,7 +55,7 @@ func TestKnot_Compile_Socks5(t *testing.T) {
 		knot := Knot{
 			Type:    KnotSocks5,
 			Network: "tcp",
-			Address: "127.0.0.1:0",
+			Address: "localhost:0",
 			Auth: &Auth{
 				Username: new(string),
 			},
@@ -71,7 +71,7 @@ func TestKnot_Compile_SSH(t *testing.T) {
 		knot := Knot{
 			Type:    KnotSSH,
 			Network: "tcp",
-			Address: "127.0.0.1:0",
+			Address: "localhost:0",
 		}
 		_, err := knot.Compile()
 		assert.NotNil(t, err)
@@ -80,7 +80,7 @@ func TestKnot_Compile_SSH(t *testing.T) {
 		knot := Knot{
 			Type:    KnotSSH,
 			Network: "tcp",
-			Address: "127.0.0.1:0",
+			Address: "localhost:0",
 			Auth: &Auth{
 				Username: new(string),
 				Password: new(string),
@@ -95,7 +95,7 @@ func TestKnot_Compile_SSH(t *testing.T) {
 		knot := Knot{
 			Type:    KnotSSH,
 			Network: "tcp",
-			Address: "127.0.0.1:0",
+			Address: "localhost:0",
 			Auth:    &Auth{},
 		}
 		_, err := knot.Compile()

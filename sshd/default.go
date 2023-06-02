@@ -19,7 +19,7 @@ func DefaultClientConfig() *ssh.ClientConfig {
 }
 
 func DefaultClient(t *testing.T) *ssh.Client {
-	client, dErr := ssh.Dial("tcp", "127.0.0.1:2222", DefaultClientConfig())
+	client, dErr := ssh.Dial("tcp", "localhost:2222", DefaultClientConfig())
 	assert.Nil(t, dErr)
 	return client
 }
