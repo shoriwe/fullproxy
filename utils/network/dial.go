@@ -1,6 +1,9 @@
 package network
 
-import "net"
+import (
+	"io"
+	"net"
+)
 
 type CloseFunc func() error
 
@@ -18,7 +21,7 @@ func Dial(addr string) net.Conn {
 	return conn
 }
 
-func CloseOnError(err *error, conn net.Conn) {
+func CloseOnError(err *error, conn io.Closer) {
 	if *err != nil && conn != nil {
 		conn.Close()
 	}
