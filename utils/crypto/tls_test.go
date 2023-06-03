@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"crypto/tls"
+	"os"
 	"testing"
 
 	"github.com/shoriwe/fullproxy/v3/utils/network"
@@ -31,5 +32,15 @@ func TestDefaultTLSConfig(t *testing.T) {
 		_, rErr := conn.Read(buffer)
 		assert.Nil(tt, rErr)
 		signal <- struct{}{}
+	})
+}
+
+func TestTempCertKey(t *testing.T) {
+	t.Run("Valid", func(tt *testing.T) {
+		cert, key := TempCertKey()
+		defer os.Remove(cert)
+		defer os.Remove(key)
+		_, err := tls.LoadX509KeyPair(cert, key)
+		assert.Nil(tt, err)
 	})
 }
