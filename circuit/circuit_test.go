@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/shoriwe/fullproxy/v3/proxies"
-	"github.com/shoriwe/fullproxy/v3/sshd"
-	"github.com/shoriwe/fullproxy/v3/utils/network"
+	"github.com/shoriwe/fullproxy/v4/proxies"
+	"github.com/shoriwe/fullproxy/v4/sshd"
+	"github.com/shoriwe/fullproxy/v4/utils/network"
 	"github.com/stretchr/testify/assert"
 )
 

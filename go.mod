@@ -1,4 +1,4 @@
-module github.com/shoriwe/fullproxy/v3
+module github.com/shoriwe/fullproxy/v4
 
 go 1.20
 

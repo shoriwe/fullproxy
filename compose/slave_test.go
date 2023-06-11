@@ -3,8 +3,8 @@ package compose
 import (
 	"testing"
 
-	"github.com/shoriwe/fullproxy/v3/reverse"
-	"github.com/shoriwe/fullproxy/v3/utils/network"
+	"github.com/shoriwe/fullproxy/v4/reverse"
+	"github.com/shoriwe/fullproxy/v4/utils/network"
 	"github.com/stretchr/testify/assert"
 )
 

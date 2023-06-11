@@ -3,7 +3,7 @@ package compose
 import (
 	"fmt"
 
-	"github.com/shoriwe/fullproxy/v3/circuit"
+	"github.com/shoriwe/fullproxy/v4/circuit"
 	"golang.org/x/net/proxy"
 )
 

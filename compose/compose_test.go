@@ -3,7 +3,7 @@ package compose
 import (
 	"testing"
 
-	"github.com/shoriwe/fullproxy/v3/utils/network"
+	"github.com/shoriwe/fullproxy/v4/utils/network"
 )
 
 func Test_startServices(t *testing.T) {

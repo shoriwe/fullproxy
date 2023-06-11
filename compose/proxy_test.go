@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
-	httputils "github.com/shoriwe/fullproxy/v3/utils/http"
-	"github.com/shoriwe/fullproxy/v3/utils/network"
+	httputils "github.com/shoriwe/fullproxy/v4/utils/http"
+	"github.com/shoriwe/fullproxy/v4/utils/network"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/proxy"
 )

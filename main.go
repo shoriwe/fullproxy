@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/shoriwe/fullproxy/v3/compose"
+	"github.com/shoriwe/fullproxy/v4/compose"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v3"
 )

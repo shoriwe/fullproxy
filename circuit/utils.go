@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
-	"github.com/shoriwe/fullproxy/v3/utils/network"
+	"github.com/shoriwe/fullproxy/v4/utils/network"
 )
 
 func newExpect(t *testing.T, baseUrl string, dial network.DialFunc) *httpexpect.Expect {

@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/hashicorp/yamux"
-	"github.com/shoriwe/fullproxy/v3/utils/network"
+	"github.com/shoriwe/fullproxy/v4/utils/network"
 )
 
 type Master struct {

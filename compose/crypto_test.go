@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/shoriwe/fullproxy/v3/utils/crypto"
-	"github.com/shoriwe/fullproxy/v3/utils/network"
+	"github.com/shoriwe/fullproxy/v4/utils/crypto"
+	"github.com/shoriwe/fullproxy/v4/utils/network"
 	"github.com/stretchr/testify/assert"
 )
 

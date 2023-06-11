@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/shoriwe/fullproxy/v3/utils/network"
+	"github.com/shoriwe/fullproxy/v4/utils/network"
 	"github.com/things-go/go-socks5"
 )
 

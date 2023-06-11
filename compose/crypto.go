@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	crypto2 "github.com/shoriwe/fullproxy/v3/utils/crypto"
+	crypto2 "github.com/shoriwe/fullproxy/v4/utils/crypto"
 )
 
 const (

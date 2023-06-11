@@ -3,8 +3,8 @@ package circuit
 import (
 	"net"
 
-	"github.com/shoriwe/fullproxy/v3/sshd"
-	"github.com/shoriwe/fullproxy/v3/utils/network"
+	"github.com/shoriwe/fullproxy/v4/sshd"
+	"github.com/shoriwe/fullproxy/v4/utils/network"
 	"golang.org/x/crypto/ssh"
 )
 

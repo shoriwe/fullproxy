@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/shoriwe/fullproxy/v3/sshd"
+	"github.com/shoriwe/fullproxy/v4/sshd"
 	"github.com/stretchr/testify/assert"
 )
 

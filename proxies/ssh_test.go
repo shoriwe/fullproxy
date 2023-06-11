@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/gavv/httpexpect/v2"
-	"github.com/shoriwe/fullproxy/v3/reverse"
-	"github.com/shoriwe/fullproxy/v3/sshd"
-	"github.com/shoriwe/fullproxy/v3/utils/network"
+	"github.com/shoriwe/fullproxy/v4/reverse"
+	"github.com/shoriwe/fullproxy/v4/sshd"
+	"github.com/shoriwe/fullproxy/v4/utils/network"
 	"github.com/stretchr/testify/assert"
 )
 
