@@ -27,16 +27,20 @@ type Network struct {
 	SlaveListener *bool    `yaml:"slaveListener,omitempty" json:"slaveListener,omitempty"`
 	master        *reverse.Master
 	sshConn       *ssh.Client
+	listener      net.Listener
 }
 
-func (n *Network) setupBasicListener(listen network.ListenFunc) (net.Listener, error) {
-	if n.Network == nil {
-		return nil, fmt.Errorf("network not set for basic listener")
+func (n *Network) setupBasicListener(listen network.ListenFunc) (_ net.Listener, err error) {
+	if n.listener == nil {
+		if n.Network == nil {
+			return nil, fmt.Errorf("network not set for basic listener")
+		}
+		if n.Address == nil {
+			return nil, fmt.Errorf("address not set for basic listener")
+		}
+		n.listener, err = listen(*n.Network, *n.Address)
 	}
-	if n.Address == nil {
-		return nil, fmt.Errorf("address not set for basic listener")
-	}
-	return listen(*n.Network, *n.Address)
+	return n.listener, err
 }
 
 func (n *Network) getMaster() (*reverse.Master, error) {
