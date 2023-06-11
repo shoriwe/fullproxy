@@ -7,11 +7,13 @@ import (
 	"net"
 
 	"github.com/hashicorp/yamux"
+	"github.com/shoriwe/fullproxy/v3/utils/network"
 )
 
 type Slave struct {
 	initialized bool
-	Listener    net.Listener   // Optional listener
+	Listener    net.Listener // Optional listener
+	Dial        network.DialFunc
 	Master      net.Conn       // Master connection
 	Control     *yamux.Session // Control channel
 }
@@ -47,7 +49,7 @@ func (s *Slave) HandleAccept(conn net.Conn, req *Request) (err error) {
 
 func (s *Slave) HandleDial(conn net.Conn, req *Request) (err error) {
 	var target net.Conn
-	target, err = net.Dial(req.Network, req.Address)
+	target, err = s.Dial(req.Network, req.Address)
 	if err == nil {
 		defer target.Close()
 		err = gob.NewEncoder(conn).Encode(SucceedResponse)

@@ -18,7 +18,7 @@ func TestSlave_init(t *testing.T) {
 		master := network.Dial(control.Addr().String())
 		defer master.Close()
 		go func() {
-			s := &Slave{Master: master}
+			s := &Slave{Master: master, Dial: net.Dial}
 			defer s.Close()
 			assert.Nil(tt, s.init())
 		}()
@@ -37,7 +37,7 @@ func TestSlave_init(t *testing.T) {
 		go func() {
 			master := network.Dial(control.Addr().String())
 			defer master.Close()
-			s := &Slave{Master: master}
+			s := &Slave{Master: master, Dial: net.Dial}
 			defer s.Close()
 			assert.Nil(tt, s.init())
 			assert.Nil(tt, s.init())
@@ -78,7 +78,7 @@ func TestSlave_HandleAccept(t *testing.T) {
 			assert.Nil(tt, wErr)
 			<-doneChan
 		}()
-		s := &Slave{Master: master, Listener: sListener}
+		s := &Slave{Master: master, Listener: sListener, Dial: net.Dial}
 		defer s.Close()
 		assert.Nil(tt, s.init())
 		go func() {
@@ -119,7 +119,7 @@ func TestSlave_HandleAccept(t *testing.T) {
 			assert.NotNil(tt, cErr)
 			<-doneChan
 		}()
-		s := &Slave{Master: master}
+		s := &Slave{Master: master, Dial: net.Dial}
 		defer s.Close()
 		assert.Nil(tt, s.init())
 		job, aErr := s.Control.Accept()
@@ -159,7 +159,7 @@ func TestSlave_Handle(t *testing.T) {
 			assert.Nil(tt, wErr)
 			<-doneChan
 		}()
-		s := &Slave{Master: master, Listener: sListener}
+		s := &Slave{Master: master, Listener: sListener, Dial: net.Dial}
 		defer s.Close()
 		assert.Nil(tt, s.init())
 		go func() {
@@ -203,7 +203,7 @@ func TestSlave_Handle(t *testing.T) {
 			assert.Nil(tt, wErr)
 			<-doneChan
 		}()
-		s := &Slave{Master: master}
+		s := &Slave{Master: master, Dial: net.Dial}
 		defer s.Close()
 		assert.Nil(tt, s.init())
 		go func() {
@@ -248,7 +248,7 @@ func TestSlave_Handle(t *testing.T) {
 			}))
 			<-doneChan
 		}()
-		s := &Slave{Master: master, Listener: sListener}
+		s := &Slave{Master: master, Listener: sListener, Dial: net.Dial}
 		defer s.Close()
 		assert.Nil(tt, s.init())
 		job, aErr := s.Control.Accept()

@@ -17,7 +17,7 @@ func TestMaster_init(t *testing.T) {
 		master := network.Dial(control.Addr().String())
 		defer master.Close()
 		go func() {
-			s := &Slave{Master: master}
+			s := &Slave{Master: master, Dial: net.Dial}
 			defer s.Close()
 			assert.Nil(tt, s.init())
 		}()
@@ -36,7 +36,7 @@ func TestMaster_init(t *testing.T) {
 		go func() {
 			master := network.Dial(control.Addr().String())
 			defer master.Close()
-			s := &Slave{Master: master}
+			s := &Slave{Master: master, Dial: net.Dial}
 			defer s.Close()
 			assert.Nil(tt, s.init())
 			assert.Nil(tt, s.init())
@@ -73,7 +73,7 @@ func TestMaster_Accept(t *testing.T) {
 		doneChan := make(chan struct{}, 2)
 		defer close(doneChan)
 		go func() {
-			s := &Slave{Master: master}
+			s := &Slave{Master: master, Dial: net.Dial}
 			defer s.Close()
 			go s.Serve()
 			<-doneChan
@@ -117,7 +117,7 @@ func TestMaster_SlaveDial(t *testing.T) {
 			<-doneChan
 		}()
 		go func() {
-			s := &Slave{Master: master}
+			s := &Slave{Master: master, Dial: net.Dial}
 			defer s.Close()
 			go s.Serve()
 			<-doneChan
@@ -149,7 +149,7 @@ func TestMaster_SlaveDial(t *testing.T) {
 		doneChan := make(chan struct{}, 1)
 		defer close(doneChan)
 		go func() {
-			s := &Slave{Master: master}
+			s := &Slave{Master: master, Dial: net.Dial}
 			defer s.Close()
 			go s.Serve()
 			<-doneChan
@@ -178,7 +178,7 @@ func TestMaster_SlaveAccept(t *testing.T) {
 		doneChan := make(chan struct{}, 2)
 		defer close(doneChan)
 		go func() {
-			s := &Slave{Master: master, Listener: sListener}
+			s := &Slave{Master: master, Listener: sListener, Dial: net.Dial}
 			defer s.Close()
 			go s.Serve()
 			<-doneChan

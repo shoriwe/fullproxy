@@ -61,6 +61,7 @@ func TestSocks5_Reverse(t *testing.T) {
 	go func() {
 		s := &reverse.Slave{
 			Master: master,
+			Dial:   net.Dial,
 		}
 		defer s.Close()
 		go s.Serve()
