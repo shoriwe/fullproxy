@@ -8,6 +8,7 @@ import (
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/shoriwe/fullproxy/v3/reverse"
+	httputils "github.com/shoriwe/fullproxy/v3/utils/http"
 	"github.com/shoriwe/fullproxy/v3/utils/network"
 	"github.com/stretchr/testify/assert"
 )
@@ -24,14 +25,8 @@ func TestHTTP_Addr(t *testing.T) {
 }
 
 func TestHTTP_Serve(t *testing.T) {
-	testMessage := "TEST"
-	echoRoute := "/echo"
 	setupHTTP := func(tt *testing.T, proxy, service net.Listener) *httpexpect.Expect {
-		mux := http.NewServeMux()
-		mux.HandleFunc(echoRoute, func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(testMessage))
-		})
-		go http.Serve(service, mux)
+		httputils.NewMux(service)
 		proxyUrl, _ := url.Parse("http://" + proxy.Addr().String())
 		return httpexpect.WithConfig(
 			httpexpect.Config{
@@ -57,7 +52,7 @@ func TestHTTP_Serve(t *testing.T) {
 		}
 		defer h.Close()
 		go h.Serve()
-		expect.GET(echoRoute).Expect().Status(http.StatusOK).Body().Contains(testMessage)
+		expect.GET(httputils.EchoRoute).Expect().Status(http.StatusOK).Body().Contains(httputils.EchoMsg)
 	})
 	t.Run("Reverse", func(tt *testing.T) {
 		service := network.ListenAny()
@@ -89,7 +84,7 @@ func TestHTTP_Serve(t *testing.T) {
 		}
 		defer h.Close()
 		go h.Serve()
-		expect.GET(echoRoute).Expect().Status(http.StatusOK).Body().Contains(testMessage)
+		expect.GET(httputils.EchoRoute).Expect().Status(http.StatusOK).Body().Contains(httputils.EchoMsg)
 		controlCh <- struct{}{}
 	})
 

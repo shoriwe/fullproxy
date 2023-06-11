@@ -16,7 +16,7 @@ func TestCircuit_setupCircuit(t *testing.T) {
 	t.Run("Succeed", func(tt *testing.T) {
 		service := network.ListenAny()
 		defer service.Close()
-		go utilshttp.NewMux(service)
+		utilshttp.NewMux(service)
 		c := Circuit{
 			Network: service.Addr().Network(),
 			Address: service.Addr().String(),
@@ -40,7 +40,7 @@ func TestCircuit_setupCircuit(t *testing.T) {
 	t.Run("Invalid Knot", func(tt *testing.T) {
 		service := network.ListenAny()
 		defer service.Close()
-		go utilshttp.NewMux(service)
+		utilshttp.NewMux(service)
 		c := Circuit{
 			Network: service.Addr().Network(),
 			Address: service.Addr().String(),
@@ -67,7 +67,7 @@ func TestCircuit_handle(t *testing.T) {
 	t.Run("Succeed", func(tt *testing.T) {
 		service := network.ListenAny()
 		defer service.Close()
-		go utilshttp.NewMux(service)
+		utilshttp.NewMux(service)
 		c := Circuit{
 			Network: service.Addr().Network(),
 			Address: service.Addr().String(),
@@ -104,7 +104,7 @@ func TestCircuit_serve(t *testing.T) {
 	t.Run("Succeed", func(tt *testing.T) {
 		service := network.ListenAny()
 		defer service.Close()
-		go utilshttp.NewMux(service)
+		utilshttp.NewMux(service)
 		c := Circuit{
 			Network: service.Addr().Network(),
 			Address: service.Addr().String(),
@@ -137,7 +137,7 @@ func TestCircuit_Serve(t *testing.T) {
 	t.Run("Succeed", func(tt *testing.T) {
 		service := network.ListenAny()
 		defer service.Close()
-		go utilshttp.NewMux(service)
+		utilshttp.NewMux(service)
 		c := Circuit{
 			Network: service.Addr().Network(),
 			Address: service.Addr().String(),
@@ -170,7 +170,7 @@ func TestCircuit_Serve(t *testing.T) {
 	t.Run("Invalid Setup", func(tt *testing.T) {
 		service := network.ListenAny()
 		defer service.Close()
-		go utilshttp.NewMux(service)
+		utilshttp.NewMux(service)
 		c := Circuit{
 			Network: service.Addr().Network(),
 			Address: service.Addr().String(),
