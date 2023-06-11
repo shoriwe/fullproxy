@@ -15,9 +15,9 @@ import (
 func TestSSH_Addr(t *testing.T) {
 	listener := network.ListenAny()
 	client := sshd.DefaultClient(t)
-	s := &SSH{
+	go sshd.KeepAlive(client)
+	s := &Forward{
 		Listener: listener,
-		Client:   client,
 	}
 	defer s.Close()
 	assert.NotNil(t, s.Addr())
@@ -27,11 +27,11 @@ func TestSSH_Serve(t *testing.T) {
 	t.Run("Trigger KeepAlive", func(tt *testing.T) {
 		listener := network.ListenAny()
 		client := sshd.DefaultClient(tt)
-		s := &SSH{
+		go sshd.KeepAlive(client)
+		s := &Forward{
 			Network:  "tcp",
 			Address:  "echo:80",
 			Listener: listener,
-			Client:   client,
 			Dial:     client.Dial,
 		}
 		defer s.Close()
@@ -43,14 +43,13 @@ func TestSSH_Serve(t *testing.T) {
 	t.Run("Error KeepAlive", func(tt *testing.T) {
 		listener := network.ListenAny()
 		client := sshd.DefaultClient(tt)
-		s := &SSH{
+		go sshd.KeepAlive(client)
+		s := &Forward{
 			Network:  "tcp",
 			Address:  "echo:80",
 			Listener: listener,
-			Client:   client,
 			Dial:     client.Dial,
 		}
-
 		go s.Serve()
 		time.Sleep(2 * time.Second)
 		s.Close()
@@ -62,11 +61,11 @@ func TestSSH_Serve_Local(t *testing.T) {
 	t.Run("Basic", func(tt *testing.T) {
 		listener := network.ListenAny()
 		client := sshd.DefaultClient(tt)
-		s := &SSH{
+		go sshd.KeepAlive(client)
+		s := &Forward{
 			Network:  "tcp",
 			Address:  "echo:80",
 			Listener: listener,
-			Client:   client,
 			Dial:     client.Dial,
 		}
 		defer s.Close()
@@ -98,11 +97,11 @@ func TestSSH_Serve_Local(t *testing.T) {
 		defer m.Close()
 		//
 		client := sshd.DefaultClient(tt)
-		s := &SSH{
+		go sshd.KeepAlive(client)
+		s := &Forward{
 			Network:  "tcp",
 			Address:  "echo:80",
 			Listener: m,
-			Client:   client,
 			Dial:     client.Dial,
 		}
 		defer s.Close()
