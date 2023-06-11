@@ -11,22 +11,22 @@ import (
 )
 
 const (
-	ListenerBasic  = "basic"
-	ListenerMaster = "master"
-	ListenerSSH    = "ssh"
+	NetworkBasic  = "basic"
+	NetworkMaster = "master"
+	NetworkSSH    = "ssh"
 )
 
-type Listener struct {
-	Type    string    `yaml:"type" json:"type"`
-	Network *string   `yaml:"network,omitempty" json:"network,omitempty"`
-	Address *string   `yaml:"address,omitempty" json:"address,omitempty"`
-	Data    *Listener `yaml:"data,omitempty" json:"data,omitempty"`
-	Control *Listener `yaml:"control,omitempty" json:"control,omitempty"`
-	Auth    *Auth     `yaml:"auth,omitempty" json:"auth,omitempty"`
-	Crypto  *Crypto   `yaml:"crypto,omitempty" json:"crypto,omitempty"`
+type Network struct {
+	Type    string   `yaml:"type" json:"type"`
+	Network *string  `yaml:"network,omitempty" json:"network,omitempty"`
+	Address *string  `yaml:"address,omitempty" json:"address,omitempty"`
+	Data    *Network `yaml:"data,omitempty" json:"data,omitempty"`
+	Control *Network `yaml:"control,omitempty" json:"control,omitempty"`
+	Auth    *Auth    `yaml:"auth,omitempty" json:"auth,omitempty"`
+	Crypto  *Crypto  `yaml:"crypto,omitempty" json:"crypto,omitempty"`
 }
 
-func (l *Listener) setupBasic(listen network.ListenFunc) (net.Listener, error) {
+func (l *Network) setupBasicListener(listen network.ListenFunc) (net.Listener, error) {
 	if l.Network == nil {
 		return nil, fmt.Errorf("network not set for basic listener")
 	}
@@ -36,7 +36,7 @@ func (l *Listener) setupBasic(listen network.ListenFunc) (net.Listener, error) {
 	return listen(*l.Network, *l.Address)
 }
 
-func (l *Listener) setupMaster() (ll net.Listener, err error) {
+func (l *Network) setupMasterListener() (ll net.Listener, err error) {
 	if l.Data == nil {
 		return nil, fmt.Errorf("no data listener provided for master")
 	}
@@ -72,7 +72,7 @@ func (s *sshWrapper) Close() error {
 	return s.Listener.Close()
 }
 
-func (l *Listener) setupSSH() (ll net.Listener, err error) {
+func (l *Network) setupSSHListener() (ll net.Listener, err error) {
 	if l.Network == nil {
 		return nil, fmt.Errorf("network not set for basic listener")
 	}
@@ -98,7 +98,7 @@ func (l *Listener) setupSSH() (ll net.Listener, err error) {
 	go sshd.KeepAlive(sshConn)
 	defer network.CloseOnError(&err, sshConn)
 	var data net.Listener
-	data, err = l.Data.setupBasic(sshConn.Listen)
+	data, err = l.Data.setupBasicListener(sshConn.Listen)
 	if err == nil {
 		ll = &sshWrapper{
 			Listener: data,
@@ -108,16 +108,16 @@ func (l *Listener) setupSSH() (ll net.Listener, err error) {
 	return ll, err
 }
 
-func (l *Listener) Listen() (ll net.Listener, err error) {
+func (l *Network) Listen() (ll net.Listener, err error) {
 	switch l.Type {
-	case ListenerBasic:
-		ll, err = l.setupBasic(net.Listen)
-	case ListenerMaster:
-		ll, err = l.setupMaster()
-	case ListenerSSH:
-		ll, err = l.setupSSH()
+	case NetworkBasic:
+		ll, err = l.setupBasicListener(net.Listen)
+	case NetworkMaster:
+		ll, err = l.setupMasterListener()
+	case NetworkSSH:
+		ll, err = l.setupSSHListener()
 	default:
-		err = fmt.Errorf("unknown listener type %s", l.Type)
+		err = fmt.Errorf("unknown network type %s", l.Type)
 	}
 	if err == nil && l.Crypto != nil {
 		ll, err = l.Crypto.WrapListener(ll)

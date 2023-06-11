@@ -20,8 +20,8 @@ func TestCircuit_setupCircuit(t *testing.T) {
 		c := Circuit{
 			Network: service.Addr().Network(),
 			Address: service.Addr().String(),
-			Listener: Listener{
-				Type:    ListenerBasic,
+			Listener: Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
@@ -44,8 +44,8 @@ func TestCircuit_setupCircuit(t *testing.T) {
 		c := Circuit{
 			Network: service.Addr().Network(),
 			Address: service.Addr().String(),
-			Listener: Listener{
-				Type:    ListenerBasic,
+			Listener: Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
@@ -71,8 +71,8 @@ func TestCircuit_handle(t *testing.T) {
 		c := Circuit{
 			Network: service.Addr().Network(),
 			Address: service.Addr().String(),
-			Listener: Listener{
-				Type:    ListenerBasic,
+			Listener: Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
@@ -108,8 +108,8 @@ func TestCircuit_serve(t *testing.T) {
 		c := Circuit{
 			Network: service.Addr().Network(),
 			Address: service.Addr().String(),
-			Listener: Listener{
-				Type:    ListenerBasic,
+			Listener: Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
@@ -141,8 +141,8 @@ func TestCircuit_Serve(t *testing.T) {
 		c := Circuit{
 			Network: service.Addr().Network(),
 			Address: service.Addr().String(),
-			Listener: Listener{
-				Type:    ListenerBasic,
+			Listener: Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
@@ -174,8 +174,8 @@ func TestCircuit_Serve(t *testing.T) {
 		c := Circuit{
 			Network: service.Addr().Network(),
 			Address: service.Addr().String(),
-			Listener: Listener{
-				Type:    ListenerBasic,
+			Listener: Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},

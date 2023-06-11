@@ -9,10 +9,10 @@ import (
 )
 
 type Circuit struct {
-	Network  string   `yaml:"network" json:"network"`
-	Address  string   `yaml:"address" json:"address"`
-	Listener Listener `yaml:"listener" json:"listener"`
-	Knots    []Knot   `yaml:"knots" json:"knots"`
+	Network  string  `yaml:"network" json:"network"`
+	Address  string  `yaml:"address" json:"address"`
+	Listener Network `yaml:"listener" json:"listener"`
+	Knots    []Knot  `yaml:"knots" json:"knots"`
 	listener net.Listener
 	circuit  *circuit.Circuit
 }

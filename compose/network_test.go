@@ -7,46 +7,46 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestListener_setupBasic(t *testing.T) {
+func TestNetwork_setupBasicListener(t *testing.T) {
 	t.Run("Valid", func(tt *testing.T) {
-		l := Listener{
+		l := Network{
 			Network: new(string),
 			Address: new(string),
 		}
 		*l.Network = "tcp"
 		*l.Address = "localhost:0"
-		ll, err := l.setupBasic(net.Listen)
+		ll, err := l.setupBasicListener(net.Listen)
 		assert.Nil(tt, err)
 		defer ll.Close()
 	})
 	t.Run("No Network", func(tt *testing.T) {
-		l := Listener{
+		l := Network{
 			Address: new(string),
 		}
 		*l.Address = "localhost:0"
-		_, err := l.setupBasic(net.Listen)
+		_, err := l.setupBasicListener(net.Listen)
 		assert.NotNil(tt, err)
 	})
 	t.Run("No Address", func(tt *testing.T) {
-		l := Listener{
+		l := Network{
 			Network: new(string),
 		}
 		*l.Network = "tcp"
-		_, err := l.setupBasic(net.Listen)
+		_, err := l.setupBasicListener(net.Listen)
 		assert.NotNil(tt, err)
 	})
 }
 
-func TestListener_setupMaster(t *testing.T) {
+func TestNetwork_setupMasterListener(t *testing.T) {
 	t.Run("Valid", func(tt *testing.T) {
-		l := Listener{
-			Data: &Listener{
-				Type:    ListenerBasic,
+		l := Network{
+			Data: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
-			Control: &Listener{
-				Type:    ListenerBasic,
+			Control: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
@@ -55,81 +55,81 @@ func TestListener_setupMaster(t *testing.T) {
 		*l.Data.Address = "localhost:0"
 		*l.Control.Network = "tcp"
 		*l.Control.Address = "localhost:0"
-		ll, err := l.setupMaster()
+		ll, err := l.setupMasterListener()
 		assert.Nil(tt, err)
 		defer ll.Close()
 	})
 	t.Run("No Data", func(tt *testing.T) {
-		l := Listener{
-			Control: &Listener{
-				Type:    ListenerBasic,
+		l := Network{
+			Control: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
 		}
 		*l.Control.Network = "tcp"
 		*l.Control.Address = "localhost:0"
-		_, err := l.setupMaster()
+		_, err := l.setupMasterListener()
 		assert.NotNil(tt, err)
 	})
 	t.Run("No Control", func(tt *testing.T) {
-		l := Listener{
-			Data: &Listener{
-				Type:    ListenerBasic,
+		l := Network{
+			Data: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
 		}
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
-		_, err := l.setupMaster()
+		_, err := l.setupMasterListener()
 		assert.NotNil(tt, err)
 	})
 	t.Run("Invalid Data", func(tt *testing.T) {
-		l := Listener{
-			Data: &Listener{
-				Type:    ListenerBasic,
+		l := Network{
+			Data: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
-			Control: &Listener{
-				Type:    ListenerBasic,
+			Control: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
 		}
 		*l.Control.Network = "tcp"
 		*l.Control.Address = "localhost:0"
-		_, err := l.setupMaster()
+		_, err := l.setupMasterListener()
 		assert.NotNil(tt, err)
 	})
 	t.Run("Invalid Control", func(tt *testing.T) {
-		l := Listener{
-			Data: &Listener{
-				Type:    ListenerBasic,
+		l := Network{
+			Data: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
-			Control: &Listener{
-				Type:    ListenerBasic,
+			Control: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
 		}
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
-		_, err := l.setupMaster()
+		_, err := l.setupMasterListener()
 		assert.NotNil(tt, err)
 	})
 }
 
-func TestListener_setupSSH(t *testing.T) {
+func TestNetwork_setupSSHListener(t *testing.T) {
 	t.Run("Valid", func(tt *testing.T) {
-		l := Listener{
+		l := Network{
 			Network: new(string),
 			Address: new(string),
-			Data: &Listener{
-				Type:    ListenerBasic,
+			Data: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
@@ -144,49 +144,49 @@ func TestListener_setupSSH(t *testing.T) {
 		*l.Data.Address = "localhost:0"
 		*l.Auth.Username = "low"
 		*l.Auth.Password = "password"
-		ll, err := l.setupSSH()
+		ll, err := l.setupSSHListener()
 		assert.Nil(tt, err)
 		defer ll.Close()
 	})
 	t.Run("No Network", func(tt *testing.T) {
-		l := Listener{}
-		_, err := l.setupSSH()
+		l := Network{}
+		_, err := l.setupSSHListener()
 		assert.NotNil(tt, err)
 	})
 	t.Run("No Address", func(tt *testing.T) {
-		l := Listener{
+		l := Network{
 			Network: new(string),
 		}
-		_, err := l.setupSSH()
+		_, err := l.setupSSHListener()
 		assert.NotNil(tt, err)
 	})
 	t.Run("No Data", func(tt *testing.T) {
-		l := Listener{
+		l := Network{
 			Network: new(string),
 			Address: new(string),
 		}
-		_, err := l.setupSSH()
+		_, err := l.setupSSHListener()
 		assert.NotNil(tt, err)
 	})
 	t.Run("No Auth", func(tt *testing.T) {
-		l := Listener{
+		l := Network{
 			Network: new(string),
 			Address: new(string),
-			Data: &Listener{
-				Type:    ListenerBasic,
+			Data: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
 		}
-		_, err := l.setupSSH()
+		_, err := l.setupSSHListener()
 		assert.NotNil(tt, err)
 	})
 	t.Run("Invalid Auth", func(tt *testing.T) {
-		l := Listener{
+		l := Network{
 			Network: new(string),
 			Address: new(string),
-			Data: &Listener{
-				Type:    ListenerBasic,
+			Data: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
@@ -196,15 +196,15 @@ func TestListener_setupSSH(t *testing.T) {
 		*l.Address = "localhost:2222"
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
-		_, err := l.setupSSH()
+		_, err := l.setupSSHListener()
 		assert.NotNil(tt, err)
 	})
 	t.Run("Dial denied", func(tt *testing.T) {
-		l := Listener{
+		l := Network{
 			Network: new(string),
 			Address: new(string),
-			Data: &Listener{
-				Type:    ListenerBasic,
+			Data: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
@@ -219,15 +219,15 @@ func TestListener_setupSSH(t *testing.T) {
 		*l.Data.Address = "localhost:0"
 		*l.Auth.Username = "low"
 		*l.Auth.Password = "password"
-		_, err := l.setupSSH()
+		_, err := l.setupSSHListener()
 		assert.NotNil(tt, err)
 	})
 }
 
-func TestListener_Listen(t *testing.T) {
-	t.Run(ListenerBasic, func(tt *testing.T) {
-		l := Listener{
-			Type:    ListenerBasic,
+func TestNetwork_Listen(t *testing.T) {
+	t.Run(NetworkBasic, func(tt *testing.T) {
+		l := Network{
+			Type:    NetworkBasic,
 			Network: new(string),
 			Address: new(string),
 		}
@@ -237,16 +237,16 @@ func TestListener_Listen(t *testing.T) {
 		assert.Nil(tt, err)
 		defer ll.Close()
 	})
-	t.Run(ListenerMaster, func(tt *testing.T) {
-		l := Listener{
-			Type: ListenerMaster,
-			Data: &Listener{
-				Type:    ListenerBasic,
+	t.Run(NetworkMaster, func(tt *testing.T) {
+		l := Network{
+			Type: NetworkMaster,
+			Data: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
-			Control: &Listener{
-				Type:    ListenerBasic,
+			Control: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
@@ -259,13 +259,13 @@ func TestListener_Listen(t *testing.T) {
 		assert.Nil(tt, err)
 		defer ll.Close()
 	})
-	t.Run(ListenerMaster, func(tt *testing.T) {
-		l := Listener{
-			Type:    ListenerSSH,
+	t.Run(NetworkMaster, func(tt *testing.T) {
+		l := Network{
+			Type:    NetworkSSH,
 			Network: new(string),
 			Address: new(string),
-			Data: &Listener{
-				Type:    ListenerBasic,
+			Data: &Network{
+				Type:    NetworkBasic,
 				Network: new(string),
 				Address: new(string),
 			},
@@ -285,15 +285,15 @@ func TestListener_Listen(t *testing.T) {
 		defer ll.Close()
 	})
 	t.Run("UNKNOWN", func(tt *testing.T) {
-		l := Listener{
+		l := Network{
 			Type: "UNKNOWN",
 		}
 		_, err := l.Listen()
 		assert.NotNil(tt, err)
 	})
 	t.Run("Self signed TLS", func(tt *testing.T) {
-		l := Listener{
-			Type:    ListenerBasic,
+		l := Network{
+			Type:    NetworkBasic,
 			Network: new(string),
 			Address: new(string),
 			Crypto: &Crypto{
