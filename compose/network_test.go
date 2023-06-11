@@ -308,3 +308,135 @@ func TestNetwork_Listen(t *testing.T) {
 		defer ll.Close()
 	})
 }
+
+func TestNetwork_setupMasterDialFunc(t *testing.T) {
+	t.Run("Valid", func(tt *testing.T) {
+		l := Network{
+			Data: &Network{
+				Type:    NetworkBasic,
+				Network: new(string),
+				Address: new(string),
+			},
+			Control: &Network{
+				Type:    NetworkBasic,
+				Network: new(string),
+				Address: new(string),
+			},
+		}
+		*l.Data.Network = "tcp"
+		*l.Data.Address = "localhost:0"
+		*l.Control.Network = "tcp"
+		*l.Control.Address = "localhost:0"
+		dialFunc, err := l.setupMasterDialFunc()
+		assert.Nil(tt, err)
+		master, err := l.getMaster()
+		assert.Nil(tt, err)
+		defer master.Close()
+		assert.NotNil(tt, dialFunc)
+	})
+}
+
+func TestNetwork_setupSSHDialFunc(t *testing.T) {
+	t.Run("Valid", func(tt *testing.T) {
+		l := Network{
+			Network: new(string),
+			Address: new(string),
+			Data: &Network{
+				Type:    NetworkBasic,
+				Network: new(string),
+				Address: new(string),
+			},
+			Auth: &Auth{
+				Username: new(string),
+				Password: new(string),
+			},
+		}
+		*l.Network = "tcp"
+		*l.Address = "localhost:2222"
+		*l.Data.Network = "tcp"
+		*l.Data.Address = "localhost:0"
+		*l.Auth.Username = "low"
+		*l.Auth.Password = "password"
+		dialFunc, err := l.setupSSHDialFunc()
+		assert.Nil(tt, err)
+		ssh, err := l.getSSHConn()
+		assert.Nil(tt, err)
+		assert.NotNil(tt, dialFunc)
+		go ssh.Close()
+	})
+}
+
+func TestNetwork_DialFunc(t *testing.T) {
+	t.Run(NetworkBasic, func(tt *testing.T) {
+		l := Network{
+			Type:    NetworkBasic,
+			Network: new(string),
+			Address: new(string),
+		}
+		*l.Network = "tcp"
+		*l.Address = "localhost:0"
+		dialFunc, err := l.DialFunc()
+		assert.Nil(tt, err)
+		assert.NotNil(tt, dialFunc)
+	})
+	t.Run(NetworkMaster, func(tt *testing.T) {
+		l := Network{
+			Type: NetworkMaster,
+			Data: &Network{
+				Type:    NetworkBasic,
+				Network: new(string),
+				Address: new(string),
+			},
+			Control: &Network{
+				Type:    NetworkBasic,
+				Network: new(string),
+				Address: new(string),
+			},
+		}
+		*l.Data.Network = "tcp"
+		*l.Data.Address = "localhost:0"
+		*l.Control.Network = "tcp"
+		*l.Control.Address = "localhost:0"
+		dialFunc, err := l.DialFunc()
+		assert.Nil(tt, err)
+		assert.NotNil(tt, dialFunc)
+		master, err := l.getMaster()
+		assert.Nil(tt, err)
+		defer master.Close()
+	})
+	t.Run(NetworkMaster, func(tt *testing.T) {
+		l := Network{
+			Type:    NetworkSSH,
+			Network: new(string),
+			Address: new(string),
+			Data: &Network{
+				Type:    NetworkBasic,
+				Network: new(string),
+				Address: new(string),
+			},
+			Auth: &Auth{
+				Username: new(string),
+				Password: new(string),
+			},
+		}
+		*l.Network = "tcp"
+		*l.Address = "localhost:2222"
+		*l.Data.Network = "tcp"
+		*l.Data.Address = "localhost:0"
+		*l.Auth.Username = "low"
+		*l.Auth.Password = "password"
+		dialFunc, err := l.DialFunc()
+		assert.Nil(tt, err)
+		assert.NotNil(tt, dialFunc)
+		master, err := l.getSSHConn()
+		assert.Nil(tt, err)
+		defer master.Close()
+	})
+	t.Run("UNKNOWN", func(tt *testing.T) {
+		l := Network{
+			Type: "UNKNOWN",
+		}
+		_, err := l.DialFunc()
+		assert.NotNil(tt, err)
+	})
+}

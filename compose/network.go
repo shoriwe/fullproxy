@@ -24,42 +24,47 @@ type Network struct {
 	Control *Network `yaml:"control,omitempty" json:"control,omitempty"`
 	Auth    *Auth    `yaml:"auth,omitempty" json:"auth,omitempty"`
 	Crypto  *Crypto  `yaml:"crypto,omitempty" json:"crypto,omitempty"`
+	master  *reverse.Master
+	sshConn *ssh.Client
 }
 
-func (l *Network) setupBasicListener(listen network.ListenFunc) (net.Listener, error) {
-	if l.Network == nil {
+func (n *Network) setupBasicListener(listen network.ListenFunc) (net.Listener, error) {
+	if n.Network == nil {
 		return nil, fmt.Errorf("network not set for basic listener")
 	}
-	if l.Address == nil {
+	if n.Address == nil {
 		return nil, fmt.Errorf("address not set for basic listener")
 	}
-	return listen(*l.Network, *l.Address)
+	return listen(*n.Network, *n.Address)
 }
 
-func (l *Network) setupMasterListener() (ll net.Listener, err error) {
-	if l.Data == nil {
-		return nil, fmt.Errorf("no data listener provided for master")
+func (n *Network) getMaster() (*reverse.Master, error) {
+	if n.master == nil {
+		if n.Data == nil {
+			return nil, fmt.Errorf("no data listener provided for master")
+		}
+		if n.Control == nil {
+			return nil, fmt.Errorf("no control listener provided for master")
+		}
+		data, err := n.Data.Listen()
+		if err != nil {
+			return nil, err
+		}
+		defer network.CloseOnError(&err, data)
+		control, err := n.Control.Listen()
+		if err != nil {
+			return nil, err
+		}
+		n.master = &reverse.Master{
+			Data:    data,
+			Control: control,
+		}
 	}
-	if l.Control == nil {
-		return nil, fmt.Errorf("no control listener provided for master")
-	}
-	var (
-		data, control net.Listener
-	)
-	data, err = l.Data.Listen()
-	if err != nil {
-		return nil, err
-	}
-	defer network.CloseOnError(&err, data)
-	control, err = l.Control.Listen()
-	if err != nil {
-		return nil, err
-	}
-	ll = &reverse.Master{
-		Data:    data,
-		Control: control,
-	}
-	return ll, nil
+	return n.master, nil
+}
+
+func (n *Network) setupMasterListener() (ll net.Listener, err error) {
+	return n.getMaster()
 }
 
 type sshWrapper struct {
@@ -72,55 +77,91 @@ func (s *sshWrapper) Close() error {
 	return s.Listener.Close()
 }
 
-func (l *Network) setupSSHListener() (ll net.Listener, err error) {
-	if l.Network == nil {
-		return nil, fmt.Errorf("network not set for basic listener")
+func (n *Network) getSSHConn() (*ssh.Client, error) {
+	if n.sshConn == nil {
+		if n.Network == nil {
+			return nil, fmt.Errorf("network not set for basic listener")
+		}
+		if n.Address == nil {
+			return nil, fmt.Errorf("address not set for basic listener")
+		}
+		if n.Data == nil {
+			return nil, fmt.Errorf("no remote listen configuration")
+		}
+		if n.Auth == nil {
+			return nil, fmt.Errorf("no ssh auth provided")
+		}
+		var config *ssh.ClientConfig
+		config, err := n.Auth.SSHClientConfig()
+		if err != nil {
+			return nil, err
+		}
+		n.sshConn, err = ssh.Dial(*n.Network, *n.Address, config)
+		if err != nil {
+			return nil, err
+		}
+		go sshd.KeepAlive(n.sshConn)
 	}
-	if l.Address == nil {
-		return nil, fmt.Errorf("address not set for basic listener")
-	}
-	if l.Data == nil {
-		return nil, fmt.Errorf("no remote listen configuration")
-	}
-	if l.Auth == nil {
-		return nil, fmt.Errorf("no ssh auth provided")
-	}
-	var config *ssh.ClientConfig
-	config, err = l.Auth.SSHClientConfig()
-	if err != nil {
-		return nil, err
-	}
-	var sshConn *ssh.Client
-	sshConn, err = ssh.Dial(*l.Network, *l.Address, config)
-	if err != nil {
-		return nil, err
-	}
-	go sshd.KeepAlive(sshConn)
-	defer network.CloseOnError(&err, sshConn)
-	var data net.Listener
-	data, err = l.Data.setupBasicListener(sshConn.Listen)
+	return n.sshConn, nil
+}
+
+func (n *Network) setupSSHListener() (ll net.Listener, err error) {
+	sshConn, err := n.getSSHConn()
 	if err == nil {
-		ll = &sshWrapper{
-			Listener: data,
-			conn:     sshConn,
+		defer network.CloseOnError(&err, sshConn)
+		data, err := n.Data.setupBasicListener(sshConn.Listen)
+		if err == nil {
+			ll = &sshWrapper{
+				Listener: data,
+				conn:     sshConn,
+			}
 		}
 	}
 	return ll, err
 }
 
-func (l *Network) Listen() (ll net.Listener, err error) {
-	switch l.Type {
+func (n *Network) Listen() (ll net.Listener, err error) {
+	switch n.Type {
 	case NetworkBasic:
-		ll, err = l.setupBasicListener(net.Listen)
+		ll, err = n.setupBasicListener(net.Listen)
 	case NetworkMaster:
-		ll, err = l.setupMasterListener()
+		ll, err = n.setupMasterListener()
 	case NetworkSSH:
-		ll, err = l.setupSSHListener()
+		ll, err = n.setupSSHListener()
 	default:
-		err = fmt.Errorf("unknown network type %s", l.Type)
+		err = fmt.Errorf("unknown network type %s", n.Type)
 	}
-	if err == nil && l.Crypto != nil {
-		ll, err = l.Crypto.WrapListener(ll)
+	if err == nil && n.Crypto != nil {
+		ll, err = n.Crypto.WrapListener(ll)
 	}
 	return ll, err
+}
+
+func (n *Network) setupMasterDialFunc() (dialFunc network.DialFunc, err error) {
+	master, err := n.getMaster()
+	if err == nil {
+		dialFunc = master.SlaveDial
+	}
+	return dialFunc, err
+}
+
+func (n *Network) setupSSHDialFunc() (dialFunc network.DialFunc, err error) {
+	sshConn, err := n.getSSHConn()
+	if err == nil {
+		dialFunc = sshConn.Dial
+	}
+	return dialFunc, err
+}
+
+func (n *Network) DialFunc() (network.DialFunc, error) {
+	switch n.Type {
+	case NetworkBasic:
+		return net.Dial, nil
+	case NetworkMaster:
+		return n.setupMasterDialFunc()
+	case NetworkSSH:
+		return n.setupSSHDialFunc()
+	default:
+		return nil, fmt.Errorf("unknown network type %s", n.Type)
+	}
 }
