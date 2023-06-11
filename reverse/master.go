@@ -28,11 +28,11 @@ func (m *Master) init() (err error) {
 }
 
 func (m *Master) handle(req *Request) (conn net.Conn, err error) {
-	defer network.CloseOnError(&err, conn)
 	err = m.init()
 	if err == nil {
 		conn, err = m.cSession.Open()
 		if err == nil {
+			defer network.CloseOnError(&err, conn)
 			err = gob.NewEncoder(conn).Encode(req)
 			if err == nil {
 				var response Response

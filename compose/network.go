@@ -17,15 +17,16 @@ const (
 )
 
 type Network struct {
-	Type    string   `yaml:"type" json:"type"`
-	Network *string  `yaml:"network,omitempty" json:"network,omitempty"`
-	Address *string  `yaml:"address,omitempty" json:"address,omitempty"`
-	Data    *Network `yaml:"data,omitempty" json:"data,omitempty"`
-	Control *Network `yaml:"control,omitempty" json:"control,omitempty"`
-	Auth    *Auth    `yaml:"auth,omitempty" json:"auth,omitempty"`
-	Crypto  *Crypto  `yaml:"crypto,omitempty" json:"crypto,omitempty"`
-	master  *reverse.Master
-	sshConn *ssh.Client
+	Type          string   `yaml:"type" json:"type"`
+	Network       *string  `yaml:"network,omitempty" json:"network,omitempty"`
+	Address       *string  `yaml:"address,omitempty" json:"address,omitempty"`
+	Data          *Network `yaml:"data,omitempty" json:"data,omitempty"`
+	Control       *Network `yaml:"control,omitempty" json:"control,omitempty"`
+	Auth          *Auth    `yaml:"auth,omitempty" json:"auth,omitempty"`
+	Crypto        *Crypto  `yaml:"crypto,omitempty" json:"crypto,omitempty"`
+	SlaveListener *bool    `yaml:"slaveListener,omitempty" json:"slaveListener,omitempty"`
+	master        *reverse.Master
+	sshConn       *ssh.Client
 }
 
 func (n *Network) setupBasicListener(listen network.ListenFunc) (net.Listener, error) {
@@ -63,8 +64,24 @@ func (n *Network) getMaster() (*reverse.Master, error) {
 	return n.master, nil
 }
 
+type slaveListenerWrapper struct {
+	*reverse.Master
+}
+
+func (slw *slaveListenerWrapper) Accept() (net.Conn, error) {
+	return slw.Master.SlaveAccept()
+}
+
 func (n *Network) setupMasterListener() (ll net.Listener, err error) {
-	return n.getMaster()
+	master, err := n.getMaster()
+	if err != nil {
+		return nil, err
+	}
+	ll = master
+	if n.SlaveListener != nil && *n.SlaveListener {
+		return &slaveListenerWrapper{master}, nil
+	}
+	return ll, nil
 }
 
 type sshWrapper struct {

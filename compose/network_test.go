@@ -4,6 +4,8 @@ import (
 	"net"
 	"testing"
 
+	"github.com/shoriwe/fullproxy/v3/reverse"
+	"github.com/shoriwe/fullproxy/v3/utils/network"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -120,6 +122,62 @@ func TestNetwork_setupMasterListener(t *testing.T) {
 		*l.Data.Address = "localhost:0"
 		_, err := l.setupMasterListener()
 		assert.NotNil(tt, err)
+	})
+	t.Run("SlaveListener", func(tt *testing.T) {
+		l := Network{
+			SlaveListener: new(bool),
+			Data: &Network{
+				Type:    NetworkBasic,
+				Network: new(string),
+				Address: new(string),
+			},
+			Control: &Network{
+				Type:    NetworkBasic,
+				Network: new(string),
+				Address: new(string),
+			},
+		}
+		*l.SlaveListener = true
+		*l.Data.Network = "tcp"
+		*l.Data.Address = "localhost:0"
+		*l.Control.Network = "tcp"
+		*l.Control.Address = "localhost:0"
+		// Request the slave listener
+		ll, err := l.setupMasterListener()
+		assert.Nil(tt, err)
+		defer ll.Close()
+		//
+		checkCh := make(chan struct{}, 1)
+		ssL := network.ListenAny()
+		defer ssL.Close()
+		// Start slave
+		go func() {
+			masterConn := network.Dial(l.master.Control.Addr().String())
+			s := &reverse.Slave{
+				Listener: ssL,
+				Dial:     net.Dial,
+				Master:   masterConn,
+			}
+			go s.Serve()
+			<-checkCh
+		}()
+		testMsg := []byte("TEST")
+		// Start Dial to slave listener
+		go func() {
+			conn := network.Dial(ssL.Addr().String())
+			defer conn.Close()
+			_, err := conn.Write(testMsg)
+			assert.Nil(tt, err)
+		}()
+		// Accept connection
+		conn, err := ll.Accept()
+		assert.Nil(tt, err)
+		defer conn.Close()
+		buffer := make([]byte, len(testMsg))
+		_, err = conn.Read(buffer)
+		assert.Nil(tt, err)
+		assert.Equal(tt, testMsg, buffer)
+		checkCh <- struct{}{}
 	})
 }
 
