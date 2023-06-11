@@ -22,15 +22,18 @@ func (f *Forward) Handle(client net.Conn) {
 	}
 }
 
+func (f *Forward) Addr() net.Addr {
+	return f.Listener.Addr()
+}
+
 func (f *Forward) Close() {
 	f.Listener.Close()
 }
 
-func (f *Forward) Serve() {
-	for {
-		client, aErr := f.Listener.Accept()
-		if aErr == nil {
-			go f.Handle(client)
-		}
+func (f *Forward) Serve() (err error) {
+	var client net.Conn
+	for client, err = f.Listener.Accept(); err == nil; client, err = f.Listener.Accept() {
+		go f.Handle(client)
 	}
+	return err
 }
