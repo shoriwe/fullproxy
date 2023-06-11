@@ -66,6 +66,7 @@ func (p *Proxy) setupHTTP() (proxy proxies.Proxy, err error) {
 			proxy = &proxies.HTTP{
 				Listener: l,
 				Dial:     dialFunc,
+				// TODO: Auth methods
 			}
 		}
 	}
@@ -85,6 +86,7 @@ func (p *Proxy) setupSocks5() (proxy proxies.Proxy, err error) {
 			proxy = &proxies.Socks5{
 				Listener: l,
 				Dial:     dialFunc,
+				// TODO: AuthMethods: authMethods,
 			}
 		}
 	}
