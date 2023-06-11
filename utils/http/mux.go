@@ -15,5 +15,5 @@ func NewMux(l net.Listener) {
 	mux.HandleFunc(EchoRoute, func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(EchoMsg))
 	})
-	http.Serve(l, mux)
+	go http.Serve(l, mux)
 }
