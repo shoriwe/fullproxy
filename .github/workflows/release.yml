@@ -60,7 +60,7 @@ jobs:
     strategy:
       matrix:
         os: [linux, windows, freebsd]
-        arch: [amd64, "386", arm, arm64]
+        arch: [amd64, "386"]
     steps:
       - uses: actions/checkout@v3
       - name: Prepare bin directory
