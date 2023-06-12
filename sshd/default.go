@@ -11,6 +11,7 @@ import (
 const (
 	SSHDefaultUser     = "low"
 	SSHDefaultPassword = "password"
+	DefaultAddr        = "localhost:22222"
 )
 
 func DefaultClientConfig() *ssh.ClientConfig {
@@ -24,7 +25,7 @@ func DefaultClientConfig() *ssh.ClientConfig {
 }
 
 func DefaultClient(t *testing.T) *ssh.Client {
-	client, dErr := ssh.Dial("tcp", "localhost:2222", DefaultClientConfig())
+	client, dErr := ssh.Dial("tcp", DefaultAddr, DefaultClientConfig())
 	assert.Nil(t, dErr)
 	return client
 }

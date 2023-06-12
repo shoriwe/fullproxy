@@ -198,7 +198,7 @@ func TestNetwork_setupSSHListener(t *testing.T) {
 			},
 		}
 		*l.Network = "tcp"
-		*l.Address = "localhost:2222"
+		*l.Address = sshd.DefaultAddr
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
 		*l.Auth.Username = sshd.SSHDefaultUser
@@ -252,7 +252,7 @@ func TestNetwork_setupSSHListener(t *testing.T) {
 			Auth: &Auth{},
 		}
 		*l.Network = "tcp"
-		*l.Address = "localhost:2222"
+		*l.Address = sshd.DefaultAddr
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
 		_, err := l.setupSSHListener()
@@ -334,7 +334,7 @@ func TestNetwork_Listen(t *testing.T) {
 			},
 		}
 		*l.Network = "tcp"
-		*l.Address = "localhost:2222"
+		*l.Address = sshd.DefaultAddr
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
 		*l.Auth.Username = sshd.SSHDefaultUser
@@ -411,7 +411,7 @@ func TestNetwork_setupSSHDialFunc(t *testing.T) {
 			},
 		}
 		*l.Network = "tcp"
-		*l.Address = "localhost:2222"
+		*l.Address = sshd.DefaultAddr
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
 		*l.Auth.Username = sshd.SSHDefaultUser
@@ -479,7 +479,7 @@ func TestNetwork_DialFunc(t *testing.T) {
 			},
 		}
 		*l.Network = "tcp"
-		*l.Address = "localhost:2222"
+		*l.Address = sshd.DefaultAddr
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
 		*l.Auth.Username = sshd.SSHDefaultUser

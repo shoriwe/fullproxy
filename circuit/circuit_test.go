@@ -29,7 +29,7 @@ func TestCircuit_Dial(t *testing.T) {
 		},
 		&SSH{
 			Network: "tcp",
-			Address: "localhost:2222",
+			Address: sshd.DefaultAddr,
 			Config:  *sshd.DefaultClientConfig(),
 		},
 	}
@@ -45,7 +45,7 @@ func TestCircuit_Dial(t *testing.T) {
 		circuit := &Circuit{
 			Chain: []Knot{&SSH{
 				Network: "tcp",
-				Address: "localhost:2222",
+				Address: sshd.DefaultAddr,
 			}},
 		}
 		_, err := circuit.Dial("tcp", "echo:80")

@@ -21,8 +21,8 @@ services:
     networks:
       - fullproxy
     ports:
-      - "127.0.0.1:2222:22"
-      #- "[::1]:2222:22"
+      - "127.0.0.1:22222:22"
+      #- "[::1]:22222:22"
     volumes:
       - ./sshd/entrypoint.sh:/etc/entrypoint.d/entrypoint.sh:ro
     environment:
