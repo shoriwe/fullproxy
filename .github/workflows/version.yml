@@ -18,7 +18,7 @@ jobs:
           cache: "npm"
       - name: Git Identity
         run: |
-          git checkout main
+          git checkout dev
           git fetch --all --tags
           git config --global user.email "antoniojosedonishung@gmail.com"
           git config --global user.name "Antonio Donis"
