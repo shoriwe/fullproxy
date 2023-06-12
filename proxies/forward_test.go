@@ -20,27 +20,32 @@ func TestForward_Addr(t *testing.T) {
 		Dial:     net.Dial,
 	}
 	defer f.Close()
-	doneChan := make(chan struct{}, 1)
-	defer close(doneChan)
+	go f.Serve()
+	assert.NotNil(t, f.Addr())
 	testMessage := []byte("TEST")
 	go func() {
-		conn, aErr := service.Accept()
-		assert.Nil(t, aErr)
+		conn, err := service.Accept()
+		assert.Nil(t, err)
 		defer conn.Close()
-		_, wErr := conn.Write(testMessage)
-		assert.Nil(t, wErr)
-		<-doneChan
+		// Write
+		_, err = conn.Write(testMessage)
+		assert.Nil(t, err)
+		// Read
+		buffer := make([]byte, len(testMessage))
+		_, err = conn.Read(buffer)
+		assert.Nil(t, err)
+		assert.Equal(t, testMessage, buffer)
 	}()
-	go f.Serve()
-	conn, dErr := net.Dial(listener.Addr().Network(), listener.Addr().String())
-	assert.Nil(t, dErr)
+	conn := network.Dial(listener.Addr().String())
 	defer conn.Close()
+	// Read
 	buffer := make([]byte, len(testMessage))
-	_, rErr := conn.Read(buffer)
-	assert.Nil(t, rErr)
+	_, err := conn.Read(buffer)
+	assert.Nil(t, err)
 	assert.Equal(t, testMessage, buffer)
-	assert.NotNil(t, f.Addr())
-	doneChan <- struct{}{}
+	// Write
+	_, err = conn.Write(buffer)
+	assert.Nil(t, err)
 }
 
 func TestBasicLocalForward(t *testing.T) {
@@ -55,25 +60,30 @@ func TestBasicLocalForward(t *testing.T) {
 		Dial:     net.Dial,
 	}
 	defer f.Close()
-	doneChan := make(chan struct{}, 1)
-	defer close(doneChan)
+	go f.Serve()
 	testMessage := []byte("TEST")
 	go func() {
-		conn, aErr := service.Accept()
-		assert.Nil(t, aErr)
+		conn, err := service.Accept()
+		assert.Nil(t, err)
 		defer conn.Close()
-		_, wErr := conn.Write(testMessage)
-		assert.Nil(t, wErr)
-		<-doneChan
+		// Write
+		_, err = conn.Write(testMessage)
+		assert.Nil(t, err)
+		// Read
+		buffer := make([]byte, len(testMessage))
+		_, err = conn.Read(buffer)
+		assert.Nil(t, err)
+		assert.Equal(t, testMessage, buffer)
 	}()
-	go f.Serve()
-	conn, dErr := net.Dial(listener.Addr().Network(), listener.Addr().String())
-	assert.Nil(t, dErr)
+	conn := network.Dial(listener.Addr().String())
 	defer conn.Close()
+	// Read
 	buffer := make([]byte, len(testMessage))
-	_, rErr := conn.Read(buffer)
-	assert.Nil(t, rErr)
+	_, err := conn.Read(buffer)
+	assert.Nil(t, err)
 	assert.Equal(t, testMessage, buffer)
-	doneChan <- struct{}{}
+	// Write
+	_, err = conn.Write(testMessage)
+	assert.Nil(t, err)
 
 }
