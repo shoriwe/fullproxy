@@ -6,23 +6,27 @@ on:
 
 jobs:
   build:
-    - uses: actions/checkout@v3
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: "1.20"
-    - name: Build
-      run: go build .
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.20"
+      - name: Build
+        run: go build .
   
   test:
-    - uses: actions/checkout@v3
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: "1.20"
-    - name: Set up docker environment
-      run: docker compose up -d
-    - name: Test
-      run: go test -count 1 -v ./...
-    - name: Clean docker environment
-      run: docker compose --rmi all -v --remove-orphans
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.20"
+      - name: Set up docker environment
+        run: docker compose up -d
+      - name: Test
+        run: go test -count 1 -v ./...
+      - name: Clean docker environment
+        run: docker compose --rmi all -v --remove-orphans
