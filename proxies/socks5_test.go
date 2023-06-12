@@ -41,8 +41,11 @@ func TestSocks5_Listener(t *testing.T) {
 	go func() {
 		conn, err := service.Accept()
 		assert.Nil(t, err)
+		defer conn.Close()
+		// Write
 		_, err = conn.Write(testMsg)
 		assert.Nil(t, err)
+		// Read
 		buffer := make([]byte, len(testMsg))
 		_, err = conn.Read(buffer)
 		assert.Nil(t, err)
@@ -51,9 +54,11 @@ func TestSocks5_Listener(t *testing.T) {
 	// -- Connect proxy
 	dialer, err := proxy.SOCKS5(l.Addr().Network(), l.Addr().String(), nil, nil)
 	assert.Nil(t, err)
-	// -- Consume
+	// -- Dial service
 	conn, err := dialer.Dial(service.Addr().Network(), service.Addr().String())
 	assert.Nil(t, err)
+	defer conn.Close()
+	// Consume
 	buffer := make([]byte, len(testMsg))
 	_, err = conn.Read(buffer)
 	assert.Nil(t, err)
@@ -98,6 +103,7 @@ func TestSocks5_Reverse(t *testing.T) {
 	go func() {
 		conn, err := service.Accept()
 		assert.Nil(t, err)
+		defer conn.Close()
 		// Write
 		_, err = conn.Write(testMsg)
 		assert.Nil(t, err)
@@ -113,6 +119,7 @@ func TestSocks5_Reverse(t *testing.T) {
 	// -- Connect service
 	conn, err := dialer.Dial(service.Addr().Network(), service.Addr().String())
 	assert.Nil(t, err)
+	defer conn.Close()
 	// -- Consume
 	buffer := make([]byte, len(testMsg))
 	_, err = conn.Read(buffer)
@@ -147,6 +154,7 @@ func TestSocks5_UsernamePassword(t *testing.T) {
 	go func() {
 		conn, err := service.Accept()
 		assert.Nil(t, err)
+		defer conn.Close()
 		// Write
 		_, err = conn.Write(testMsg)
 		assert.Nil(t, err)
@@ -165,6 +173,7 @@ func TestSocks5_UsernamePassword(t *testing.T) {
 	// Connect service
 	conn, dErr := dialer.Dial(service.Addr().Network(), service.Addr().String())
 	assert.Nil(t, dErr)
+	defer conn.Close()
 	// Consume
 	buffer := make([]byte, len(testMsg))
 	_, err = conn.Read(buffer)
