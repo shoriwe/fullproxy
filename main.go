@@ -1,52 +1,64 @@
 package main
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"log"
 	"os"
+
+	"github.com/shoriwe/fullproxy/v4/compose"
+	"github.com/urfave/cli/v2"
+	"gopkg.in/yaml.v3"
 )
 
-const (
-	helpMessage = `Usage: fullproxy COMMAND [ARGUMENTS]
+const JsonFlag = "json"
 
-Available commands:
+var app = &cli.App{
+	Commands: []*cli.Command{
+		{
+			Name:  "compose",
+			Usage: "start fullproxy services based on the defined compose contract",
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:  JsonFlag,
+					Usage: "decode compose as JSON",
+				},
+			},
+			Action: func(ctx *cli.Context) error {
+				composeFile := "fullproxy-compose.yaml"
+				if ctx.Args().Len() == 1 {
+					composeFile = ctx.Args().First()
+				}
+				composeContents, err := os.ReadFile(composeFile)
+				if err != nil {
+					return err
+				}
+				var c compose.Compose
+				if ctx.Bool(JsonFlag) {
+					err = json.NewDecoder(bytes.NewReader(composeContents)).Decode(&c)
+					if err != nil {
+						return err
+					}
+				} else {
+					err = yaml.NewDecoder(bytes.NewReader(composeContents)).Decode(&c)
+					if err != nil {
+						return err
+					}
+				}
+				err = c.Start()
+				return err
+			},
+		},
+	},
+}
 
-- help:			prints this help.
-- slave:		Connects to master server.
-- socks5:		Starts a SOCKS5 server.
-- http:			Starts a HTTP proxy server.
-- forward:		Starts a port forward proxy server.
-- translate:	Translate a proxy protocol to another to proxy protocol.
-- reverse:		Starts a raw reverse proxy.
-- config:		Start serving the server configured in the targeted yaml file.`
-)
+func init() {
 
-func printAndExit(msg string, code int) {
-	_, _ = fmt.Fprintln(os.Stderr, msg)
-	os.Exit(code)
 }
 
 func main() {
-	if len(os.Args) == 1 {
-		printAndExit(helpMessage, 0)
-	}
-	switch os.Args[1] {
-	case "help":
-		printAndExit(helpMessage, 0)
-	case "slave":
-		slave()
-	case "socks5":
-		socks5()
-	case "http":
-		http()
-	case "forward":
-		forward()
-	case "translate":
-		translate()
-	case "reverse":
-		reverse()
-	case "config":
-		config()
-	default:
-		printAndExit(fmt.Sprintf("Unknown command '%s'", os.Args[1]), 1)
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
 	}
 }

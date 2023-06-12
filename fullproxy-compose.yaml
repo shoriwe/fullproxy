@@ -1,0 +1,9 @@
+proxies:
+  forward:
+    type: forward
+    network: tcp
+    address: google.com:443
+    listener:
+      type: basic
+      network: tcp
+      address: localhost:9999
