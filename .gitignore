@@ -3,3 +3,4 @@ coverage
 coverage.txt
 coverage.html
 *.exe
+node_modules
