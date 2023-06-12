@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  versioning:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.latest_version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: latest_version
+        name: Latest version
+        run: python version.py >> $GITHUB_OUTPUT
+  
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    needs:
+      - versioning
+    strategy:
+      matrix:
+        os: [linux, windows, freebsd]
+        arch: [amd64, "386"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build binary
+        run: go build -v -o bin/${{ github.event.repository.name }}.${{ matrix.os }}.${{ matrix.arch }}$(python -c "import os; print('.exe' if os.getenv('GOOS') == 'windows' else '', end='')")
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+  
+  upx:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    steps:
+      - name: UPX
+        run: upx bin/*
+  
+  release-github:
+    runs-on: ubuntu-latest
+    needs:
+      - upx
+    steps:
+      - name: GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            bin/*
+          tag_name: v${{needs.versioning.outputs.version}}
