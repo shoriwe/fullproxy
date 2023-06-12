@@ -42,7 +42,8 @@ jobs:
     outputs:
       upload_url: ${{ steps.create-release.outputs.upload_url }}
     steps:
-      - name: create-release
+      - name: Create Release
+        id: create-release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
