@@ -2,6 +2,7 @@ package proxies
 
 import (
 	"net"
+	"sync"
 	"testing"
 
 	"github.com/shoriwe/fullproxy/v4/utils/network"
@@ -20,27 +21,36 @@ func TestForward_Addr(t *testing.T) {
 		Dial:     net.Dial,
 	}
 	defer f.Close()
-	doneChan := make(chan struct{}, 1)
-	defer close(doneChan)
-	testMessage := []byte("TEST")
-	go func() {
-		conn, aErr := service.Accept()
-		assert.Nil(t, aErr)
-		defer conn.Close()
-		_, wErr := conn.Write(testMessage)
-		assert.Nil(t, wErr)
-		<-doneChan
-	}()
 	go f.Serve()
-	conn, dErr := net.Dial(listener.Addr().Network(), listener.Addr().String())
-	assert.Nil(t, dErr)
-	defer conn.Close()
-	buffer := make([]byte, len(testMessage))
-	_, rErr := conn.Read(buffer)
-	assert.Nil(t, rErr)
-	assert.Equal(t, testMessage, buffer)
 	assert.NotNil(t, f.Addr())
-	doneChan <- struct{}{}
+	testMessage := []byte("TEST")
+	var wg sync.WaitGroup
+	defer wg.Wait()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		conn, err := service.Accept()
+		assert.Nil(t, err)
+		defer conn.Close()
+		// Write
+		_, err = conn.Write(testMessage)
+		assert.Nil(t, err)
+		// Read
+		buffer := make([]byte, len(testMessage))
+		_, err = conn.Read(buffer)
+		assert.Nil(t, err)
+		assert.Equal(t, testMessage, buffer)
+	}()
+	conn := network.Dial(listener.Addr().String())
+	defer conn.Close()
+	// Read
+	buffer := make([]byte, len(testMessage))
+	_, err := conn.Read(buffer)
+	assert.Nil(t, err)
+	assert.Equal(t, testMessage, buffer)
+	// Write
+	_, err = conn.Write(buffer)
+	assert.Nil(t, err)
 }
 
 func TestBasicLocalForward(t *testing.T) {
@@ -55,25 +65,34 @@ func TestBasicLocalForward(t *testing.T) {
 		Dial:     net.Dial,
 	}
 	defer f.Close()
-	doneChan := make(chan struct{}, 1)
-	defer close(doneChan)
-	testMessage := []byte("TEST")
-	go func() {
-		conn, aErr := service.Accept()
-		assert.Nil(t, aErr)
-		defer conn.Close()
-		_, wErr := conn.Write(testMessage)
-		assert.Nil(t, wErr)
-		<-doneChan
-	}()
 	go f.Serve()
-	conn, dErr := net.Dial(listener.Addr().Network(), listener.Addr().String())
-	assert.Nil(t, dErr)
+	testMessage := []byte("TEST")
+	var wg sync.WaitGroup
+	defer wg.Wait()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		conn, err := service.Accept()
+		assert.Nil(t, err)
+		defer conn.Close()
+		// Write
+		_, err = conn.Write(testMessage)
+		assert.Nil(t, err)
+		// Read
+		buffer := make([]byte, len(testMessage))
+		_, err = conn.Read(buffer)
+		assert.Nil(t, err)
+		assert.Equal(t, testMessage, buffer)
+	}()
+	conn := network.Dial(listener.Addr().String())
 	defer conn.Close()
+	// Read
 	buffer := make([]byte, len(testMessage))
-	_, rErr := conn.Read(buffer)
-	assert.Nil(t, rErr)
+	_, err := conn.Read(buffer)
+	assert.Nil(t, err)
 	assert.Equal(t, testMessage, buffer)
-	doneChan <- struct{}{}
+	// Write
+	_, err = conn.Write(testMessage)
+	assert.Nil(t, err)
 
 }

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	SSHDefaultUser     = "low"
+	SSHDefaultUser     = "root"
 	SSHDefaultPassword = "password"
 	DefaultAddr        = "localhost:22222"
 )
