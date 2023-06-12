@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/gavv/httpexpect/v2"
 	httputils "github.com/shoriwe/fullproxy/v4/utils/http"
@@ -308,6 +309,7 @@ func TestProxy_Serve(t *testing.T) {
 		go func() {
 			go p.Serve()
 			for p.proxy == nil {
+				time.Sleep(time.Millisecond)
 			}
 			checkCh <- struct{}{}
 		}()

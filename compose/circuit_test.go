@@ -2,6 +2,7 @@ package compose
 
 import (
 	"testing"
+	"time"
 
 	"net/http"
 
@@ -161,6 +162,7 @@ func TestCircuit_Serve(t *testing.T) {
 		go func() {
 			go c.Serve()
 			for c.listener == nil {
+				time.Sleep(time.Millisecond)
 			}
 			checkChn <- struct{}{}
 		}()

@@ -2,6 +2,7 @@ package compose
 
 import (
 	"testing"
+	"time"
 
 	"github.com/shoriwe/fullproxy/v4/utils/network"
 )
@@ -32,6 +33,7 @@ func Test_startServices(t *testing.T) {
 	errCh := make(chan error, 1)
 	go startServices(c.Proxies, errCh)
 	for p.Listener.listener == nil {
+		time.Sleep(time.Millisecond)
 	}
 	defer p.Listener.listener.Close()
 }
@@ -61,6 +63,7 @@ func TestCompose_Start(t *testing.T) {
 	}
 	go c.Start()
 	for p.Listener.listener == nil {
+		time.Sleep(time.Millisecond)
 	}
 	defer p.Listener.listener.Close()
 }
