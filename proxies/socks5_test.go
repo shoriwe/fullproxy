@@ -2,6 +2,7 @@ package proxies
 
 import (
 	"net"
+	"sync"
 	"testing"
 
 	"github.com/shoriwe/fullproxy/v4/reverse"
@@ -38,7 +39,11 @@ func TestSocks5_Listener(t *testing.T) {
 	// Test
 	testMsg := []byte("HELLO")
 	// - Producer
+	var wg sync.WaitGroup
+	defer wg.Wait()
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		conn, err := service.Accept()
 		assert.Nil(t, err)
 		defer conn.Close()
@@ -99,8 +104,12 @@ func TestSocks5_Reverse(t *testing.T) {
 	}
 	go sockProxy.Serve()
 	// - Producer
+	var wg sync.WaitGroup
+	defer wg.Wait()
 	testMsg := []byte("HELLO")
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		conn, err := service.Accept()
 		assert.Nil(t, err)
 		defer conn.Close()
@@ -151,7 +160,11 @@ func TestSocks5_UsernamePassword(t *testing.T) {
 	go s.Serve()
 	// Producer
 	testMsg := []byte("HELLO")
+	var wg sync.WaitGroup
+	defer wg.Wait()
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		conn, err := service.Accept()
 		assert.Nil(t, err)
 		defer conn.Close()
