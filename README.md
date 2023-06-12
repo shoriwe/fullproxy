@@ -1,6 +1,8 @@
 # fullproxy
 
 [![Release](https://github.com/shoriwe/fullproxy/actions/workflows/release.yml/badge.svg)](https://github.com/shoriwe/fullproxy/actions/workflows/release.yml)
+[![Test](https://github.com/shoriwe/fullproxy/actions/workflows/test.yml/badge.svg)](https://github.com/shoriwe/fullproxy/actions/workflows/test.yml)
+[![Versioning](https://github.com/shoriwe/fullproxy/actions/workflows/version.yml/badge.svg)](https://github.com/shoriwe/fullproxy/actions/workflows/version.yml)
 [![codecov](https://codecov.io/gh/shoriwe/fullproxy/branch/master/graph/badge.svg?token=WQSZVR7YT7)](https://codecov.io/gh/shoriwe/fullproxy)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/shoriwe/fullproxy)
 [![Go Report Card](https://goreportcard.com/badge/github.com/shoriwe/fullproxy/v4)](https://goreportcard.com/report/github.com/shoriwe/fullproxy/v4)
