@@ -23,91 +23,114 @@ func TestSocks5_Addr(t *testing.T) {
 }
 
 func TestSocks5_Listener(t *testing.T) {
+	// - Proxy
 	l := network.ListenAny()
 	defer l.Close()
+	// - Service
 	service := network.ListenAny()
 	defer service.Close()
-	msg := []byte("HELLO")
-	go func() {
-		conn, aErr := service.Accept()
-		assert.Nil(t, aErr)
-		_, wErr := conn.Write(msg)
-		assert.Nil(t, wErr)
-	}()
+	// Proxy
 	s := Socks5{
 		Listener: l,
 		Dial:     net.Dial,
 	}
 	go s.Serve()
-	dialer, sErr := proxy.SOCKS5(l.Addr().Network(), l.Addr().String(), nil, nil)
-	assert.Nil(t, sErr)
-	conn, dErr := dialer.Dial(service.Addr().Network(), service.Addr().String())
-	assert.Nil(t, dErr)
-	buffer := make([]byte, len(msg))
-	_, rErr := conn.Read(buffer)
-	assert.Nil(t, rErr)
-	assert.Equal(t, msg, buffer)
+	// Test
+	testMsg := []byte("HELLO")
+	// - Producer
+	go func() {
+		conn, err := service.Accept()
+		assert.Nil(t, err)
+		_, err = conn.Write(testMsg)
+		assert.Nil(t, err)
+		buffer := make([]byte, len(testMsg))
+		_, err = conn.Read(buffer)
+		assert.Nil(t, err)
+	}()
+	// - Consumer
+	// -- Connect proxy
+	dialer, err := proxy.SOCKS5(l.Addr().Network(), l.Addr().String(), nil, nil)
+	assert.Nil(t, err)
+	// -- Consume
+	conn, err := dialer.Dial(service.Addr().Network(), service.Addr().String())
+	assert.Nil(t, err)
+	buffer := make([]byte, len(testMsg))
+	_, err = conn.Read(buffer)
+	assert.Nil(t, err)
+	assert.Equal(t, testMsg, buffer)
+	// -- Send
+	_, err = conn.Write(buffer)
+	assert.Nil(t, err)
 }
 
 func TestSocks5_Reverse(t *testing.T) {
+	// - Proxy
 	data := network.ListenAny()
 	defer data.Close()
 	control := network.ListenAny()
 	defer control.Close()
-	master := network.Dial(control.Addr().String())
-	defer master.Close()
-	doneChan := make(chan struct{}, 1)
-	defer close(doneChan)
-	go func() {
-		s := &reverse.Slave{
-			Master: master,
-			Dial:   net.Dial,
-		}
-		defer s.Close()
-		go s.Serve()
-		<-doneChan
-	}()
-	m := &reverse.Master{
+	masterConn := network.Dial(control.Addr().String())
+	defer masterConn.Close()
+	// - Service
+	service := network.ListenAny()
+	defer service.Close()
+	// - Slave
+	slave := &reverse.Slave{
+		Master: masterConn,
+		Dial:   net.Dial,
+	}
+	defer slave.Close()
+	go slave.Serve()
+	// - Master
+	master := &reverse.Master{
 		Data:    data,
 		Control: control,
 	}
-	service := network.ListenAny()
-	defer service.Close()
-	msg := []byte("HELLO")
-	go func() {
-		conn, aErr := service.Accept()
-		assert.Nil(t, aErr)
-		_, wErr := conn.Write(msg)
-		assert.Nil(t, wErr)
-	}()
-	s := Socks5{
-		Listener: m,
-		Dial:     m.SlaveDial,
+	defer master.Close()
+	// - Setup Proxy
+	sockProxy := Socks5{
+		Listener: master,
+		Dial:     master.SlaveDial,
 	}
-	go s.Serve()
-	dialer, sErr := proxy.SOCKS5(data.Addr().Network(), data.Addr().String(), nil, nil)
-	assert.Nil(t, sErr)
-	conn, dErr := dialer.Dial(service.Addr().Network(), service.Addr().String())
-	assert.Nil(t, dErr)
-	buffer := make([]byte, len(msg))
-	_, rErr := conn.Read(buffer)
-	assert.Nil(t, rErr)
-	assert.Equal(t, msg, buffer)
-	doneChan <- struct{}{}
+	go sockProxy.Serve()
+	// - Producer
+	testMsg := []byte("HELLO")
+	go func() {
+		conn, err := service.Accept()
+		assert.Nil(t, err)
+		// Write
+		_, err = conn.Write(testMsg)
+		assert.Nil(t, err)
+		buffer := make([]byte, len(testMsg))
+		// Read
+		_, err = conn.Read(buffer)
+		assert.Nil(t, err)
+	}()
+	// - Consumer
+	// -- Connect proxy
+	dialer, err := proxy.SOCKS5(data.Addr().Network(), data.Addr().String(), nil, nil)
+	assert.Nil(t, err)
+	// -- Connect service
+	conn, err := dialer.Dial(service.Addr().Network(), service.Addr().String())
+	assert.Nil(t, err)
+	// -- Consume
+	buffer := make([]byte, len(testMsg))
+	_, err = conn.Read(buffer)
+	assert.Nil(t, err)
+	assert.Equal(t, testMsg, buffer)
+	// -- Produce
+	_, err = conn.Write(buffer)
+	assert.Nil(t, err)
 }
 
 func TestSocks5_UsernamePassword(t *testing.T) {
+	// Proxy
 	l := network.ListenAny()
 	defer l.Close()
+	// Service
 	service := network.ListenAny()
 	defer service.Close()
-	msg := []byte("HELLO")
-	go func() {
-		conn, aErr := service.Accept()
-		assert.Nil(t, aErr)
-		_, wErr := conn.Write(msg)
-		assert.Nil(t, wErr)
-	}()
+	// Setup Proxy
 	s := Socks5{
 		Listener: l,
 		Dial:     net.Dial,
@@ -117,16 +140,37 @@ func TestSocks5_UsernamePassword(t *testing.T) {
 			},
 		},
 	}
+	defer s.Close()
 	go s.Serve()
-	dialer, sErr := proxy.SOCKS5(l.Addr().Network(), l.Addr().String(), &proxy.Auth{
+	// Producer
+	testMsg := []byte("HELLO")
+	go func() {
+		conn, err := service.Accept()
+		assert.Nil(t, err)
+		// Write
+		_, err = conn.Write(testMsg)
+		assert.Nil(t, err)
+		// Read
+		buffer := make([]byte, len(testMsg))
+		_, err = conn.Read(buffer)
+		assert.Nil(t, err)
+	}()
+	// Consumer
+	// Connect proxy
+	dialer, err := proxy.SOCKS5(l.Addr().Network(), l.Addr().String(), &proxy.Auth{
 		User:     "username",
 		Password: "password",
 	}, nil)
-	assert.Nil(t, sErr)
+	assert.Nil(t, err)
+	// Connect service
 	conn, dErr := dialer.Dial(service.Addr().Network(), service.Addr().String())
 	assert.Nil(t, dErr)
-	buffer := make([]byte, len(msg))
-	_, rErr := conn.Read(buffer)
-	assert.Nil(t, rErr)
-	assert.Equal(t, msg, buffer)
+	// Consume
+	buffer := make([]byte, len(testMsg))
+	_, err = conn.Read(buffer)
+	assert.Nil(t, err)
+	assert.Equal(t, testMsg, buffer)
+	// Produce
+	_, err = conn.Write(buffer)
+	assert.Nil(t, err)
 }
