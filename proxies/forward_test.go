@@ -2,6 +2,7 @@ package proxies
 
 import (
 	"net"
+	"sync"
 	"testing"
 
 	"github.com/shoriwe/fullproxy/v4/utils/network"
@@ -23,7 +24,11 @@ func TestForward_Addr(t *testing.T) {
 	go f.Serve()
 	assert.NotNil(t, f.Addr())
 	testMessage := []byte("TEST")
+	var wg sync.WaitGroup
+	defer wg.Wait()
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		conn, err := service.Accept()
 		assert.Nil(t, err)
 		defer conn.Close()
@@ -62,7 +67,11 @@ func TestBasicLocalForward(t *testing.T) {
 	defer f.Close()
 	go f.Serve()
 	testMessage := []byte("TEST")
+	var wg sync.WaitGroup
+	defer wg.Wait()
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		conn, err := service.Accept()
 		assert.Nil(t, err)
 		defer conn.Close()
