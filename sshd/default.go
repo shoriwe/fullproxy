@@ -10,7 +10,7 @@ import (
 
 func DefaultClientConfig() *ssh.ClientConfig {
 	return &ssh.ClientConfig{
-		User: "low",
+		User: "root",
 		Auth: []ssh.AuthMethod{
 			ssh.Password("password"),
 		},

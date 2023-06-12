@@ -200,7 +200,7 @@ func TestNetwork_setupSSHListener(t *testing.T) {
 		*l.Address = "localhost:2222"
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
-		*l.Auth.Username = "low"
+		*l.Auth.Username = "root"
 		*l.Auth.Password = "password"
 		ll, err := l.setupSSHListener()
 		assert.Nil(tt, err)
@@ -275,7 +275,7 @@ func TestNetwork_setupSSHListener(t *testing.T) {
 		*l.Address = "1111111111111111111111111111111"
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
-		*l.Auth.Username = "low"
+		*l.Auth.Username = "root"
 		*l.Auth.Password = "password"
 		_, err := l.setupSSHListener()
 		assert.NotNil(tt, err)
@@ -336,7 +336,7 @@ func TestNetwork_Listen(t *testing.T) {
 		*l.Address = "localhost:2222"
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
-		*l.Auth.Username = "low"
+		*l.Auth.Username = "root"
 		*l.Auth.Password = "password"
 		ll, err := l.Listen()
 		assert.Nil(tt, err)
@@ -413,7 +413,7 @@ func TestNetwork_setupSSHDialFunc(t *testing.T) {
 		*l.Address = "localhost:2222"
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
-		*l.Auth.Username = "low"
+		*l.Auth.Username = "root"
 		*l.Auth.Password = "password"
 		dialFunc, err := l.setupSSHDialFunc()
 		assert.Nil(tt, err)
@@ -481,7 +481,7 @@ func TestNetwork_DialFunc(t *testing.T) {
 		*l.Address = "localhost:2222"
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
-		*l.Auth.Username = "low"
+		*l.Auth.Username = "root"
 		*l.Auth.Password = "password"
 		dialFunc, err := l.DialFunc()
 		assert.Nil(tt, err)
