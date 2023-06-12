@@ -114,9 +114,17 @@ stateDiagram-v2
 		join_release --> [*]
 	}
 	
+	state UPX {
+		direction LR
+		upx: Run UPX
+		[*] --> upx
+		upx --> [*]
+	}
+	
 	[*] --> Versioning
 	Versioning --> Build
-	Build --> Release
+	Build --> UPX
+	UPX --> Release
 	Release --> [*]
 ```
 
