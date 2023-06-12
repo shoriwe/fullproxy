@@ -54,7 +54,7 @@ fullproxy compose ./fullproxy-compose.yaml
 | [Circuits](docs/Circuits.md)                             | Documentation about how circuits work             |
 | [CLI](docs/CLI.md)                                       | Documentation of the CLI tool                     |
 | [Compose](docs/Compose.md)                               | Documentation about the **compose** specification |
-| [Continuous integration](docs/Continuous integration.md) | Documentation of the CI                           |
+| [Continuous integration](docs/Continuous%20integration.md) | Documentation of the CI                           |
 
 ## Coverage
 
