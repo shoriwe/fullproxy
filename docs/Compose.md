@@ -49,6 +49,7 @@ slaves:
 - [Network](#Network)
 - [Auth](#Auth)
 - [Crypto](#Crypto)
+- [Filter](#Filter)
 
 ### Definition
 
@@ -63,8 +64,12 @@ control:
 auth:
     <<AUTH>>|EMPTY
 crypto:
-    <<CRYPTO>>|empty
+    <<CRYPTO>>|EMPTY
 slaveListener: true|false
+listenerFilter:
+    <<FILTER>>|EMPTY
+dialFilter:
+    <<FILTER>>|EMPTY
 ```
 
 ### Examples
@@ -266,6 +271,52 @@ address: google.com:22
 auth:
     username: sulcud
     password: password
+```
+
+## Filter
+
+### Dependencies
+
+- [Match](#Match)
+
+### Definition
+
+```yaml
+whitelist:
+    - <<MATCH>>
+blacklist:
+    - <<MATCH>>
+```
+
+### Examples
+
+```yaml
+whitelist:
+    - <<MATCH>>
+blacklist:
+    - <<MATCH>>
+```
+
+## Match
+
+### Definition
+
+```yaml
+host: REGEXP|EMPTY
+port: NUMBER|EMPTY
+portRange:
+    from: NUMBER|EMPTY
+    to: NUMBER|EMPTY
+```
+
+### Examples
+
+```yaml
+host: "127\\.0\\.0\\.\\d+"
+port: 443
+portRange:
+    from: 0
+    to: 65535
 ```
 
 ## Proxies
