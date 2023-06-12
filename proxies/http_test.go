@@ -25,12 +25,13 @@ func TestHTTP_Addr(t *testing.T) {
 }
 
 func TestHTTP_Serve(t *testing.T) {
-	setupHTTP := func(tt *testing.T, proxy, service net.Listener) *httpexpect.Expect {
-		httputils.NewMux(service)
+	doProxyTest := func(tt *testing.T, proxy, targetService net.Listener) {
+		// Setup expect
+		httputils.NewMux(targetService)
 		proxyUrl, _ := url.Parse("http://" + proxy.Addr().String())
-		return httpexpect.WithConfig(
+		expect := httpexpect.WithConfig(
 			httpexpect.Config{
-				BaseURL:  "http://" + service.Addr().String(),
+				BaseURL:  "http://" + targetService.Addr().String(),
 				Reporter: httpexpect.NewAssertReporter(t),
 				Client: &http.Client{
 					Transport: &http.Transport{
@@ -39,53 +40,50 @@ func TestHTTP_Serve(t *testing.T) {
 				},
 			},
 		)
-	}
-	t.Run("Basic", func(tt *testing.T) {
-		service := network.ListenAny()
-		defer service.Close()
-		listener := network.ListenAny()
-		defer listener.Close()
-		expect := setupHTTP(tt, listener, service)
+		// HTTP
 		h := HTTP{
-			Listener: listener,
+			Listener: proxy,
 			Dial:     net.Dial,
 		}
 		defer h.Close()
 		go h.Serve()
 		expect.GET(httputils.EchoRoute).Expect().Status(http.StatusOK).Body().Contains(httputils.EchoMsg)
-	})
-	t.Run("Reverse", func(tt *testing.T) {
+	}
+	t.Run("Basic", func(tt *testing.T) {
+		// - Proxy
+		listener := network.ListenAny()
+		defer listener.Close()
+		// - Service
 		service := network.ListenAny()
 		defer service.Close()
+		// Run test
+		doProxyTest(tt, listener, service)
+	})
+	t.Run("Reverse", func(tt *testing.T) {
+		// - Proxy
 		data := network.ListenAny()
 		defer data.Close()
 		control := network.ListenAny()
 		defer control.Close()
 		master := network.Dial(control.Addr().String())
 		defer master.Close()
-		controlCh := make(chan struct{}, 1)
-		defer close(controlCh)
-		go func() {
-			s := &reverse.Slave{
-				Master: master,
-			}
-			defer s.Close()
-			go s.Serve()
-			<-controlCh
-		}()
+		// - Service
+		service := network.ListenAny()
+		defer service.Close()
+		// Slave
+		s := &reverse.Slave{
+			Master: master,
+		}
+		defer s.Close()
+		go s.Serve()
+		// Master
 		m := &reverse.Master{
 			Data:    data,
 			Control: control,
 		}
-		expect := setupHTTP(tt, data, service)
-		h := HTTP{
-			Listener: m,
-			Dial:     net.Dial,
-		}
-		defer h.Close()
-		go h.Serve()
-		expect.GET(httputils.EchoRoute).Expect().Status(http.StatusOK).Body().Contains(httputils.EchoMsg)
-		controlCh <- struct{}{}
+		defer m.Close()
+		// Run test
+		doProxyTest(tt, data, service)
 	})
 
 }
