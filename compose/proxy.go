@@ -6,6 +6,7 @@ import (
 
 	"github.com/shoriwe/fullproxy/v4/proxies"
 	"github.com/shoriwe/fullproxy/v4/utils/network"
+	"github.com/things-go/go-socks5"
 )
 
 const (
@@ -15,12 +16,13 @@ const (
 )
 
 type Proxy struct {
-	Type     string   `yaml:"type" json:"type"`
-	Listener Network  `yaml:"listener" json:"listener"`
-	Dialer   *Network `yaml:"dialer,omitempty" json:"dialer,omitempty"`
-	Network  *string  `yaml:"network,omitempty" json:"network,omitempty"`
-	Address  *string  `yaml:"address,omitempty" json:"address,omitempty"`
-	proxy    proxies.Proxy
+	Type        string      `yaml:"type" json:"type"`
+	Listener    Network     `yaml:"listener" json:"listener"`
+	Dialer      *Network    `yaml:"dialer,omitempty" json:"dialer,omitempty"`
+	Network     *string     `yaml:"network,omitempty" json:"network,omitempty"`
+	Address     *string     `yaml:"address,omitempty" json:"address,omitempty"`
+	AuthMethods AuthMethods `yaml:"authMethods,omitempty" json:"authMethods,omitempty"`
+	proxy       proxies.Proxy
 }
 
 func (p *Proxy) getDialFunc() (network.DialFunc, error) {
@@ -82,11 +84,15 @@ func (p *Proxy) setupSocks5() (proxy proxies.Proxy, err error) {
 	if err == nil {
 		dialFunc, err = p.getDialFunc()
 		if err == nil {
-			network.CloseOnError(&err, l)
-			proxy = &proxies.Socks5{
-				Listener: l,
-				Dial:     dialFunc,
-				// TODO: AuthMethods: authMethods,
+			var authMethods []socks5.Authenticator
+			authMethods, err = p.AuthMethods.Socks5()
+			if err == nil {
+				network.CloseOnError(&err, l)
+				proxy = &proxies.Socks5{
+					Listener:    l,
+					Dial:        dialFunc,
+					AuthMethods: authMethods,
+				}
 			}
 		}
 	}

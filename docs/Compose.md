@@ -324,6 +324,7 @@ portRange:
 ### Dependencies
 
 - [Network](#Network)
+- [Auth method](#Auth method)
 
 ### Definition
 
@@ -335,6 +336,8 @@ dialer:
     <<NETWORK>>|EMPTY
 network: tcp|EMPTY
 address: HOST:PORT|EMPTY
+authMethods:
+    - <<AUTH_METHOD>>
 ```
 
 ### Examples
@@ -365,6 +368,23 @@ dialer:
     address: 10.10.50.10:22
     auth:
         privateKey: /home/admin/id_rsa
+```
+
+### Auth method
+
+### Definition
+
+```yaml
+raw:
+    USERNAME: PASSWORD
+```
+
+### Examples
+
+```yaml
+raw:
+    sulcud: password
+    shoriwe: password
 ```
 
 ## Slaves
