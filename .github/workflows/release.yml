@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    branches: ["master"]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.20"
+      - name: Set up docker environment
+        run: docker compose up -d
+      - name: Test
+        run: go test -coverpkg ./... -coverprofile coverage.txt -covermode count ./...
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.txt
+          fail_ci_if_error: true
+      - name: Clean docker environment
+        run: docker compose --rmi all -v --remove-orphans
+
+  versioning:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.latest_version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: latest_version
+        name: Latest version
+        run: python version.py >> $GITHUB_OUTPUT
+
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    needs:
+      - versioning
+    strategy:
+      matrix:
+        os: [linux, windows, freebsd]
+        arch: [amd64, "386"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build binary
+        run: go build -v -o bin/${{ github.event.repository.name }}.${{ matrix.os }}.${{ matrix.arch }}$(python -c "import os; print('.exe' if os.getenv('GOOS') == 'windows' else '', end='')")
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+
+  upx:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    steps:
+      - name: UPX
+        run: upx bin/*
+
+  release-github:
+    runs-on: ubuntu-latest
+    needs:
+      - upx
+      - versioning
+    steps:
+      - name: GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            bin/*
+          tag_name: v${{needs.versioning.outputs.version}}
