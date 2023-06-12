@@ -36,7 +36,6 @@ func TestSSH_Serve(t *testing.T) {
 		}
 		defer s.Close()
 		go s.Serve()
-		time.Sleep(2 * time.Second)
 		expect := httpexpect.Default(tt, "http://"+listener.Addr().String())
 		expect.GET("/").Expect().Status(http.StatusOK).Body().Contains("ECHO")
 	})
