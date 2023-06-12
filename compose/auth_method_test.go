@@ -41,6 +41,6 @@ func TestAuthMethods_Socks5(t *testing.T) {
 		as := AuthMethods{}
 		authMethods, err := as.Socks5()
 		assert.Nil(tt, err)
-		assert.Nil(tt, authMethods)
+		assert.Len(tt, authMethods, 0)
 	})
 }
