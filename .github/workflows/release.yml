@@ -25,7 +25,7 @@ jobs:
           files: ./coverage.txt
           fail_ci_if_error: true
       - name: Clean docker environment
-        run: docker compose --rmi all -v --remove-orphans
+        run: docker compose down --rmi all -v --remove-orphans
 
   versioning:
     runs-on: ubuntu-latest
