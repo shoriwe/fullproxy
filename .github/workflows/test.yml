@@ -25,8 +25,8 @@ jobs:
         with:
           go-version: "1.20"
       - name: Set up docker environment
-        run: docker compose up -d && sleep 2m
+        run: docker compose up -d && sleep 30
       - name: Test
-        run: go test -count 1 -v ./...
+        run: go test -p 1 -count 1 -v ./...
       - name: Clean docker environment
         run: docker compose --rmi all -v --remove-orphans

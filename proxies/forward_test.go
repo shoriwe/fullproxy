@@ -26,6 +26,7 @@ func TestForward_Addr(t *testing.T) {
 	go func() {
 		conn, aErr := service.Accept()
 		assert.Nil(t, aErr)
+		defer conn.Close()
 		_, wErr := conn.Write(testMessage)
 		assert.Nil(t, wErr)
 		<-doneChan
@@ -33,12 +34,13 @@ func TestForward_Addr(t *testing.T) {
 	go f.Serve()
 	conn, dErr := net.Dial(listener.Addr().Network(), listener.Addr().String())
 	assert.Nil(t, dErr)
+	defer conn.Close()
 	buffer := make([]byte, len(testMessage))
 	_, rErr := conn.Read(buffer)
 	assert.Nil(t, rErr)
 	assert.Equal(t, testMessage, buffer)
 	assert.NotNil(t, f.Addr())
-
+	doneChan <- struct{}{}
 }
 
 func TestBasicLocalForward(t *testing.T) {
@@ -59,6 +61,7 @@ func TestBasicLocalForward(t *testing.T) {
 	go func() {
 		conn, aErr := service.Accept()
 		assert.Nil(t, aErr)
+		defer conn.Close()
 		_, wErr := conn.Write(testMessage)
 		assert.Nil(t, wErr)
 		<-doneChan
@@ -66,9 +69,11 @@ func TestBasicLocalForward(t *testing.T) {
 	go f.Serve()
 	conn, dErr := net.Dial(listener.Addr().Network(), listener.Addr().String())
 	assert.Nil(t, dErr)
+	defer conn.Close()
 	buffer := make([]byte, len(testMessage))
 	_, rErr := conn.Read(buffer)
 	assert.Nil(t, rErr)
 	assert.Equal(t, testMessage, buffer)
+	doneChan <- struct{}{}
 
 }
