@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/shoriwe/fullproxy/v4/filter"
 	"github.com/shoriwe/fullproxy/v4/reverse"
 	"github.com/shoriwe/fullproxy/v4/sshd"
 	"github.com/shoriwe/fullproxy/v4/utils/network"
@@ -17,17 +18,19 @@ const (
 )
 
 type Network struct {
-	Type          string   `yaml:"type" json:"type"`
-	Network       *string  `yaml:"network,omitempty" json:"network,omitempty"`
-	Address       *string  `yaml:"address,omitempty" json:"address,omitempty"`
-	Data          *Network `yaml:"data,omitempty" json:"data,omitempty"`
-	Control       *Network `yaml:"control,omitempty" json:"control,omitempty"`
-	Auth          *Auth    `yaml:"auth,omitempty" json:"auth,omitempty"`
-	Crypto        *Crypto  `yaml:"crypto,omitempty" json:"crypto,omitempty"`
-	SlaveListener *bool    `yaml:"slaveListener,omitempty" json:"slaveListener,omitempty"`
-	master        *reverse.Master
-	sshConn       *ssh.Client
-	listener      net.Listener
+	Type           string   `yaml:"type" json:"type"`
+	Network        *string  `yaml:"network,omitempty" json:"network,omitempty"`
+	Address        *string  `yaml:"address,omitempty" json:"address,omitempty"`
+	Data           *Network `yaml:"data,omitempty" json:"data,omitempty"`
+	Control        *Network `yaml:"control,omitempty" json:"control,omitempty"`
+	Auth           *Auth    `yaml:"auth,omitempty" json:"auth,omitempty"`
+	Crypto         *Crypto  `yaml:"crypto,omitempty" json:"crypto,omitempty"`
+	SlaveListener  *bool    `yaml:"slaveListener,omitempty" json:"slaveListener,omitempty"`
+	ListenerFilter *Filter  `yaml:"listenerFilter,omitempty" json:"listenerFilter,omitempty"`
+	DialFilter     *Filter  `yaml:"dialFilter,omitempty" json:"dialFilter,omitempty"`
+	master         *reverse.Master
+	sshConn        *ssh.Client
+	listener       net.Listener
 }
 
 func (n *Network) setupBasicListener(listen network.ListenFunc) (_ net.Listener, err error) {
@@ -152,8 +155,12 @@ func (n *Network) Listen() (ll net.Listener, err error) {
 	default:
 		err = fmt.Errorf("unknown network type %s", n.Type)
 	}
+	network.CloseOnError(&err, ll)
 	if err == nil && n.Crypto != nil {
 		ll, err = n.Crypto.WrapListener(ll)
+	}
+	if err == nil && n.ListenerFilter != nil {
+		ll, err = n.ListenerFilter.Listener(ll)
 	}
 	return ll, err
 }
@@ -174,15 +181,23 @@ func (n *Network) setupSSHDialFunc() (dialFunc network.DialFunc, err error) {
 	return dialFunc, err
 }
 
-func (n *Network) DialFunc() (network.DialFunc, error) {
+func (n *Network) DialFunc() (dialFunc network.DialFunc, err error) {
 	switch n.Type {
 	case NetworkBasic:
-		return net.Dial, nil
+		dialFunc, err = net.Dial, nil
 	case NetworkMaster:
-		return n.setupMasterDialFunc()
+		dialFunc, err = n.setupMasterDialFunc()
 	case NetworkSSH:
-		return n.setupSSHDialFunc()
+		dialFunc, err = n.setupSSHDialFunc()
 	default:
-		return nil, fmt.Errorf("unknown network type %s", n.Type)
+		dialFunc, err = nil, fmt.Errorf("unknown network type %s", n.Type)
 	}
+	if err == nil && n.DialFilter != nil {
+		var df *filter.DialFunc
+		df, err = n.DialFilter.DialFunc(dialFunc)
+		if err == nil {
+			dialFunc = df.Dial
+		}
+	}
+	return dialFunc, err
 }
