@@ -9,24 +9,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: "1.20"
-
       - name: Set up docker environment
         run: docker compose up -d
-
       - name: Test
         run: go test -coverpkg ./... -coverprofile coverage.txt -covermode count ./...
-
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.txt
           fail_ci_if_error: true
-
       - name: Clean docker environment
         run: docker compose --rmi all -v --remove-orphans
 
