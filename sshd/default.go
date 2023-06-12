@@ -8,11 +8,16 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+const (
+	SSHDefaultUser     = "low"
+	SSHDefaultPassword = "password"
+)
+
 func DefaultClientConfig() *ssh.ClientConfig {
 	return &ssh.ClientConfig{
-		User: "root",
+		User: SSHDefaultUser,
 		Auth: []ssh.AuthMethod{
-			ssh.Password("password"),
+			ssh.Password(SSHDefaultPassword),
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}

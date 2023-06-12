@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/shoriwe/fullproxy/v4/reverse"
+	"github.com/shoriwe/fullproxy/v4/sshd"
 	"github.com/shoriwe/fullproxy/v4/utils/network"
 	"github.com/stretchr/testify/assert"
 )
@@ -200,8 +201,8 @@ func TestNetwork_setupSSHListener(t *testing.T) {
 		*l.Address = "localhost:2222"
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
-		*l.Auth.Username = "root"
-		*l.Auth.Password = "password"
+		*l.Auth.Username = sshd.SSHDefaultUser
+		*l.Auth.Password = sshd.SSHDefaultPassword
 		ll, err := l.setupSSHListener()
 		assert.Nil(tt, err)
 		defer ll.Close()
@@ -275,8 +276,8 @@ func TestNetwork_setupSSHListener(t *testing.T) {
 		*l.Address = "1111111111111111111111111111111"
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
-		*l.Auth.Username = "root"
-		*l.Auth.Password = "password"
+		*l.Auth.Username = sshd.SSHDefaultUser
+		*l.Auth.Password = sshd.SSHDefaultPassword
 		_, err := l.setupSSHListener()
 		assert.NotNil(tt, err)
 	})
@@ -336,8 +337,8 @@ func TestNetwork_Listen(t *testing.T) {
 		*l.Address = "localhost:2222"
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
-		*l.Auth.Username = "root"
-		*l.Auth.Password = "password"
+		*l.Auth.Username = sshd.SSHDefaultUser
+		*l.Auth.Password = sshd.SSHDefaultPassword
 		ll, err := l.Listen()
 		assert.Nil(tt, err)
 		defer ll.Close()
@@ -413,8 +414,8 @@ func TestNetwork_setupSSHDialFunc(t *testing.T) {
 		*l.Address = "localhost:2222"
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
-		*l.Auth.Username = "root"
-		*l.Auth.Password = "password"
+		*l.Auth.Username = sshd.SSHDefaultUser
+		*l.Auth.Password = sshd.SSHDefaultPassword
 		dialFunc, err := l.setupSSHDialFunc()
 		assert.Nil(tt, err)
 		ssh, err := l.getSSHConn()
@@ -481,8 +482,8 @@ func TestNetwork_DialFunc(t *testing.T) {
 		*l.Address = "localhost:2222"
 		*l.Data.Network = "tcp"
 		*l.Data.Address = "localhost:0"
-		*l.Auth.Username = "root"
-		*l.Auth.Password = "password"
+		*l.Auth.Username = sshd.SSHDefaultUser
+		*l.Auth.Password = sshd.SSHDefaultPassword
 		dialFunc, err := l.DialFunc()
 		assert.Nil(tt, err)
 		assert.NotNil(tt, dialFunc)
