@@ -83,11 +83,12 @@ stateDiagram-v2
 		[*] --> VersionPy
 		VersionPy --> [*]
 	}
-	
-	state Build {
+	BuildAndUpload: Build and Upload
+	state BuildAndUpload {
 		direction LR
 		state fork_build <<fork>>
 		state join_build <<join>>
+		upx: Run UPX
 		[*] --> fork_build
 		fork_build --> Windows
 		fork_build --> Linux
@@ -97,29 +98,19 @@ stateDiagram-v2
 		Linux --> join_build
 		FreeBSD --> join_build
 		OSX --> join_build
-		join_build --> [*]
+		join_build --> upx
+		upx --> Upload
+		Upload --> [*]
 	}
 	
-	state Release {
+	state CreateRelease {
 		direction LR
-		state fork_release <<fork>>
-		state join_release <<join>>
-		GitHub: GitHub Releases
-		Pages: GitHub pages
-		[*] --> fork_release
-		fork_release --> GitHub
-		fork_release --> Pages
-		GitHub --> join_release
-		Pages --> join_release
-		join_release --> [*]
+		createRelease: Create Release
+		[*] --> createRelease
+		createRelease --> [*]
 	}
 	
-	state UPX {
-		direction LR
-		upx: Run UPX
-		[*] --> upx
-		upx --> [*]
-	}
+	
 	
 	state Coverage {
 		direction LR
@@ -140,10 +131,9 @@ stateDiagram-v2
 	[*] --> fork_main
 	fork_main --> Versioning
 	fork_main --> Coverage
-	Versioning --> Build
-	Build --> UPX
-	UPX --> Release
-	Release --> join_main
+	Versioning --> CreateRelease
+	CreateRelease --> BuildAndUpload
+	BuildAndUpload --> join_main
 	Coverage --> join_main
 	join_main --> [*]
 ```
