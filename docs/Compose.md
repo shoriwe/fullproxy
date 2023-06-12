@@ -14,32 +14,32 @@ This document describes the `compose` contract specification.
 
 ```yaml
 circuits:
-	NAME:
-		<<CIRCUIT>>
+    NAME:
+        <<CIRCUIT>>
 proxies:
-	NAME:
-		<<PROXY>>
+    NAME:
+        <<PROXY>>
 slaves:
-	NAME:
-		<<SLAVE>>
+    NAME:
+        <<SLAVE>>
 ```
 
 ### Examples
 
 ```yaml
 circuits:
-	australia:
-		<<CIRCUIT>>
-	china:
-		<<CIRCUIT>>
+    australia:
+        <<CIRCUIT>>
+    china:
+        <<CIRCUIT>>
 proxies:
-	US:
-		<<PROXY>>
+    US:
+        <<PROXY>>
 slaves:
-	colombia:
-		<<SLAVE>>
-	us:
-		<<SLAVE>>
+    colombia:
+        <<SLAVE>>
+    us:
+        <<SLAVE>>
 ```
 
 ## Network
@@ -57,13 +57,13 @@ type: basic|master|ssh
 network: tcp|EMPTY
 address: HOST:PORT|EMPTY
 data:
-	<<NETWORK>>|EMPTY
+    <<NETWORK>>|EMPTY
 control:
-	<<NETWORK>>|EMPTY
+    <<NETWORK>>|EMPTY
 auth:
-	<<AUTH>>|EMPTY
+    <<AUTH>>|EMPTY
 crypto:
-	<<CRYPTO>>|empty
+    <<CRYPTO>>|empty
 slaveListener: true|false
 ```
 
@@ -82,13 +82,13 @@ address: 0.0.0.0:443
 ```yaml
 type: master
 data:
-	type: basic
-	network: tcp
-	address: 0.0.0.0:9050
+    type: basic
+    network: tcp
+    address: 0.0.0.0:9050
 control:
-	type: basic
-	network: tcp
-	address: 10.10.50.10:8000
+    type: basic
+    network: tcp
+    address: 10.10.50.10:8000
 ```
 
 - SSH listener
@@ -98,8 +98,8 @@ type: ssh
 network: tcp
 address: 10.10.50.10:22
 auth:
-	username: sulcud
-	password: password
+    username: sulcud
+    password: password
 ```
 
 - Basic listener with **TLS**
@@ -110,8 +110,8 @@ type: basic
 network: tcp
 address: 0.0.0.0:443
 crypto:
-	mode: tls
-	selfSigned: true
+    mode: tls
+    selfSigned: true
 ```
 
 - Master with **Data** coming from **Basic** and Slave from TLS **SSH**
@@ -119,19 +119,19 @@ crypto:
 ```yaml
 type: master
 data:
-	type: basic
-	network: tcp
-	address: 0.0.0.0:8000
+    type: basic
+    network: tcp
+    address: 0.0.0.0:8000
 control:
-	type: ssh
-	network: tcp
-	address: 10.10.50.10:22
-	auth:
-		privateKey: /home/admin/id_rsa
-	crypto:
-		mode: tls
-		selfSigned: true
-		insecureSkipVerify: true
+    type: ssh
+    network: tcp
+    address: 10.10.50.10:22
+    auth:
+        privateKey: /home/admin/id_rsa
+    crypto:
+        mode: tls
+        selfSigned: true
+        insecureSkipVerify: true
 ```
 
 ## Auth
@@ -215,9 +215,9 @@ key: /etc/certs/key
 network: tcp
 address: HOST:PORT
 listener:
-	<<NETWORK>>
+    <<NETWORK>>
 knots:
-	- <<KNOT>>
+    - <<KNOT>>
 ```
 
 ### Examples
@@ -226,19 +226,19 @@ knots:
 network: tcp
 address: google.com:443
 listener:
-	type: basic
-	network: tcp
-	address: localhost:443
+    type: basic
+    network: tcp
+    address: localhost:443
 knots:
-	- type: ssh
-	  network: tcp
-	  address: 10.10.50.10:22
-	  auth:
-	  	username: sulcud
-	  	password: password
-	- type: socks5
-	  network: tcp
-	  address: 207.208.10.30:9050
+    - type: ssh
+      network: tcp
+      address: 10.10.50.10:22
+      auth:
+          username: sulcud
+          password: password
+    - type: socks5
+      network: tcp
+      address: 207.208.10.30:9050
 ```
 
 ## Knots
@@ -254,7 +254,7 @@ type: forward|socks5|ssh
 network: tcp
 address: HOST:PORT
 auth:
-	<<AUTH>>|EMPTY
+    <<AUTH>>|EMPTY
 ```
 
 ### Examples
@@ -264,8 +264,8 @@ type: ssh
 network: tcp
 address: google.com:22
 auth:
-	username: sulcud
-	password: password
+    username: sulcud
+    password: password
 ```
 
 ## Proxies
@@ -279,9 +279,9 @@ auth:
 ```yaml
 type: forward|http|socks5
 listener:
-	<<NETWORK>>
+    <<NETWORK>>
 dialer:
-	<<NETWORK>>|EMPTY
+    <<NETWORK>>|EMPTY
 network: tcp|EMPTY
 address: HOST:PORT|EMPTY
 ```
@@ -293,9 +293,9 @@ address: HOST:PORT|EMPTY
 ```yaml
 type: forward
 listener:
-	type: basic
-	network: tcp
-	address: 0.0.0.0:80
+    type: basic
+    network: tcp
+    address: 0.0.0.0:80
 network: tcp
 address: google.com:80
 ```
@@ -305,15 +305,15 @@ address: google.com:80
 ```yaml
 type: socks5
 listener:
-	type: basic
-	network: tcp
-	address: 0.0.0.0:9050
+    type: basic
+    network: tcp
+    address: 0.0.0.0:9050
 dialer:
-	type: ssh
-	network: tcp
-	address: 10.10.50.10:22
-	auth:
-		privateKey: /home/admin/id_rsa
+    type: ssh
+    network: tcp
+    address: 10.10.50.10:22
+    auth:
+        privateKey: /home/admin/id_rsa
 ```
 
 ## Slaves
@@ -328,9 +328,9 @@ dialer:
 masterNetwork: tcp
 masterAddress: HOST:PORT
 dialer:
-	<<NETWORK>>
+    <<NETWORK>>
 listener:
-	<<NETWORK>>|EMPTY
+    <<NETWORK>>|EMPTY
 ```
 
 ### Examples
@@ -339,7 +339,7 @@ listener:
 masterNetwork: tcp
 masterAddress: 10.10.50.10:9999
 dialer:
-	<<NETWORK>>
+    <<NETWORK>>
 listener:
-	<<NETWORK>>
+    <<NETWORK>>
 ```
