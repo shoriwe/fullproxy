@@ -2,6 +2,7 @@ package compose
 
 import (
 	"net"
+	"sync"
 	"testing"
 
 	"github.com/shoriwe/fullproxy/v4/reverse"
@@ -125,7 +126,7 @@ func TestNetwork_setupMasterListener(t *testing.T) {
 		assert.NotNil(tt, err)
 	})
 	t.Run("SlaveListener", func(tt *testing.T) {
-		l := Network{
+		m := Network{
 			SlaveListener: new(bool),
 			Data: &Network{
 				Type:    NetworkBasic,
@@ -138,47 +139,55 @@ func TestNetwork_setupMasterListener(t *testing.T) {
 				Address: new(string),
 			},
 		}
-		*l.SlaveListener = true
-		*l.Data.Network = "tcp"
-		*l.Data.Address = "localhost:0"
-		*l.Control.Network = "tcp"
-		*l.Control.Address = "localhost:0"
-		// Request the slave listener
-		ll, err := l.setupMasterListener()
+		*m.SlaveListener = true
+		*m.Data.Network = "tcp"
+		*m.Data.Address = "localhost:0"
+		*m.Control.Network = "tcp"
+		*m.Control.Address = "localhost:0"
+		// Master
+		master, err := m.setupMasterListener()
 		assert.Nil(tt, err)
-		defer ll.Close()
-		//
-		checkCh := make(chan struct{}, 1)
-		ssL := network.ListenAny()
-		defer ssL.Close()
-		// Start slave
-		go func() {
-			masterConn := network.Dial(l.master.Control.Addr().String())
-			s := &reverse.Slave{
-				Listener: ssL,
-				Dial:     net.Dial,
-				Master:   masterConn,
-			}
-			go s.Serve()
-			<-checkCh
-		}()
+		defer master.Close()
+		// Slave
+		slaveSideListener := network.ListenAny()
+		defer slaveSideListener.Close()
+		masterConn := network.Dial(m.master.Control.Addr().String())
+		defer masterConn.Close()
+		slave := &reverse.Slave{
+			Listener: slaveSideListener,
+			Dial:     net.Dial,
+			Master:   masterConn,
+		}
+		go slave.Serve()
+		// Producer
 		testMsg := []byte("TEST")
-		// Start Dial to slave listener
+		var wg sync.WaitGroup
+		defer wg.Wait()
+		wg.Add(1)
 		go func() {
-			conn := network.Dial(ssL.Addr().String())
+			defer wg.Done()
+			conn := network.Dial(slaveSideListener.Addr().String())
 			defer conn.Close()
+			// Write
 			_, err := conn.Write(testMsg)
+			assert.Nil(tt, err)
+			// Read
+			buffer := make([]byte, 1)
+			_, err = conn.Read(buffer)
 			assert.Nil(tt, err)
 		}()
 		// Accept connection
-		conn, err := ll.Accept()
+		conn, err := master.Accept()
 		assert.Nil(tt, err)
 		defer conn.Close()
+		// Read
 		buffer := make([]byte, len(testMsg))
 		_, err = conn.Read(buffer)
 		assert.Nil(tt, err)
 		assert.Equal(tt, testMsg, buffer)
-		checkCh <- struct{}{}
+		// Write
+		_, err = conn.Write(buffer)
+		assert.Nil(tt, err)
 	})
 }
 
