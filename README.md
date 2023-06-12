@@ -6,6 +6,7 @@
 [![codecov](https://codecov.io/gh/shoriwe/fullproxy/branch/master/graph/badge.svg?token=WQSZVR7YT7)](https://codecov.io/gh/shoriwe/fullproxy)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/shoriwe/fullproxy)
 [![Go Report Card](https://goreportcard.com/badge/github.com/shoriwe/fullproxy/v4)](https://goreportcard.com/report/github.com/shoriwe/fullproxy/v4)
+[![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/avelino/awesome-go)
 
 <img src="logo/white_logo_color_background.jpg" alt="logo" style="zoom: 25%;" />
 
