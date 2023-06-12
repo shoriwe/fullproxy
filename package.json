@@ -3,5 +3,5 @@
 		"git-semver-tags": "^4.1.1",
 		"standard-version": "^9.5.0"
 	},
-	"version": "4.1.0"
+	"version": "4.1.1"
 }

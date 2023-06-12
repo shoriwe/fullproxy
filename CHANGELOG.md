@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### 4.1.1 (2023-06-12)
+
+
+### Bug Fixes
+
+* push to dev ([08a0196](https://github.com/shoriwe/fullproxy/commit/08a019659ab9473425977243a17b2772d3d6e56d))
+
 ## [4.1.0](https://github.com/shoriwe/fullproxy/compare/v3.2.0...v4.1.0) (2023-06-12)
 
 

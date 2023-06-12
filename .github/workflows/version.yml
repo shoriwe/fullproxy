@@ -18,11 +18,11 @@ jobs:
           cache: "npm"
       - name: Git Identity
         run: |
-          git checkout main
+          git checkout dev
           git fetch --all --tags
           git config --global user.email "antoniojosedonishung@gmail.com"
           git config --global user.name "Antonio Donis"
       - name: Changelog
         run: 'npx standard-version --message "[ci skip] chore(release): %s"'
       - name: Push changes
-        run: git push --follow-tags --force origin main
+        run: git push --follow-tags --force origin dev
