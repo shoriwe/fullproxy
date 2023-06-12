@@ -59,7 +59,7 @@ jobs:
       - create-release
     strategy:
       matrix:
-        os: [linux, windows, freebsd]
+        os: [linux, windows]
         arch: [amd64, "386"]
     steps:
       - uses: actions/checkout@v3
