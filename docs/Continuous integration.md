@@ -121,10 +121,30 @@ stateDiagram-v2
 		upx --> [*]
 	}
 	
-	[*] --> Versioning
+	state Coverage {
+		direction LR
+		EnvironmentUp: Environment Up
+		coverage: Coverage
+		Push: Push converage.txt
+		EnvironmentDown: Environment Down
+		[*] --> EnvironmentUp
+		EnvironmentUp --> coverage
+		coverage --> Push
+		Push --> EnvironmentDown
+		EnvironmentDown --> [*]
+	}
+	
+	state fork_main <<fork>>
+	state join_main <<join>>
+	
+	[*] --> fork_main
+	fork_main --> Versioning
+	fork_main --> Coverage
 	Versioning --> Build
 	Build --> UPX
 	UPX --> Release
-	Release --> [*]
+	Release --> join_main
+	Coverage --> join_main
+	join_main --> [*]
 ```
 
